@@ -27,6 +27,9 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+/**
+ * @author Janario Oliveira
+ */
 public class HttpRequest extends Builder {
 
     private final URL url;
