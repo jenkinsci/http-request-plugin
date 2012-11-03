@@ -1,0 +1,8 @@
+
+#Maven build
+target/
+
+
+#Backups created by gedit
+*~
+
