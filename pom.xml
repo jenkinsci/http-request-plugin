@@ -24,4 +24,12 @@
             <url>http://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
+    
+    <developers>
+        <developer>
+            <id>janario</id>
+            <name>Janario Oliveira</name>
+            <email>janarioliver@gmail.com</email>
+        </developer>
+    </developers>
 </project>
