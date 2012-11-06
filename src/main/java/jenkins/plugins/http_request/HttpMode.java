@@ -1,4 +1,4 @@
-package br.com.janario.jenkins;
+package jenkins.plugins.http_request;
 
 /**
  * @author Janario Oliveira

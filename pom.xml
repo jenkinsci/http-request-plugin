@@ -6,7 +6,6 @@
         <version>1.466</version><!-- which version of Jenkins is this plugin built against? -->
     </parent>
 
-    <groupId>br.com.janario.jenkins</groupId>
     <artifactId>http_request</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>hpi</packaging>
