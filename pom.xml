@@ -25,6 +25,11 @@
         </pluginRepository>
     </pluginRepositories>
     
+    <scm>
+        <connection>scm:git:ssh://github.com/jenkinsci/http-request-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/http-request-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/http-request-plugin</url>
+    </scm>
     <developers>
         <developer>
             <id>janario</id>
