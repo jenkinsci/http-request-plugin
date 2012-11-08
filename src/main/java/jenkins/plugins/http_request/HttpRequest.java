@@ -1,5 +1,6 @@
 package jenkins.plugins.http_request;
 
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
@@ -51,8 +52,9 @@ public class HttpRequest extends Builder {
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener)
-            throws IOException {
+    public boolean perform(AbstractBuild build, Launcher launcher,
+            BuildListener listener)
+            throws IOException, InterruptedException {
         PrintStream logger = listener.getLogger();
         HttpMode mode = httpMode != null ? httpMode : getDescriptor().getDefaultHttpMode();
         URL finalURL = url;
@@ -60,7 +62,8 @@ public class HttpRequest extends Builder {
         logger.println("HttpMode: " + mode);
         logger.println("Sending request to url: " + url + " with parameters:");
 
-        String params = createParameters(logger, build.getBuildVariables());
+        String params = createParameters(logger, build.getBuildVariables(),
+                build.getEnvironment(listener));
 
         //doGet
         if (mode == HttpMode.GET) {
@@ -106,10 +109,21 @@ public class HttpRequest extends Builder {
         return (DescriptorImpl) super.getDescriptor();
     }
 
-    private String createParameters(PrintStream logger, Map<String, String> buildVariables)
+    private String createParameters(PrintStream logger,
+            Map<String, String> buildVariables, EnvVars envVars)
             throws UnsupportedEncodingException {
         StringBuilder params = new StringBuilder();
+
         for (Map.Entry<String, String> entry : buildVariables.entrySet()) {
+            //replace envs
+            if (entry.getValue().trim().startsWith("$")) {
+                final String key = entry.getValue().trim().replaceFirst("\\$", "");
+                if (envVars.containsKey(key)) {
+                    entry.setValue(envVars.get(key));
+                }
+            }
+
+
             logger.println("  " + entry.getKey() + " = " + entry.getValue());
 
             if (params.length() != 0) {
@@ -121,7 +135,8 @@ public class HttpRequest extends Builder {
         return params.toString();
     }
 
-    private void logResponse(InputStream inputStream, PrintStream logger) throws IOException {
+    private void logResponse(InputStream inputStream, PrintStream logger) throws
+            IOException {
         logger.println();
         logger.println("Response:");
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -141,7 +156,8 @@ public class HttpRequest extends Builder {
             return defaultHttpMode;
         }
 
-        public FormValidation doCheckDefaultHttpMode(@QueryParameter String value)
+        public FormValidation doCheckDefaultHttpMode(
+                @QueryParameter String value)
                 throws IOException, ServletException {
             if (value.length() == 0) {
                 return FormValidation.error("Please set an http mode");
@@ -193,7 +209,8 @@ public class HttpRequest extends Builder {
         }
 
         @Override
-        public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+        public boolean configure(StaplerRequest req, JSONObject formData) throws
+                FormException {
             defaultHttpMode = HttpMode.valueOf(formData.getString("defaultHttpMode"));
             save();
             return super.configure(req, formData);

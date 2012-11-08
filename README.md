@@ -1,2 +1,2 @@
-This just does a request to an url with some parameters.
+This plugin does a request to an url with some parameters.
 
