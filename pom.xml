@@ -7,7 +7,7 @@
     </parent>
 
     <artifactId>http_request</artifactId>
-    <version>1.4-SNAPSHOT</version>
+    <version>1.4</version>
     <packaging>hpi</packaging>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/HTTP+Request+Plugin</url>
 
