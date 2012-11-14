@@ -9,6 +9,7 @@
     <artifactId>http_request</artifactId>
     <version>1.3-SNAPSHOT</version>
     <packaging>hpi</packaging>
+    <url>http://wiki.jenkins-ci.org/display/JENKINS/HTTP+Request</url>
 
     <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
     <repositories>
