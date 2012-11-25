@@ -21,6 +21,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.Map;
 import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
@@ -35,6 +36,7 @@ public class HttpRequest extends Builder {
 
     private final URL url;
     private final HttpMode httpMode;
+    public static final String CONTENT_TYPE = "application/x-www-form-urlencoded;charset=" + Charset.defaultCharset().name();
 
     @DataBoundConstructor
     public HttpRequest(String url, String httpMode) throws MalformedURLException {
@@ -71,6 +73,7 @@ public class HttpRequest extends Builder {
         }
 
         URLConnection connection = finalURL.openConnection();
+        connection.addRequestProperty("Content-Type", CONTENT_TYPE);
 
         //doPost
         OutputStreamWriter writer = null;
@@ -129,8 +132,8 @@ public class HttpRequest extends Builder {
             if (params.length() != 0) {
                 params.append("&");
             }
-            params.append(URLEncoder.encode(entry.getKey(), "UTF-8")).append("=")
-                    .append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+            params.append(URLEncoder.encode(entry.getKey(), Charset.defaultCharset().name())).append("=")
+                    .append(URLEncoder.encode(entry.getValue(), Charset.defaultCharset().name()));
         }
         return params.toString();
     }
