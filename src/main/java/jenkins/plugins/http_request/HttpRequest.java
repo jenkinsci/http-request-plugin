@@ -11,20 +11,28 @@ import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -34,18 +42,17 @@ import org.kohsuke.stapler.StaplerRequest;
  */
 public class HttpRequest extends Builder {
 
-    private final URL url;
+    private final String url;
     private final HttpMode httpMode;
-    public static final String CONTENT_TYPE = "application/x-www-form-urlencoded;charset=" + Charset.defaultCharset().name();
 
     @DataBoundConstructor
     public HttpRequest(String url, String httpMode) throws MalformedURLException {
-        this.url = new URL(url);
+        this.url = url;
         this.httpMode = httpMode != null && !httpMode.isEmpty()
                 ? HttpMode.valueOf(httpMode) : null;
     }
 
-    public URL getUrl() {
+    public String getUrl() {
         return url;
     }
 
@@ -55,99 +62,77 @@ public class HttpRequest extends Builder {
 
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher,
-            BuildListener listener)
-            throws IOException, InterruptedException {
+            BuildListener listener) throws UnsupportedEncodingException,
+            IOException, InterruptedException {
         PrintStream logger = listener.getLogger();
         HttpMode mode = httpMode != null ? httpMode : getDescriptor().getDefaultHttpMode();
-        URL finalURL = url;
 
         logger.println("HttpMode: " + mode);
         logger.println("Sending request to url: " + url + " with parameters:");
 
-        String params = createParameters(logger, build.getBuildVariables(),
-                build.getEnvironment(listener));
+        HttpEntity params = createParameters(build.getBuildVariables(),
+                logger, build.getEnvironment(listener));
 
-        //doGet
-        if (mode == HttpMode.GET) {
-            finalURL = new URL(url.toExternalForm() + "?" + params);
+
+        HttpRequestBase method = mode == HttpMode.GET
+                ? makeGet(url, params) : makePost(url, params);
+
+        HttpClient httpclient = new DefaultHttpClient();
+        HttpResponse execute = httpclient.execute(method);
+
+        logger.println("Response Code: " + execute.getStatusLine());
+        logger.println("Response: \n" + EntityUtils.toString(execute.getEntity()));
+        method.releaseConnection();
+
+        //from 400(client error) to 599(server error)
+        return !(execute.getStatusLine().getStatusCode() >= 400
+                && execute.getStatusLine().getStatusCode() <= 599);
+    }
+
+    private HttpEntity createParameters(Map<String, String> buildVariables,
+            PrintStream logger, EnvVars envVars) throws
+            UnsupportedEncodingException {
+        List<NameValuePair> l = new ArrayList<NameValuePair>();
+        for (Map.Entry<String, String> entry : buildVariables.entrySet()) {
+            doValueAndLog(entry, envVars, logger);
+            l.add(new BasicNameValuePair(entry.getKey(), entry.getValue()));
+
         }
+        return new UrlEncodedFormEntity(l);
+    }
 
-        URLConnection connection = finalURL.openConnection();
-        connection.addRequestProperty("Content-Type", CONTENT_TYPE);
-
-        //doPost
-        OutputStreamWriter writer = null;
-        if (mode == HttpMode.POST) {
-            connection.setDoOutput(true);
-            writer = new OutputStreamWriter(connection.getOutputStream());
-            writer.write(params.toString());
-            writer.flush();
+    private void doValueAndLog(Entry<String, String> entry, EnvVars envVars,
+            PrintStream logger) {
+        //replace envs
+        if (entry.getValue().trim().startsWith("$")) {
+            final String key = entry.getValue().trim().replaceFirst("\\$", "");
+            if (envVars.containsKey(key)) {
+                entry.setValue(envVars.get(key));
+            }
         }
+        logger.println("  " + entry.getKey() + " = " + entry.getValue());
+    }
 
-        //send
-        try {
-            InputStream inputStream = connection.getInputStream();
-            inputStream.close();
+    private HttpGet makeGet(String url, HttpEntity params) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(params.getContent()));
 
-        } catch (IOException ioe) {
-            HttpURLConnection httpConn = (HttpURLConnection) connection;
-
-            InputStream errorStream = httpConn.getErrorStream();
-            logResponse(errorStream, logger);
-            errorStream.close();
-
-            throw ioe;
+        StringBuilder sb = new StringBuilder(url).append("?");
+        String s;
+        while ((s = br.readLine()) != null) {
+            sb.append(s);
         }
+        return new HttpGet(sb.toString());
+    }
 
-
-        if (writer != null) {
-            writer.close();
-        }
-
-        return true;
+    private HttpPost makePost(String url, HttpEntity params) {
+        HttpPost httpPost = new HttpPost(url);
+        httpPost.setEntity(params);
+        return httpPost;
     }
 
     @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) super.getDescriptor();
-    }
-
-    private String createParameters(PrintStream logger,
-            Map<String, String> buildVariables, EnvVars envVars)
-            throws UnsupportedEncodingException {
-        StringBuilder params = new StringBuilder();
-
-        for (Map.Entry<String, String> entry : buildVariables.entrySet()) {
-            //replace envs
-            if (entry.getValue().trim().startsWith("$")) {
-                final String key = entry.getValue().trim().replaceFirst("\\$", "");
-                if (envVars.containsKey(key)) {
-                    entry.setValue(envVars.get(key));
-                }
-            }
-
-
-            logger.println("  " + entry.getKey() + " = " + entry.getValue());
-
-            if (params.length() != 0) {
-                params.append("&");
-            }
-            params.append(URLEncoder.encode(entry.getKey(), Charset.defaultCharset().name())).append("=")
-                    .append(URLEncoder.encode(entry.getValue(), Charset.defaultCharset().name()));
-        }
-        return params.toString();
-    }
-
-    private void logResponse(InputStream inputStream, PrintStream logger) throws
-            IOException {
-        logger.println();
-        logger.println("Response:");
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            logger.println("  " + line);
-        }
-        logger.println();
     }
 
     @Extension
