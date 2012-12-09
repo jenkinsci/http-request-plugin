@@ -1,21 +1,83 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-  <!--
-    This Jelly script is used to produce the global configuration option.
-
-    Jenkins uses a set of tag libraries to provide uniformity in forms.
-    To determine where this tag is defined, first check the namespace URI,
-    and then look under $JENKINS/views/. For example, <f:section> is defined
-    in $JENKINS/views/lib/form/section.jelly.
-
-    It's also often useful to just check other similar scripts to see what
-    tags they use. Views are always organized according to its owner class,
-    so it should be straightforward to find them.
-  -->
-  <f:section title="HTTP Request">
-    <f:entry title="HTTP default mode" field="defaultHttpMode"
-      description="Defeault mode to use(GET|POST)">
-      <!--<f:checkbox />-->
-      <f:textbox />
-    </f:entry>
-  </f:section>
+    <f:section title="HTTP Request">
+        <f:entry field="defaultHttpMode" title="HTTP default mode"
+                 help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-httpMode.html">
+            <f:select />
+        </f:entry>
+        
+        <f:entry title="Basic/Digest Authentication">
+            <f:repeatable field="basicDigestAuthentications">
+                <table width="100%">
+                    <f:entry title="Key Name" field="keyName">
+                        <f:textbox name="basicDigestAuthentication.keyName"/>
+                    </f:entry>  
+                    <f:entry title="Login" field="userName">
+                        <f:textbox name="basicDigestAuthentication.userName" />
+                    </f:entry>  
+                    <f:entry title="Password" field="password">
+                        <f:password name="basicDigestAuthentication.password" />
+                    </f:entry>  
+                    <f:entry>
+                        <div align="right">
+                            <f:repeatableDeleteButton />
+                        </div>
+                    </f:entry>
+                </table>
+            </f:repeatable>
+        </f:entry>
+        
+        <f:entry title="Form Authentication">
+            <f:repeatable field="formAuthentications">
+                <table width="100%">
+                    <f:entry title="Key Name" field="keyName">
+                        <f:textbox name="formAuthentication.keyName" />
+                    </f:entry>
+                
+                    <f:entry title="Actions">
+                        <f:repeatable field="actions">
+                            <table width="100%">
+                                <f:entry title="URL" field="url">
+                                    <f:textbox name="actionFormAuthentication.url" />
+                                </f:entry>
+                                <f:entry field="mode" title="HTTP Mode"
+                                     help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-httpMode.html">
+                                    <f:select name="actionFormAuthentication.mode" />
+                                </f:entry>
+                                <f:entry title="Parameters">
+                                    <f:repeatable field="params">
+                                        <table width="100%">
+                                            <f:entry title="Name" field="name">
+                                                <f:textbox name="nameValuePair.name" />
+                                            </f:entry>
+                                            <f:entry title="Value" field="value">
+                                                <f:textbox name="nameValuePair.value" />
+                                            </f:entry>
+                                            <f:entry>
+                                                <div align="right">
+                                                    <f:repeatableDeleteButton />
+                                                </div>
+                                            </f:entry>
+                                        </table>
+                                    </f:repeatable>
+                                </f:entry>
+                            
+                                <f:entry>
+                                    <div align="right">
+                                        <f:repeatableDeleteButton />
+                                    </div>
+                                </f:entry>
+                            </table>
+                        </f:repeatable>
+                    </f:entry>
+                
+                    <f:entry>
+                        <div align="right">
+                            <f:repeatableDeleteButton />
+                        </div>
+                    </f:entry>
+                </table>
+            </f:repeatable>
+        </f:entry>
+        
+    </f:section>
 </j:jelly>
