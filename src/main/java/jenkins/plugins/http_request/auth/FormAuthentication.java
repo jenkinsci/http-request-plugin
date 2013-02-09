@@ -1,13 +1,14 @@
 package jenkins.plugins.http_request.auth;
 
-import jenkins.plugins.http_request.util.RequestAction;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
+import jenkins.plugins.http_request.util.RequestAction;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import jenkins.model.Jenkins;
 import jenkins.plugins.http_request.HttpRequest;
@@ -25,11 +26,12 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
         implements Authenticator {
 
     private final String keyName;
-    private List<RequestAction> actions = new ArrayList<RequestAction>();
+    private final List<RequestAction> actions;
 
     @DataBoundConstructor
-    public FormAuthentication(String keyName) {
+    public FormAuthentication(String keyName, List<RequestAction> actions) {
         this.keyName = keyName;
+        this.actions = actions == null ? new ArrayList<RequestAction>() : actions;
     }
 
     public String getKeyName() {
@@ -37,25 +39,16 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
     }
 
     public List<RequestAction> getActions() {
-        return actions;
-    }
-
-    public void setActions(List<RequestAction> actions) {
-        this.actions = actions;
-    }
-
-    @Override
-    public FormAuthenticationDescriptor getDescriptor() {
-        return (FormAuthenticationDescriptor) super.getDescriptor();
+        return Collections.unmodifiableList(actions);
     }
 
     public void authenticate(DefaultHttpClient client,
             HttpRequestBase requestBase, PrintStream logger) throws IOException {
-        HttpClientUtil clientUtil = new HttpClientUtil();
+        final HttpClientUtil clientUtil = new HttpClientUtil();
         for (RequestAction requestAction : actions) {
-            HttpRequestBase method = clientUtil.createRequestBase(requestAction);
+            final HttpRequestBase method = clientUtil.createRequestBase(requestAction);
 
-            HttpResponse execute = clientUtil.execute(client, method, logger);
+            final HttpResponse execute = clientUtil.execute(client, method, logger);
             //from 400(client error) to 599(server error)
             if ((execute.getStatusLine().getStatusCode() >= 400
                     && execute.getStatusLine().getStatusCode() <= 599)) {

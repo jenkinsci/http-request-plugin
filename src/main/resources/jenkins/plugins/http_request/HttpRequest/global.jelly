@@ -40,7 +40,7 @@
                                     <f:textbox name="actionFormAuthentication.url" />
                                 </f:entry>
                                 <f:entry field="mode" title="HTTP Mode"
-                                     help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-httpMode.html">
+                                         help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-httpMode.html">
                                     <f:select name="actionFormAuthentication.mode" />
                                 </f:entry>
                                 <f:entry title="Parameters">

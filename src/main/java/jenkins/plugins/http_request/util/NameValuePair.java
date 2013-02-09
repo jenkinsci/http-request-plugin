@@ -4,19 +4,19 @@ import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
+import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 /**
  * @author Janario Oliveira
  */
-public class NameValuePair extends AbstractDescribableImpl<NameValuePair> {
+public class NameValuePair extends AbstractDescribableImpl<NameValuePair>
+        implements org.apache.http.NameValuePair {
 
-    private String name;
-    private String value;
+    private final String name;
+    private final String value;
 
-    public NameValuePair() {
-    }
-
+    @DataBoundConstructor
     public NameValuePair(String name, String value) {
         this.name = name;
         this.value = value;
@@ -26,20 +26,17 @@ public class NameValuePair extends AbstractDescribableImpl<NameValuePair> {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getValue() {
         return value;
     }
 
-    public void setValue(String value) {
-        this.value = value;
-    }
-
     @Extension
-    public static class NameValuePairDescriptor extends Descriptor<NameValuePair> {
+    public static class NameValueParamDescriptor extends Descriptor<NameValuePair> {
+
+        @Override
+        public String getDisplayName() {
+            return "Name Value Param";
+        }
 
         public FormValidation doCheckName(@QueryParameter String value) {
             return FormValidation.validateRequired(value);
@@ -47,11 +44,6 @@ public class NameValuePair extends AbstractDescribableImpl<NameValuePair> {
 
         public FormValidation doCheckValue(@QueryParameter String value) {
             return FormValidation.validateRequired(value);
-        }
-
-        @Override
-        public String getDisplayName() {
-            return "Name/Value";
         }
     }
 }
