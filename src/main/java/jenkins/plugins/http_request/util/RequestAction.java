@@ -50,7 +50,7 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> {
         }
 
         public FormValidation doCheckUrl(@QueryParameter String value) {
-            return FormValidation.validateRequired(value);
+            return HttpRequestValidation.checkUrl(value);
         }
 
         public ListBoxModel doFillModeItems() {

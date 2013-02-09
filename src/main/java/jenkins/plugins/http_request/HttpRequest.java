@@ -26,6 +26,7 @@ import jenkins.plugins.http_request.util.RequestAction;
 import jenkins.plugins.http_request.auth.Authenticator;
 import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
+import jenkins.plugins.http_request.util.HttpRequestValidation;
 import jenkins.plugins.http_request.util.NameValuePair;
 import net.sf.json.JSONObject;
 import org.apache.http.HttpResponse;
@@ -222,7 +223,7 @@ public class HttpRequest extends Builder {
 
         public FormValidation doCheckUrl(@QueryParameter String value)
                 throws IOException, ServletException {
-            return FormValidation.validateRequired(value);
+            return HttpRequestValidation.checkUrl(value);
         }
 
         public FormValidation doValidateKeyName(@QueryParameter String value) {
