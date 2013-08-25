@@ -3,16 +3,19 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.500</version>
+        <version>1.524</version>
     </parent>
-
+    
     <artifactId>http_request</artifactId>
     <version>1.8.1-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>HTTP Request Plugin</name>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/HTTP+Request+Plugin</url>
 
-    <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+   
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>
