@@ -41,10 +41,11 @@ public class HttpClientUtil {
 
     public HttpGet makeGet(RequestAction requestAction) throws
             UnsupportedEncodingException, IOException {
-        final StringBuilder sb = new StringBuilder(requestAction.getUrl().toString());
+        final String url = requestAction.getUrl().toString();
+        final StringBuilder sb = new StringBuilder(url);
 
         if (!requestAction.getParams().isEmpty()) {
-            sb.append("?");
+            sb.append(url.contains("?") ? "&" : "?");
             final HttpEntity entity = makeEntity(requestAction.getParams());
 
             final BufferedReader br = new BufferedReader(new InputStreamReader(entity.getContent()));

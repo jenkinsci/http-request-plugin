@@ -1,6 +1,5 @@
 package jenkins.plugins.http_request;
 
-import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
@@ -12,22 +11,22 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.VariableResolver;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import javax.servlet.ServletException;
-import jenkins.plugins.http_request.util.RequestAction;
 import jenkins.plugins.http_request.auth.Authenticator;
+import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.HttpRequestValidation;
 import jenkins.plugins.http_request.util.NameValuePair;
+import jenkins.plugins.http_request.util.RequestAction;
 import net.sf.json.JSONObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -66,8 +65,7 @@ public class HttpRequest extends Builder {
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener)
-            throws IOException, InterruptedException, UnsupportedEncodingException {
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
         final PrintStream logger = listener.getLogger();
 
         final HttpMode mode = httpMode != null ? httpMode : getDescriptor().getDefaultHttpMode();
@@ -76,8 +74,11 @@ public class HttpRequest extends Builder {
         final DefaultHttpClient httpclient = new DefaultHttpClient();
 
         logger.println("Parameters: ");
-        final List<NameValuePair> params = createParameters(build.getBuildVariables(), logger, build.getEnvironment(listener));
-        final RequestAction requestAction = new RequestAction(url, mode, params);
+        final EnvVars envVars = build.getEnvironment(listener);
+        final List<NameValuePair> params = createParameters(build, logger, envVars);
+        final RequestAction requestAction = new RequestAction(
+                new URL(evaluate(url.toExternalForm(), build.getBuildVariableResolver(), envVars))
+                , mode, params);
         final HttpClientUtil clientUtil = new HttpClientUtil();
         final HttpRequestBase method = clientUtil.createRequestBase(requestAction);
 
@@ -98,27 +99,23 @@ public class HttpRequest extends Builder {
     }
 
     private List<NameValuePair> createParameters(
-            Map<String, String> buildVariables, PrintStream logger,
+            AbstractBuild<?, ?> build, PrintStream logger,
             EnvVars envVars) {
+        final VariableResolver<String> vars = build.getBuildVariableResolver();
+
         List<NameValuePair> l = new ArrayList<NameValuePair>();
-        for (Map.Entry<String, String> entry : buildVariables.entrySet()) {
-            doValueAndLog(entry, envVars, logger);
-            l.add(new NameValuePair(entry.getKey(), entry.getValue()));
+        for (Map.Entry<String, String> entry : build.getBuildVariables().entrySet()) {
+            String value = evaluate(entry.getValue(), vars, envVars);
+            logger.println("  " + entry.getKey() + " = " + value);
+
+            l.add(new NameValuePair(entry.getKey(), value));
         }
 
         return l;
     }
 
-    private void doValueAndLog(Entry<String, String> entry, EnvVars envVars,
-            PrintStream logger) {
-        //replace envs
-        if (entry.getValue().trim().startsWith("$")) {
-            final String key = entry.getValue().trim().replaceFirst("\\$", "");
-            if (envVars.containsKey(key)) {
-                entry.setValue(envVars.get(key));
-            }
-        }
-        logger.println("  " + entry.getKey() + " = " + entry.getValue());
+    private String evaluate(String value, VariableResolver<String> vars, Map<String, String> env) {
+        return Util.replaceMacro(Util.replaceMacro(value, vars), env);
     }
 
     @Override
