@@ -44,15 +44,19 @@ public class HttpRequest extends Builder {
     private final URL url;
     private final HttpMode httpMode;
     private final String authentication;
-    private final boolean returnCodeBuildRelevant;
+    private final Boolean returnCodeBuildRelevant;
 
     @DataBoundConstructor
-    public HttpRequest(URL url, String httpMode, String authentication, boolean returnCodeBuildRelevant)
+    public HttpRequest(URL url, String httpMode, String authentication, String returnCodeBuildRelevant)
             throws URISyntaxException {
         this.url = url;
         this.httpMode = Util.fixEmpty(httpMode) == null ? null : HttpMode.valueOf(httpMode);
         this.authentication = Util.fixEmpty(authentication);
-        this.returnCodeBuildRelevant = returnCodeBuildRelevant;
+        if (returnCodeBuildRelevant != null && returnCodeBuildRelevant.trim().length() > 0) {
+            this.returnCodeBuildRelevant = Boolean.parseBoolean(returnCodeBuildRelevant);
+        } else {
+            this.returnCodeBuildRelevant = null;
+        }
     }
 
     public URL getUrl() {
@@ -67,7 +71,7 @@ public class HttpRequest extends Builder {
         return authentication;
     }
 
-    public boolean isReturnCodeBuildRelevant() {
+    public Boolean isReturnCodeBuildRelevant() {
         return returnCodeBuildRelevant;
     }
 
@@ -101,7 +105,14 @@ public class HttpRequest extends Builder {
 
         final HttpResponse execute = clientUtil.execute(httpclient, method, logger);
 
-        if (returnCodeBuildRelevant) {
+        // use global configuration as default if it is unset for this job
+        boolean returnCodeRelevant = returnCodeBuildRelevant != null
+                ? returnCodeBuildRelevant : getDescriptor().isDefaultReturnCodeBuildRelevant();
+        System.out.println("---> config local:       " + returnCodeBuildRelevant);
+        System.out.println("---> global:             " + getDescriptor().isDefaultReturnCodeBuildRelevant());
+        System.out.println("---> returnCodeRelevant: " + returnCodeRelevant);
+
+        if (returnCodeRelevant) {
             // return false if status from 400(client error) to 599(server error)
             return !(execute.getStatusLine().getStatusCode() >= 400 && execute.getStatusLine().getStatusCode() <= 599);
         } else {
