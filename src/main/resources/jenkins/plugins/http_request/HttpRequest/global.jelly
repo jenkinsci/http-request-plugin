@@ -86,6 +86,10 @@
                 </table>
             </f:repeatable>
         </f:entry>
-        
+
+        <f:entry field="defaultReturnCodeBuildRelevant" title="Fail build by default?"
+                 help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-returnCodeBuildRelevant.html">
+            <f:booleanRadio />
+        </f:entry>
     </f:section>
 </j:jelly>

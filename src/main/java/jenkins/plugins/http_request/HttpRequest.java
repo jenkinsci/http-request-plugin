@@ -12,14 +12,6 @@ import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.VariableResolver;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import javax.servlet.ServletException;
 import jenkins.plugins.http_request.auth.Authenticator;
 import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
@@ -35,6 +27,15 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author Janario Oliveira
  */
@@ -43,13 +44,19 @@ public class HttpRequest extends Builder {
     private final URL url;
     private final HttpMode httpMode;
     private final String authentication;
+    private final Boolean returnCodeBuildRelevant;
 
     @DataBoundConstructor
-    public HttpRequest(URL url, String httpMode, String authentication)
+    public HttpRequest(URL url, String httpMode, String authentication, String returnCodeBuildRelevant)
             throws URISyntaxException {
         this.url = url;
         this.httpMode = Util.fixEmpty(httpMode) == null ? null : HttpMode.valueOf(httpMode);
         this.authentication = Util.fixEmpty(authentication);
+        if (returnCodeBuildRelevant != null && returnCodeBuildRelevant.trim().length() > 0) {
+            this.returnCodeBuildRelevant = Boolean.parseBoolean(returnCodeBuildRelevant);
+        } else {
+            this.returnCodeBuildRelevant = null;
+        }
     }
 
     public URL getUrl() {
@@ -62,6 +69,10 @@ public class HttpRequest extends Builder {
 
     public String getAuthentication() {
         return authentication;
+    }
+
+    public Boolean isReturnCodeBuildRelevant() {
+        return returnCodeBuildRelevant;
     }
 
     @Override
@@ -93,9 +104,21 @@ public class HttpRequest extends Builder {
         }
 
         final HttpResponse execute = clientUtil.execute(httpclient, method, logger);
-        //from 400(client error) to 599(server error)
-        return !(execute.getStatusLine().getStatusCode() >= 400
-                && execute.getStatusLine().getStatusCode() <= 599);
+
+        // use global configuration as default if it is unset for this job
+        boolean returnCodeRelevant = returnCodeBuildRelevant != null
+                ? returnCodeBuildRelevant : getDescriptor().isDefaultReturnCodeBuildRelevant();
+        System.out.println("---> config local:       " + returnCodeBuildRelevant);
+        System.out.println("---> global:             " + getDescriptor().isDefaultReturnCodeBuildRelevant());
+        System.out.println("---> returnCodeRelevant: " + returnCodeRelevant);
+
+        if (returnCodeRelevant) {
+            // return false if status from 400(client error) to 599(server error)
+            return !(execute.getStatusLine().getStatusCode() >= 400 && execute.getStatusLine().getStatusCode() <= 599);
+        } else {
+            // ignore status code from HTTP response
+            return true;
+        }
     }
 
     private List<NameValuePair> createParameters(
@@ -129,6 +152,7 @@ public class HttpRequest extends Builder {
         private HttpMode defaultHttpMode = HttpMode.POST;
         private List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<BasicDigestAuthentication>();
         private List<FormAuthentication> formAuthentications = new ArrayList<FormAuthentication>();
+        private boolean defaultReturnCodeBuildRelevant = true;
 
         public DescriptorImpl() {
             load();
@@ -174,6 +198,14 @@ public class HttpRequest extends Builder {
                 }
             }
             return null;
+        }
+
+        public boolean isDefaultReturnCodeBuildRelevant() {
+            return defaultReturnCodeBuildRelevant;
+        }
+
+        public void setDefaultReturnCodeBuildRelevant(boolean defaultReturnCodeBuildRelevant) {
+            this.defaultReturnCodeBuildRelevant = defaultReturnCodeBuildRelevant;
         }
 
         @Override
