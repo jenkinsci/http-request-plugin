@@ -35,12 +35,15 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Janario Oliveira
  */
 public class HttpRequest extends Builder {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpRequest.class);
     private final URL url;
     private final HttpMode httpMode;
     private final String authentication;
@@ -71,7 +74,7 @@ public class HttpRequest extends Builder {
         return authentication;
     }
 
-    public Boolean isReturnCodeBuildRelevant() {
+    public Boolean getReturnCodeBuildRelevant() {
         return returnCodeBuildRelevant;
     }
 
@@ -108,15 +111,17 @@ public class HttpRequest extends Builder {
         // use global configuration as default if it is unset for this job
         boolean returnCodeRelevant = returnCodeBuildRelevant != null
                 ? returnCodeBuildRelevant : getDescriptor().isDefaultReturnCodeBuildRelevant();
-        System.out.println("---> config local:       " + returnCodeBuildRelevant);
-        System.out.println("---> global:             " + getDescriptor().isDefaultReturnCodeBuildRelevant());
-        System.out.println("---> returnCodeRelevant: " + returnCodeRelevant);
+        
+        LOGGER.debug("---> config local: {}", returnCodeBuildRelevant);
+        LOGGER.debug("---> global: {}", getDescriptor().isDefaultReturnCodeBuildRelevant());
+        LOGGER.debug("---> returnCodeRelevant: {}", returnCodeRelevant);
 
         if (returnCodeRelevant) {
             // return false if status from 400(client error) to 599(server error)
             return !(execute.getStatusLine().getStatusCode() >= 400 && execute.getStatusLine().getStatusCode() <= 599);
         } else {
             // ignore status code from HTTP response
+            logger.println("Ignoring return code as " + (returnCodeBuildRelevant != null ? "Local" : "Global") + " configuration");
             return true;
         }
     }
@@ -270,6 +275,14 @@ public class HttpRequest extends Builder {
             }
 
             return FormValidation.validateRequired(value);
+        }
+        
+        public ListBoxModel doFillReturnCodeBuildRelevantItems() {
+            ListBoxModel items = new ListBoxModel();
+            items.add("Default", "");
+            items.add("Yes", "true");
+            items.add("No", "false");
+            return items;
         }
     }
 }

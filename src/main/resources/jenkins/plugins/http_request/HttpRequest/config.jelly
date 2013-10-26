@@ -12,11 +12,7 @@
     </f:entry>
 
     <f:entry field="returnCodeBuildRelevant" title="Fail build?">
-        <select name="returnCodeBuildRelevant">
-            <option value="">Default</option>
-            <option value="true">Yes</option>
-            <option value="false">No</option>
-        </select>
+        <f:select />
     </f:entry>
 
 </j:jelly>
