@@ -7,3 +7,5 @@ target/
 *~
 
 /work/
+*.iml
+.idea/*
