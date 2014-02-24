@@ -16,7 +16,6 @@ import jenkins.plugins.http_request.auth.Authenticator;
 import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
-import jenkins.plugins.http_request.util.HttpRequestValidation;
 import jenkins.plugins.http_request.util.NameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
 import net.sf.json.JSONObject;
@@ -26,6 +25,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
@@ -35,8 +36,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Janario Oliveira
@@ -44,13 +43,13 @@ import org.slf4j.LoggerFactory;
 public class HttpRequest extends Builder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpRequest.class);
-    private final URL url;
+    private final String url;
     private final HttpMode httpMode;
     private final String authentication;
     private final Boolean returnCodeBuildRelevant;
 
     @DataBoundConstructor
-    public HttpRequest(URL url, String httpMode, String authentication, String returnCodeBuildRelevant)
+    public HttpRequest(String url, String httpMode, String authentication, String returnCodeBuildRelevant)
             throws URISyntaxException {
         this.url = url;
         this.httpMode = Util.fixEmpty(httpMode) == null ? null : HttpMode.valueOf(httpMode);
@@ -62,7 +61,7 @@ public class HttpRequest extends Builder {
         }
     }
 
-    public URL getUrl() {
+    public String getUrl() {
         return url;
     }
 
@@ -90,9 +89,12 @@ public class HttpRequest extends Builder {
         logger.println("Parameters: ");
         final EnvVars envVars = build.getEnvironment(listener);
         final List<NameValuePair> params = createParameters(build, logger, envVars);
+        String evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
+        logger.println(String.format("URL: %s", evaluatedUrl));
         final RequestAction requestAction = new RequestAction(
-                new URL(evaluate(url.toExternalForm(), build.getBuildVariableResolver(), envVars))
-                , mode, params);
+                new URL(evaluatedUrl),
+                mode,
+                params);
         final HttpClientUtil clientUtil = new HttpClientUtil();
         final HttpRequestBase method = clientUtil.createRequestBase(requestAction);
 
@@ -257,7 +259,8 @@ public class HttpRequest extends Builder {
 
         public FormValidation doCheckUrl(@QueryParameter String value)
                 throws IOException, ServletException {
-            return HttpRequestValidation.checkUrl(value);
+            return FormValidation.ok();
+            // return HttpRequestValidation.checkUrl(value);
         }
 
         public FormValidation doValidateKeyName(@QueryParameter String value) {
