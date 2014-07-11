@@ -91,5 +91,11 @@
                  help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-returnCodeBuildRelevant.html">
             <f:booleanRadio />
         </f:entry>
+
+        <f:entry field="defaultLogResponseBody" title="Log Response body by default?"
+                 help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-logResponseBody.html">
+            <f:booleanRadio />
+        </f:entry>
+	
     </f:section>
 </j:jelly>

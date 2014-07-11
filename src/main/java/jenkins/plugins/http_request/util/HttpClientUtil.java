@@ -66,13 +66,15 @@ public class HttpClientUtil {
     }
 
     public HttpResponse execute(DefaultHttpClient client, HttpRequestBase method,
-            PrintStream logger) throws IOException {
+            PrintStream logger, boolean logResponseBody) throws IOException {
         doSecurity(client, method.getURI());
 
         logger.println("Sending request to url: " + method.getURI());
         final HttpResponse execute = client.execute(method);
         logger.println("Response Code: " + execute.getStatusLine());
-        logger.println("Response: \n" + EntityUtils.toString(execute.getEntity()));
+	if (logResponseBody){
+	    logger.println("Response: \n" + EntityUtils.toString(execute.getEntity()));
+	}
         
         EntityUtils.consume(execute.getEntity());
 

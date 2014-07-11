@@ -15,4 +15,8 @@
         <f:select />
     </f:entry>
 
+    <f:entry field="logResponseBody" title="Log Response Body?">
+        <f:select />
+    </f:entry>   
+    
 </j:jelly>

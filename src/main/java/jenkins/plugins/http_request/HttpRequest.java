@@ -47,9 +47,10 @@ public class HttpRequest extends Builder {
     private final HttpMode httpMode;
     private final String authentication;
     private final Boolean returnCodeBuildRelevant;
+    private final Boolean logResponseBody;
 
     @DataBoundConstructor
-    public HttpRequest(String url, String httpMode, String authentication, String returnCodeBuildRelevant)
+    public HttpRequest(String url, String httpMode, String authentication, String returnCodeBuildRelevant, String logResponseBody)
             throws URISyntaxException {
         this.url = url;
         this.httpMode = Util.fixEmpty(httpMode) == null ? null : HttpMode.valueOf(httpMode);
@@ -59,6 +60,17 @@ public class HttpRequest extends Builder {
         } else {
             this.returnCodeBuildRelevant = null;
         }
+	
+        if (logResponseBody != null && logResponseBody.trim().length() > 0) {
+            this.logResponseBody = Boolean.parseBoolean(logResponseBody);
+        } else {
+            this.logResponseBody = null;
+        }
+	
+    }
+
+    public Boolean getLogResponseBody() {
+        return logResponseBody;
     }
 
     public String getUrl() {
@@ -107,8 +119,11 @@ public class HttpRequest extends Builder {
             logger.println("Using authentication: " + auth.getKeyName());
             auth.authenticate(httpclient, method, logger);
         }
+	
+        boolean tmpLogResponseBody = logResponseBody != null
+        ? logResponseBody : getDescriptor().isDefaultLogResponseBody();	
 
-        final HttpResponse execute = clientUtil.execute(httpclient, method, logger);
+        final HttpResponse execute = clientUtil.execute(httpclient, method, logger, tmpLogResponseBody);
 
         // use global configuration as default if it is unset for this job
         boolean returnCodeRelevant = returnCodeBuildRelevant != null
@@ -160,11 +175,20 @@ public class HttpRequest extends Builder {
         private List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<BasicDigestAuthentication>();
         private List<FormAuthentication> formAuthentications = new ArrayList<FormAuthentication>();
         private boolean defaultReturnCodeBuildRelevant = true;
+	private boolean defaultLogResponseBody = true;
 
         public DescriptorImpl() {
             load();
         }
 
+	public boolean isDefaultLogResponseBody() {
+		return defaultLogResponseBody;
+	}
+
+	public void setDefaultLogResponseBody(boolean defaultLogResponseBody) {
+		this.defaultLogResponseBody = defaultLogResponseBody;
+	}
+	
         public HttpMode getDefaultHttpMode() {
             return defaultHttpMode;
         }
@@ -287,5 +311,14 @@ public class HttpRequest extends Builder {
             items.add("No", "false");
             return items;
         }
+	
+        public ListBoxModel doFillLogResponseBodyItems() {
+            ListBoxModel items = new ListBoxModel();
+            items.add("Default", "");
+            items.add("Yes", "true");
+            items.add("No", "false");
+            return items;
+        }
+	
     }
 }
