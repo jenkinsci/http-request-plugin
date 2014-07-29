@@ -48,7 +48,7 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
         for (RequestAction requestAction : actions) {
             final HttpRequestBase method = clientUtil.createRequestBase(requestAction);
 
-            final HttpResponse execute = clientUtil.execute(client, method, logger);
+            final HttpResponse execute = clientUtil.execute(client, method, logger, true);
             //from 400(client error) to 599(server error)
             if ((execute.getStatusLine().getStatusCode() >= 400
                     && execute.getStatusLine().getStatusCode() <= 599)) {
