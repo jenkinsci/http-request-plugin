@@ -15,6 +15,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
@@ -30,8 +32,21 @@ public class HttpClientUtil {
 
     public HttpRequestBase createRequestBase(RequestAction requestAction) throws
             UnsupportedEncodingException, IOException {
-        return (requestAction.getMode() == HttpMode.GET)
-                ? makeGet(requestAction) : makePost(requestAction);
+
+        if (requestAction.getMode() == HttpMode.GET) {
+            return makeGet(requestAction);
+
+        } else if (requestAction.getMode() == HttpMode.POST) {
+            return makePost(requestAction);
+
+        } else if (requestAction.getMode() == HttpMode.PUT) {
+            return makePut(requestAction);
+
+        } else if (requestAction.getMode() == HttpMode.DELETE) {
+            return makeDelete(requestAction);
+        }
+
+        return makePost(requestAction);
     }
 
     private HttpEntity makeEntity(List<NameValuePair> params) throws
@@ -63,6 +78,21 @@ public class HttpClientUtil {
         httpPost.setEntity(entity);
 
         return httpPost;
+    }
+
+    public HttpPut makePut(RequestAction requestAction) throws UnsupportedEncodingException {
+        final HttpEntity entity = makeEntity(requestAction.getParams());
+        final HttpPut httpPut = new HttpPut(requestAction.getUrl().toString());
+        httpPut.setEntity(entity);
+
+        return httpPut;
+    }
+
+    public HttpDelete makeDelete(RequestAction requestAction) throws UnsupportedEncodingException {
+        final HttpEntity entity = makeEntity(requestAction.getParams());
+        final HttpDelete httpDelete = new HttpDelete(requestAction.getUrl().toString());
+
+        return httpDelete;
     }
 
     public HttpResponse execute(DefaultHttpClient client, HttpRequestBase method,
