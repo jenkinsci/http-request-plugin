@@ -21,7 +21,7 @@ import jenkins.plugins.http_request.util.RequestAction;
 import net.sf.json.JSONObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.SystemDefaultHttpClient;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -96,7 +96,7 @@ public class HttpRequest extends Builder {
         final HttpMode mode = httpMode != null ? httpMode : getDescriptor().getDefaultHttpMode();
         logger.println("HttpMode: " + mode);
 
-        final DefaultHttpClient httpclient = new DefaultHttpClient();
+        final SystemDefaultHttpClient httpclient = new SystemDefaultHttpClient();
 
         logger.println("Parameters: ");
         final EnvVars envVars = build.getEnvironment(listener);
