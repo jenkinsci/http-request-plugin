@@ -6,10 +6,14 @@
     <f:entry field="httpMode" title="HTTP mode">
         <f:select />
     </f:entry>
-    
+
     <f:entry field="authentication" title="Authenticate">
         <f:select />
     </f:entry>
+
+    <f:entry field="contentType" title="Content-Type">
+            <f:select />
+        </f:entry>
 
     <f:entry field="returnCodeBuildRelevant" title="Fail build?">
         <f:select />
