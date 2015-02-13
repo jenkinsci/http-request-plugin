@@ -9,6 +9,8 @@ import java.net.URI;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
+
+import jenkins.plugins.http_request.ContentType;
 import jenkins.plugins.http_request.HttpMode;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -23,6 +25,7 @@ import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 
 /**
@@ -73,9 +76,9 @@ public class HttpClientUtil {
     }
 
     public HttpPost makePost(RequestAction requestAction) throws UnsupportedEncodingException {
-        final HttpEntity entity = makeEntity(requestAction.getParams());
+        final HttpEntity httpEntity = makeEntity(requestAction.getParams());
         final HttpPost httpPost = new HttpPost(requestAction.getUrl().toString());
-        httpPost.setEntity(entity);
+        httpPost.setEntity(httpEntity);
 
         return httpPost;
     }
@@ -89,7 +92,7 @@ public class HttpClientUtil {
     }
 
     public HttpDelete makeDelete(RequestAction requestAction) throws UnsupportedEncodingException {
-        final HttpEntity entity = makeEntity(requestAction.getParams());
+        final HttpEntity httpEntity = makeEntity(requestAction.getParams());
         final HttpDelete httpDelete = new HttpDelete(requestAction.getUrl().toString());
 
         return httpDelete;
@@ -97,18 +100,18 @@ public class HttpClientUtil {
 
     public HttpResponse execute(DefaultHttpClient client, HttpRequestBase method,
             PrintStream logger, boolean logResponseBody) throws IOException {
-        doSecurity(client, method.getURI());
 
+        doSecurity(client, method.getURI());
         logger.println("Sending request to url: " + method.getURI());
-        final HttpResponse execute = client.execute(method);
-        logger.println("Response Code: " + execute.getStatusLine());
+        final HttpResponse httpResponse = client.execute(method);
+        logger.println("Response Code: " + httpResponse.getStatusLine());
 	if (logResponseBody){
-	    logger.println("Response: \n" + EntityUtils.toString(execute.getEntity()));
+	    logger.println("Response: \n" + EntityUtils.toString(httpResponse.getEntity()));
 	}
         
-        EntityUtils.consume(execute.getEntity());
+        EntityUtils.consume(httpResponse.getEntity());
 
-        return execute;
+        return httpResponse;
     }
 
     private void doSecurity(DefaultHttpClient base, URI uri) throws IOException {

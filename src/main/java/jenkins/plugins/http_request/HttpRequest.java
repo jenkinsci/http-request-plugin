@@ -45,14 +45,16 @@ public class HttpRequest extends Builder {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpRequest.class);
     private final String url;
     private final HttpMode httpMode;
+    private final ContentType contentType;
     private final String authentication;
     private final Boolean returnCodeBuildRelevant;
     private final Boolean logResponseBody;
 
     @DataBoundConstructor
-    public HttpRequest(String url, String httpMode, String authentication, String returnCodeBuildRelevant, String logResponseBody)
+    public HttpRequest(String url, String httpMode, String authentication, ContentType contentType, String returnCodeBuildRelevant, String logResponseBody)
             throws URISyntaxException {
         this.url = url;
+        this.contentType = contentType;
         this.httpMode = Util.fixEmpty(httpMode) == null ? null : HttpMode.valueOf(httpMode);
         this.authentication = Util.fixEmpty(authentication);
         if (returnCodeBuildRelevant != null && returnCodeBuildRelevant.trim().length() > 0) {
@@ -81,6 +83,10 @@ public class HttpRequest extends Builder {
         return httpMode;
     }
 
+    public ContentType getContentType() {
+        return contentType;
+    }
+
     public String getAuthentication() {
         return authentication;
     }
@@ -95,6 +101,7 @@ public class HttpRequest extends Builder {
 
         final HttpMode mode = httpMode != null ? httpMode : getDescriptor().getDefaultHttpMode();
         logger.println("HttpMode: " + mode);
+        logger.println("Content-type Accept: " + contentType);
 
         final SystemDefaultHttpClient httpclient = new SystemDefaultHttpClient();
 
@@ -108,7 +115,15 @@ public class HttpRequest extends Builder {
                 mode,
                 params);
         final HttpClientUtil clientUtil = new HttpClientUtil();
-        final HttpRequestBase method = clientUtil.createRequestBase(requestAction);
+        final HttpRequestBase httpRequestBase = clientUtil.createRequestBase(requestAction);
+
+        if (contentType == ContentType.APPLICATION_JSON) {
+            httpRequestBase.setHeader("Accept", "application/json");
+        } else if (contentType == ContentType.TEXT_HTML) {
+            httpRequestBase.setHeader("Accept", "text/html");
+        } else {
+            httpRequestBase.setHeader("Accept", "text/html");
+        }
 
         if (authentication != null) {
             final Authenticator auth = getDescriptor().getAuthentication(authentication);
@@ -117,13 +132,13 @@ public class HttpRequest extends Builder {
             }
 
             logger.println("Using authentication: " + auth.getKeyName());
-            auth.authenticate(httpclient, method, logger);
+            auth.authenticate(httpclient, httpRequestBase, logger);
         }
 	
         boolean tmpLogResponseBody = logResponseBody != null
         ? logResponseBody : getDescriptor().isDefaultLogResponseBody();	
 
-        final HttpResponse execute = clientUtil.execute(httpclient, method, logger, tmpLogResponseBody);
+        final HttpResponse execute = clientUtil.execute(httpclient, httpRequestBase, logger, tmpLogResponseBody);
 
         // use global configuration as default if it is unset for this job
         boolean returnCodeRelevant = returnCodeBuildRelevant != null
@@ -263,6 +278,17 @@ public class HttpRequest extends Builder {
 
         public ListBoxModel doFillHttpModeItems() {
             ListBoxModel items = HttpMode.getFillItems();
+            items.add(0, new ListBoxModel.Option("Default", ""));
+
+            return items;
+        }
+
+        public ListBoxModel doFillDefaultContentTypeItems() {
+            return ContentType.getContentTypeFillItems();
+        }
+
+        public ListBoxModel doFillContentTypeItems() {
+            ListBoxModel items = ContentType.getContentTypeFillItems();
             items.add(0, new ListBoxModel.Option("Default", ""));
 
             return items;
