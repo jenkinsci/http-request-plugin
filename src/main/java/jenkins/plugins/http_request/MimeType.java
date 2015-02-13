@@ -5,14 +5,14 @@ import hudson.util.ListBoxModel;
 /**
  * @author James Chapman
  */
-public enum ContentType {
+public enum MimeType {
 
-    TEXT_HTML, APPLICATION_JSON;
+    TEXT_HTML, APPLICATION_JSON, APPLICATION_ZIP, APPLICATION_TAR, APPLICATION_OCTETSTREAM;
 
     public static ListBoxModel getContentTypeFillItems() {
         ListBoxModel items = new ListBoxModel();
-        for (ContentType contentType : values()) {
-            items.add(contentType.name());
+        for (MimeType mimeType : values()) {
+            items.add(mimeType.name());
         }
         return items;
     }

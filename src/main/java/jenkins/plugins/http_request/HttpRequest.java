@@ -45,16 +45,22 @@ public class HttpRequest extends Builder {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpRequest.class);
     private final String url;
     private final HttpMode httpMode;
-    private final ContentType contentType;
+    private final MimeType contentType;
+    private final MimeType acceptType;
+    private final String customHeader;
     private final String authentication;
     private final Boolean returnCodeBuildRelevant;
     private final Boolean logResponseBody;
 
     @DataBoundConstructor
-    public HttpRequest(String url, String httpMode, String authentication, ContentType contentType, String returnCodeBuildRelevant, String logResponseBody)
+    public HttpRequest(String url, String httpMode, String authentication, MimeType contentType,
+                       MimeType acceptType, String customHeader, String returnCodeBuildRelevant,
+                       String logResponseBody)
             throws URISyntaxException {
         this.url = url;
         this.contentType = contentType;
+        this.acceptType = acceptType;
+        this.customHeader = customHeader;
         this.httpMode = Util.fixEmpty(httpMode) == null ? null : HttpMode.valueOf(httpMode);
         this.authentication = Util.fixEmpty(authentication);
         if (returnCodeBuildRelevant != null && returnCodeBuildRelevant.trim().length() > 0) {
@@ -83,8 +89,16 @@ public class HttpRequest extends Builder {
         return httpMode;
     }
 
-    public ContentType getContentType() {
+    public MimeType getContentType() {
         return contentType;
+    }
+
+    public MimeType getAcceptType() {
+        return acceptType;
+    }
+
+    public String getCustomHeader() {
+        return customHeader;
     }
 
     public String getAuthentication() {
@@ -101,7 +115,12 @@ public class HttpRequest extends Builder {
 
         final HttpMode mode = httpMode != null ? httpMode : getDescriptor().getDefaultHttpMode();
         logger.println("HttpMode: " + mode);
-        logger.println("Content-type Accept: " + contentType);
+        logger.println("Request Headers:-");
+        logger.println("Content-type: " + contentType);
+        logger.println("Accept: " + acceptType);
+        if(customHeader != null && !customHeader.isEmpty()) {
+            logger.println(customHeader);
+        }
 
         final SystemDefaultHttpClient httpclient = new SystemDefaultHttpClient();
 
@@ -110,19 +129,16 @@ public class HttpRequest extends Builder {
         final List<NameValuePair> params = createParameters(build, logger, envVars);
         String evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
         logger.println(String.format("URL: %s", evaluatedUrl));
-        final RequestAction requestAction = new RequestAction(
-                new URL(evaluatedUrl),
-                mode,
-                params);
+        final RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), mode, params);
         final HttpClientUtil clientUtil = new HttpClientUtil();
         final HttpRequestBase httpRequestBase = clientUtil.createRequestBase(requestAction);
 
-        if (contentType == ContentType.APPLICATION_JSON) {
-            httpRequestBase.setHeader("Accept", "application/json");
-        } else if (contentType == ContentType.TEXT_HTML) {
-            httpRequestBase.setHeader("Accept", "text/html");
-        } else {
-            httpRequestBase.setHeader("Accept", "text/html");
+        httpRequestBase.setHeader("Content-type", getMimeType(contentType));
+        httpRequestBase.setHeader("Accept", getMimeType(acceptType));
+
+        if(customHeader != null && !customHeader.isEmpty()) {
+            String[] parts = customHeader.split(":");
+            httpRequestBase.setHeader(parts[0], parts[1]);
         }
 
         if (authentication != null) {
@@ -155,6 +171,22 @@ public class HttpRequest extends Builder {
             // ignore status code from HTTP response
             logger.println("Ignoring return code as " + (returnCodeBuildRelevant != null ? "Local" : "Global") + " configuration");
             return true;
+        }
+    }
+
+    private String getMimeType(MimeType mimeType) {
+        if (mimeType == MimeType.TEXT_HTML) {
+            return "text/html";
+        } else if (mimeType == MimeType.APPLICATION_JSON) {
+            return "application/json";
+        } else if (mimeType == MimeType.APPLICATION_TAR) {
+            return "application/x-tar";
+        } else if (mimeType == MimeType.APPLICATION_ZIP) {
+            return "application/zip";
+        } else if (mimeType == MimeType.APPLICATION_OCTETSTREAM) {
+            return "application/octet-stream";
+        } else {
+            return "text/html";
         }
     }
 
@@ -284,11 +316,22 @@ public class HttpRequest extends Builder {
         }
 
         public ListBoxModel doFillDefaultContentTypeItems() {
-            return ContentType.getContentTypeFillItems();
+            return MimeType.getContentTypeFillItems();
         }
 
         public ListBoxModel doFillContentTypeItems() {
-            ListBoxModel items = ContentType.getContentTypeFillItems();
+            ListBoxModel items = MimeType.getContentTypeFillItems();
+            items.add(0, new ListBoxModel.Option("Default", ""));
+
+            return items;
+        }
+
+        public ListBoxModel doFillDefaultAcceptTypeItems() {
+            return MimeType.getContentTypeFillItems();
+        }
+
+        public ListBoxModel doFillAcceptTypeItems() {
+            ListBoxModel items = MimeType.getContentTypeFillItems();
             items.add(0, new ListBoxModel.Option("Default", ""));
 
             return items;

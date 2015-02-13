@@ -10,7 +10,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
-import jenkins.plugins.http_request.ContentType;
 import jenkins.plugins.http_request.HttpMode;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -25,7 +24,6 @@ import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 
 /**

@@ -12,8 +12,16 @@
     </f:entry>
 
     <f:entry field="contentType" title="Content-Type">
-            <f:select />
-        </f:entry>
+        <f:select />
+    </f:entry>
+
+    <f:entry field="acceptType" title="Accept">
+        <f:select />
+    </f:entry>
+
+    <f:entry field="customHeader" title="Custom Header">
+        <f:textbox />
+    </f:entry>
 
     <f:entry field="returnCodeBuildRelevant" title="Fail build?">
         <f:select />
