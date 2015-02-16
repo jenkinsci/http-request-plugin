@@ -23,12 +23,20 @@
         <f:textbox />
     </f:entry>
 
+    <f:entry field="outputFile" title="Output File">
+        <f:textbox />
+    </f:entry>
+
     <f:entry field="returnCodeBuildRelevant" title="Fail build?">
         <f:select />
     </f:entry>
 
     <f:entry field="logResponseBody" title="Log Response Body?">
         <f:select />
-    </f:entry>   
+    </f:entry>
+
+    <f:entry field="passBuildParameters" title="Pass build params to URL?">
+        <f:booleanRadio default="No" />
+    </f:entry>
     
 </j:jelly>

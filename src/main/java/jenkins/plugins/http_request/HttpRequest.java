@@ -48,19 +48,24 @@ public class HttpRequest extends Builder {
     private final MimeType contentType;
     private final MimeType acceptType;
     private final String customHeader;
+    private final String outputFile;
     private final String authentication;
     private final Boolean returnCodeBuildRelevant;
+    private final Boolean passBuildParameters;
+
     private final Boolean logResponseBody;
 
     @DataBoundConstructor
     public HttpRequest(String url, String httpMode, String authentication, MimeType contentType,
-                       MimeType acceptType, String customHeader, String returnCodeBuildRelevant,
-                       String logResponseBody)
+                       MimeType acceptType, String customHeader, String outputFile, String returnCodeBuildRelevant,
+                       String logResponseBody, Boolean passBuildParameters)
             throws URISyntaxException {
         this.url = url;
         this.contentType = contentType;
         this.acceptType = acceptType;
         this.customHeader = customHeader;
+        this.outputFile = outputFile;
+        this.passBuildParameters = passBuildParameters;
         this.httpMode = Util.fixEmpty(httpMode) == null ? null : HttpMode.valueOf(httpMode);
         this.authentication = Util.fixEmpty(authentication);
         if (returnCodeBuildRelevant != null && returnCodeBuildRelevant.trim().length() > 0) {
@@ -101,6 +106,10 @@ public class HttpRequest extends Builder {
         return customHeader;
     }
 
+    public String getOutputFile() {
+        return outputFile;
+    }
+
     public String getAuthentication() {
         return authentication;
     }
@@ -129,8 +138,16 @@ public class HttpRequest extends Builder {
         final List<NameValuePair> params = createParameters(build, logger, envVars);
         String evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
         logger.println(String.format("URL: %s", evaluatedUrl));
-        final RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), mode, params);
+        final RequestAction requestAction;
+        if (this.passBuildParameters) {
+            requestAction = new RequestAction(new URL(evaluatedUrl), mode, params);
+        } else {
+            requestAction = new RequestAction(new URL(evaluatedUrl), mode, null);
+        }
         final HttpClientUtil clientUtil = new HttpClientUtil();
+        if(outputFile != null && !outputFile.isEmpty()) {
+            clientUtil.setOutputFile(this.outputFile);
+        }
         final HttpRequestBase httpRequestBase = clientUtil.createRequestBase(requestAction);
 
         httpRequestBase.setHeader("Content-type", getMimeType(contentType));

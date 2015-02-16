@@ -1,10 +1,6 @@
 package jenkins.plugins.http_request.util;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URI;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -30,6 +26,17 @@ import org.apache.http.util.EntityUtils;
  * @author Janario Oliveira
  */
 public class HttpClientUtil {
+
+    private String outputFile;
+
+    public String getOutputFile() {
+        return outputFile;
+    }
+
+    public void setOutputFile(String outputFile) {
+        this.outputFile = outputFile;
+    }
+
 
     public HttpRequestBase createRequestBase(RequestAction requestAction) throws
             UnsupportedEncodingException, IOException {
@@ -105,6 +112,14 @@ public class HttpClientUtil {
         logger.println("Response Code: " + httpResponse.getStatusLine());
 	if (logResponseBody){
 	    logger.println("Response: \n" + EntityUtils.toString(httpResponse.getEntity()));
+        try {
+            FileWriter fstream = new FileWriter(this.outputFile);
+            BufferedWriter fileOut = new BufferedWriter(fstream);
+            fileOut.write(EntityUtils.toString(httpResponse.getEntity()));
+            fileOut.close();
+        } catch (Exception ex) {
+            logger.println("Exception caught while writing to http_request_out.txt: " + ex.getMessage());
+        }
 	}
         
         EntityUtils.consume(httpResponse.getEntity());
