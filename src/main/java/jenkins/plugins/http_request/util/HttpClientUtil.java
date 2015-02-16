@@ -110,17 +110,18 @@ public class HttpClientUtil {
         logger.println("Sending request to url: " + method.getURI());
         final HttpResponse httpResponse = client.execute(method);
         logger.println("Response Code: " + httpResponse.getStatusLine());
-	if (logResponseBody){
-	    logger.println("Response: \n" + EntityUtils.toString(httpResponse.getEntity()));
-        try {
-            FileWriter fstream = new FileWriter(this.outputFile);
-            BufferedWriter fileOut = new BufferedWriter(fstream);
-            fileOut.write(EntityUtils.toString(httpResponse.getEntity()));
-            fileOut.close();
-        } catch (Exception ex) {
-            logger.println("Exception caught while writing to http_request_out.txt: " + ex.getMessage());
+        if (logResponseBody){
+            logger.println("Response: \n" + EntityUtils.toString(httpResponse.getEntity()));
+            try {
+                FileWriter fstream = new FileWriter(this.outputFile);
+                BufferedWriter fileOut = new BufferedWriter(fstream);
+                fileOut.write(EntityUtils.toString(httpResponse.getEntity()));
+                fileOut.close();
+            } catch (Exception ex) {
+                logger.println("Exception caught while writing " + this.outputFile + ": " + ex.getMessage());
+                //throw(ex);
+            }
         }
-	}
         
         EntityUtils.consume(httpResponse.getEntity());
 
