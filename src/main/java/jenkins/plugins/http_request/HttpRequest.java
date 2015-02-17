@@ -48,39 +48,28 @@ public class HttpRequest extends Builder {
     private final String outputFile;
     private final String authentication;
     private final Boolean returnCodeBuildRelevant;
+    private final Boolean consoleLogResponseBody;
     private final Boolean passBuildParameters;
-
-    private final Boolean logResponseBody;
 
     @DataBoundConstructor
     public HttpRequest(String url, String httpMode, String authentication, MimeType contentType,
-                       MimeType acceptType, String customHeader, String outputFile, String returnCodeBuildRelevant,
-                       String logResponseBody, Boolean passBuildParameters)
-            throws URISyntaxException {
+                       MimeType acceptType, String customHeader, String outputFile, Boolean returnCodeBuildRelevant,
+                       Boolean consoleLogResponseBody, Boolean passBuildParameters)
+                       throws URISyntaxException {
         this.url = url;
         this.contentType = contentType;
         this.acceptType = acceptType;
         this.customHeader = customHeader;
         this.outputFile = outputFile;
-        this.passBuildParameters = passBuildParameters;
         this.httpMode = Util.fixEmpty(httpMode) == null ? null : HttpMode.valueOf(httpMode);
         this.authentication = Util.fixEmpty(authentication);
-        if (returnCodeBuildRelevant != null && returnCodeBuildRelevant.trim().length() > 0) {
-            this.returnCodeBuildRelevant = Boolean.parseBoolean(returnCodeBuildRelevant);
-        } else {
-            this.returnCodeBuildRelevant = null;
-        }
-	
-        if (logResponseBody != null && logResponseBody.trim().length() > 0) {
-            this.logResponseBody = Boolean.parseBoolean(logResponseBody);
-        } else {
-            this.logResponseBody = null;
-        }
-	
+        this.returnCodeBuildRelevant = returnCodeBuildRelevant;
+        this.consoleLogResponseBody = consoleLogResponseBody;
+        this.passBuildParameters = passBuildParameters;
     }
 
-    public Boolean getLogResponseBody() {
-        return logResponseBody;
+    public Boolean getConsoleLogResponseBody() {
+        return consoleLogResponseBody;
     }
 
     public String getUrl() {
@@ -166,10 +155,7 @@ public class HttpRequest extends Builder {
             auth.authenticate(httpclient, httpRequestBase, logger);
         }
 	
-        boolean tmpLogResponseBody = logResponseBody != null
-        ? logResponseBody : getDescriptor().isDefaultLogResponseBody();	
-
-        final HttpResponse execute = clientUtil.execute(httpclient, httpRequestBase, logger, tmpLogResponseBody);
+        final HttpResponse execute = clientUtil.execute(httpclient, httpRequestBase, logger, consoleLogResponseBody);
 
         // use global configuration as default if it is unset for this job
         boolean returnCodeRelevant = returnCodeBuildRelevant != null
@@ -237,19 +223,19 @@ public class HttpRequest extends Builder {
         private List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<BasicDigestAuthentication>();
         private List<FormAuthentication> formAuthentications = new ArrayList<FormAuthentication>();
         private boolean defaultReturnCodeBuildRelevant = true;
-	private boolean defaultLogResponseBody = true;
+    	private boolean defaultLogResponseBody = true;
 
         public DescriptorImpl() {
             load();
         }
 
-	public boolean isDefaultLogResponseBody() {
-		return defaultLogResponseBody;
-	}
+	    public boolean isDefaultLogResponseBody() {
+		    return defaultLogResponseBody;
+	    }
 
-	public void setDefaultLogResponseBody(boolean defaultLogResponseBody) {
-		this.defaultLogResponseBody = defaultLogResponseBody;
-	}
+	    public void setDefaultLogResponseBody(boolean defaultLogResponseBody) {
+		    this.defaultLogResponseBody = defaultLogResponseBody;
+	    }
 	
         public HttpMode getDefaultHttpMode() {
             return defaultHttpMode;
@@ -387,22 +373,6 @@ public class HttpRequest extends Builder {
 
             return FormValidation.validateRequired(value);
         }
-        
-        public ListBoxModel doFillReturnCodeBuildRelevantItems() {
-            ListBoxModel items = new ListBoxModel();
-            items.add("Default", "");
-            items.add("Yes", "true");
-            items.add("No", "false");
-            return items;
-        }
-	
-        public ListBoxModel doFillLogResponseBodyItems() {
-            ListBoxModel items = new ListBoxModel();
-            items.add("Default", "");
-            items.add("Yes", "true");
-            items.add("No", "false");
-            return items;
-        }
-	
+
     }
 }

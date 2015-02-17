@@ -93,7 +93,7 @@
         </f:entry>
 
         <f:entry field="defaultLogResponseBody" title="Log Response body by default?"
-                 help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-logResponseBody.html">
+                 help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-consoleLogResponseBody.html">
             <f:booleanRadio />
         </f:entry>
 	

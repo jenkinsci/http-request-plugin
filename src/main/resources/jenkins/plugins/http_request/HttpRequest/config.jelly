@@ -1,5 +1,5 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <f:entry title="URL" field="url">
+    <f:entry field="url" title="URL">
         <f:textbox />
     </f:entry>
 
@@ -11,7 +11,7 @@
         <f:select />
     </f:entry>
 
-    <f:entry field="contentType" title="Content-Type">
+    <f:entry field="contentType" title="Content-type">
         <f:select />
     </f:entry>
 
@@ -19,20 +19,20 @@
         <f:select />
     </f:entry>
 
-    <f:entry field="customHeader" title="Custom Header">
+    <f:entry field="customHeader" title="Custom header">
         <f:textbox />
     </f:entry>
 
-    <f:entry field="outputFile" title="Output File">
+    <f:entry field="outputFile" title="Output file">
         <f:textbox />
     </f:entry>
 
     <f:entry field="returnCodeBuildRelevant" title="Fail build?">
-        <f:select />
+        <f:booleanRadio default="No" />
     </f:entry>
 
-    <f:entry field="logResponseBody" title="Log Response Body?">
-        <f:select />
+    <f:entry field="consoleLogResponseBody" title="Response body in console?">
+        <f:booleanRadio default="No" />
     </f:entry>
 
     <f:entry field="passBuildParameters" title="Pass build params to URL?">

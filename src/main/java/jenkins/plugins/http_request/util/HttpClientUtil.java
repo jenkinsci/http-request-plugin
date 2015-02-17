@@ -106,23 +106,17 @@ public class HttpClientUtil {
     }
 
     public HttpResponse execute(DefaultHttpClient client, HttpRequestBase method,
-            PrintStream logger, boolean logResponseBody) throws IOException {
+            PrintStream logger, boolean consolLogResponseBody) throws IOException, InterruptedException {
 
         doSecurity(client, method.getURI());
         logger.println("Sending request to url: " + method.getURI());
         final HttpResponse httpResponse = client.execute(method);
         logger.println("Response Code: " + httpResponse.getStatusLine());
-        if (logResponseBody){
-            logger.println("Response: \n" + EntityUtils.toString(httpResponse.getEntity()));
-            try {
-                String httpData = EntityUtils.toString(httpResponse.getEntity());
-                outputFilePath.write().write(httpData.getBytes());
-            } catch (Exception ex) {
-                logger.println("Exception caught while writing " + this.outputFilePath.getName() + ": " + ex.getMessage());
-                // TODO: Consider throwing exception to fail the build.
-            }
+        String httpData = EntityUtils.toString(httpResponse.getEntity());
+        if (consolLogResponseBody) {
+            logger.println("Response: \n" + httpData);
         }
-        
+        outputFilePath.write().write(httpData.getBytes());
         EntityUtils.consume(httpResponse.getEntity());
 
         return httpResponse;
