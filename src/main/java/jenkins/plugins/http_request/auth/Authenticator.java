@@ -13,5 +13,5 @@ public interface Authenticator {
     String getKeyName();
 
     void authenticate(DefaultHttpClient client, HttpRequestBase requestBase,
-            PrintStream logger) throws IOException;
+            PrintStream logger) throws IOException, InterruptedException;
 }
