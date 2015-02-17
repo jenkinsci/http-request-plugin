@@ -72,7 +72,6 @@ public class HttpClientUtil {
     }
 
     public HttpHead makeHead(RequestAction requestAction) throws UnsupportedEncodingException {
-        final HttpEntity entity = makeEntity(requestAction.getParams());
         final HttpHead httpHead = new HttpHead(requestAction.getUrl().toString());
 
         return httpHead;
