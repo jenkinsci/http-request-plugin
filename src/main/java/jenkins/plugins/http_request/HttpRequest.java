@@ -1,9 +1,6 @@
 package jenkins.plugins.http_request;
 
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.Launcher;
-import hudson.Util;
+import hudson.*;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
@@ -146,7 +143,8 @@ public class HttpRequest extends Builder {
         }
         final HttpClientUtil clientUtil = new HttpClientUtil();
         if(outputFile != null && !outputFile.isEmpty()) {
-            clientUtil.setOutputFile(this.outputFile);
+            FilePath outputFilePath = build.getWorkspace().child(outputFile);
+            clientUtil.setOutputFile(outputFilePath);
         }
         final HttpRequestBase httpRequestBase = clientUtil.createRequestBase(requestAction);
 

@@ -6,6 +6,8 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
+import hudson.FilePath;
+import hudson.util.IOUtils;
 import jenkins.plugins.http_request.HttpMode;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -27,14 +29,14 @@ import org.apache.http.util.EntityUtils;
  */
 public class HttpClientUtil {
 
-    private String outputFile;
+    private FilePath outputFilePath;
 
     public String getOutputFile() {
-        return outputFile;
+        return outputFilePath.getName();
     }
 
-    public void setOutputFile(String outputFile) {
-        this.outputFile = outputFile;
+    public void setOutputFile(FilePath filePath) {
+        this.outputFilePath = filePath;
     }
 
 
@@ -113,13 +115,11 @@ public class HttpClientUtil {
         if (logResponseBody){
             logger.println("Response: \n" + EntityUtils.toString(httpResponse.getEntity()));
             try {
-                FileWriter fstream = new FileWriter(this.outputFile);
-                BufferedWriter fileOut = new BufferedWriter(fstream);
-                fileOut.write(EntityUtils.toString(httpResponse.getEntity()));
-                fileOut.close();
+                String httpData = EntityUtils.toString(httpResponse.getEntity());
+                outputFilePath.write().write(httpData.getBytes());
             } catch (Exception ex) {
-                logger.println("Exception caught while writing " + this.outputFile + ": " + ex.getMessage());
-                //throw(ex);
+                logger.println("Exception caught while writing " + this.outputFilePath.getName() + ": " + ex.getMessage());
+                // TODO: Consider throwing exception to fail the build.
             }
         }
         
