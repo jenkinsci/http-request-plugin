@@ -13,11 +13,7 @@ import jenkins.plugins.http_request.HttpMode;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.*;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
@@ -33,7 +29,10 @@ public class HttpClientUtil {
     public HttpRequestBase createRequestBase(RequestAction requestAction) throws
             UnsupportedEncodingException, IOException {
 
-        if (requestAction.getMode() == HttpMode.GET) {
+        if (requestAction.getMode() == HttpMode.HEAD) {
+            return makeHead(requestAction);
+
+        } else if (requestAction.getMode() == HttpMode.GET) {
             return makeGet(requestAction);
 
         } else if (requestAction.getMode() == HttpMode.POST) {
@@ -72,6 +71,13 @@ public class HttpClientUtil {
         return new HttpGet(sb.toString());
     }
 
+    public HttpHead makeHead(RequestAction requestAction) throws UnsupportedEncodingException {
+        final HttpEntity entity = makeEntity(requestAction.getParams());
+        final HttpHead httpHead = new HttpHead(requestAction.getUrl().toString());
+
+        return httpHead;
+    }
+
     public HttpPost makePost(RequestAction requestAction) throws UnsupportedEncodingException {
         final HttpEntity entity = makeEntity(requestAction.getParams());
         final HttpPost httpPost = new HttpPost(requestAction.getUrl().toString());
@@ -89,7 +95,6 @@ public class HttpClientUtil {
     }
 
     public HttpDelete makeDelete(RequestAction requestAction) throws UnsupportedEncodingException {
-        final HttpEntity entity = makeEntity(requestAction.getParams());
         final HttpDelete httpDelete = new HttpDelete(requestAction.getUrl().toString());
 
         return httpDelete;
