@@ -48,9 +48,10 @@ public class HttpRequest extends Builder {
     private final String authentication;
     private final Boolean returnCodeBuildRelevant;
     private final Boolean logResponseBody;
+    private final Boolean accept200Only;
 
     @DataBoundConstructor
-    public HttpRequest(String url, String httpMode, String authentication, String returnCodeBuildRelevant, String logResponseBody)
+    public HttpRequest(String url, String httpMode, String authentication, String returnCodeBuildRelevant, String logResponseBody, String accept200Only)
             throws URISyntaxException {
         this.url = url;
         this.httpMode = Util.fixEmpty(httpMode) == null ? null : HttpMode.valueOf(httpMode);
@@ -66,11 +67,20 @@ public class HttpRequest extends Builder {
         } else {
             this.logResponseBody = null;
         }
-	
+
+        if (accept200Only != null && accept200Only.trim().length() > 0) {
+            this.accept200Only = Boolean.parseBoolean(accept200Only);
+        } else {
+            this.accept200Only = null;
+        }
     }
 
     public Boolean getLogResponseBody() {
         return logResponseBody;
+    }
+
+    public Boolean getAccept200Only() {
+        return accept200Only;
     }
 
     public String getUrl() {
@@ -121,7 +131,10 @@ public class HttpRequest extends Builder {
         }
 	
         boolean tmpLogResponseBody = logResponseBody != null
-        ? logResponseBody : getDescriptor().isDefaultLogResponseBody();	
+                ? logResponseBody : getDescriptor().isDefaultLogResponseBody();
+
+        boolean tmpAccept200Only = accept200Only != null
+                ? accept200Only : getDescriptor().isDefaultAccept200Only();
 
         final HttpResponse execute = clientUtil.execute(httpclient, method, logger, tmpLogResponseBody);
 
@@ -135,7 +148,7 @@ public class HttpRequest extends Builder {
 
         if (returnCodeRelevant) {
             // return false if status from 400(client error) to 599(server error)
-            return !(execute.getStatusLine().getStatusCode() >= 400 && execute.getStatusLine().getStatusCode() <= 599);
+            return !((tmpAccept200Only && execute.getStatusLine().getStatusCode() != 200) || (!tmpAccept200Only && execute.getStatusLine().getStatusCode() >= 400 && execute.getStatusLine().getStatusCode() <= 599));
         } else {
             // ignore status code from HTTP response
             logger.println("Ignoring return code as " + (returnCodeBuildRelevant != null ? "Local" : "Global") + " configuration");
@@ -175,20 +188,29 @@ public class HttpRequest extends Builder {
         private List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<BasicDigestAuthentication>();
         private List<FormAuthentication> formAuthentications = new ArrayList<FormAuthentication>();
         private boolean defaultReturnCodeBuildRelevant = true;
-	private boolean defaultLogResponseBody = true;
+	    private boolean defaultLogResponseBody = true;
+        private boolean defaultAccept200Only = false;
 
         public DescriptorImpl() {
             load();
         }
 
-	public boolean isDefaultLogResponseBody() {
-		return defaultLogResponseBody;
-	}
+        public boolean isDefaultLogResponseBody() {
+            return defaultLogResponseBody;
+        }
 
-	public void setDefaultLogResponseBody(boolean defaultLogResponseBody) {
-		this.defaultLogResponseBody = defaultLogResponseBody;
-	}
-	
+        public void setDefaultLogResponseBody(boolean defaultLogResponseBody) {
+            this.defaultLogResponseBody = defaultLogResponseBody;
+        }
+
+        public boolean isDefaultAccept200Only() {
+            return defaultAccept200Only;
+        }
+
+        public void setDefaultAccept200Only(boolean defaultAccept200Only) {
+            this.defaultAccept200Only = defaultAccept200Only;
+        }
+
         public HttpMode getDefaultHttpMode() {
             return defaultHttpMode;
         }
@@ -319,6 +341,13 @@ public class HttpRequest extends Builder {
             items.add("No", "false");
             return items;
         }
-	
+
+        public ListBoxModel doFillAccept200OnlyItems() {
+            ListBoxModel items = new ListBoxModel();
+            items.add("Default", "");
+            items.add("Yes", "true");
+            items.add("No", "false");
+            return items;
+        }
     }
 }
