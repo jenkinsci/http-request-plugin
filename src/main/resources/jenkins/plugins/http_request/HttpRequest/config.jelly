@@ -2,25 +2,26 @@
     <f:entry title="URL" field="url">
         <f:textbox />
     </f:entry>
+    <f:advanced>
+        <f:entry field="httpMode" title="HTTP mode">
+            <f:select />
+        </f:entry>
 
-    <f:entry field="httpMode" title="HTTP mode">
-        <f:select />
-    </f:entry>
-    
-    <f:entry field="authentication" title="Authenticate">
-        <f:select />
-    </f:entry>
+        <f:entry field="authentication" title="Authenticate">
+            <f:select />
+        </f:entry>
 
-    <f:entry field="returnCodeBuildRelevant" title="Fail build?">
-        <f:select />
-    </f:entry>
+        <f:entry field="returnCodeBuildRelevant" title="Fail build?">
+            <f:select />
+        </f:entry>
 
-    <f:entry field="logResponseBody" title="Log Response Body?">
-        <f:select />
-    </f:entry>   
+        <f:entry field="accept200Only" title="Fail unless 200 status code?">
+            <f:select />
+        </f:entry>
 
-    <f:entry field="accept200Only" title="Accept 200 HTTP code only?">
-        <f:select />
-    </f:entry>
+        <f:entry field="logResponseBody" title="Log Response Body?">
+            <f:select />
+        </f:entry>
 
+    </f:advanced>
 </j:jelly>

@@ -92,13 +92,13 @@
             <f:booleanRadio />
         </f:entry>
 
-        <f:entry field="defaultLogResponseBody" title="Log Response body by default?"
-                 help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-logResponseBody.html">
+	    <f:entry field="defaultAccept200Only" title="Fail unless 200 status code by default?"
+                 help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-accept200Only.html">
             <f:booleanRadio />
         </f:entry>
 
-	    <f:entry field="defaultAccept200Only" title="Accept 200 HTTP code by default?"
-                 help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-accept200Only.html">
+        <f:entry field="defaultLogResponseBody" title="Log Response body by default?"
+                 help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-logResponseBody.html">
             <f:booleanRadio />
         </f:entry>
 
