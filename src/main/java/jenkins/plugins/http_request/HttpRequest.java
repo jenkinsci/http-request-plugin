@@ -49,9 +49,10 @@ public class HttpRequest extends Builder {
     private final Boolean returnCodeBuildRelevant;
     private final Boolean logResponseBody;
     private final Boolean accept200Only;
+    private final Integer timeout;
 
     @DataBoundConstructor
-    public HttpRequest(String url, String httpMode, String authentication, String returnCodeBuildRelevant, String logResponseBody, String accept200Only)
+    public HttpRequest(String url, String httpMode, String authentication, String returnCodeBuildRelevant, String accept200Only, String logResponseBody, String timeout)
             throws URISyntaxException {
         this.url = url;
         this.httpMode = Util.fixEmpty(httpMode) == null ? null : HttpMode.valueOf(httpMode);
@@ -61,17 +62,23 @@ public class HttpRequest extends Builder {
         } else {
             this.returnCodeBuildRelevant = null;
         }
-	
+
+        if (accept200Only != null && accept200Only.trim().length() > 0) {
+            this.accept200Only = Boolean.parseBoolean(accept200Only);
+        } else {
+            this.accept200Only = null;
+        }
+
         if (logResponseBody != null && logResponseBody.trim().length() > 0) {
             this.logResponseBody = Boolean.parseBoolean(logResponseBody);
         } else {
             this.logResponseBody = null;
         }
 
-        if (accept200Only != null && accept200Only.trim().length() > 0) {
-            this.accept200Only = Boolean.parseBoolean(accept200Only);
+        if (timeout != null && timeout.trim().length() > 0) {
+            this.timeout = Integer.parseInt(timeout);
         } else {
-            this.accept200Only = null;
+            this.timeout = null;
         }
     }
 
@@ -99,6 +106,10 @@ public class HttpRequest extends Builder {
         return returnCodeBuildRelevant;
     }
 
+    public Integer getTimeout() {
+        return timeout;
+    }
+
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
         final PrintStream logger = listener.getLogger();
@@ -106,10 +117,13 @@ public class HttpRequest extends Builder {
         final HttpMode mode = httpMode != null ? httpMode : getDescriptor().getDefaultHttpMode();
         logger.println("HttpMode: " + mode);
 
-        final SystemDefaultHttpClient httpclient = new SystemDefaultHttpClient();
+        final SystemDefaultHttpClient httpClient = new SystemDefaultHttpClient();
 
-        logger.println("Parameters: ");
         final EnvVars envVars = build.getEnvironment(listener);
+
+        if (!envVars.isEmpty())
+            logger.println("Parameters: ");
+
         final List<NameValuePair> params = createParameters(build, logger, envVars);
         String evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
         logger.println(String.format("URL: %s", evaluatedUrl));
@@ -120,6 +134,9 @@ public class HttpRequest extends Builder {
         final HttpClientUtil clientUtil = new HttpClientUtil();
         final HttpRequestBase method = clientUtil.createRequestBase(requestAction);
 
+        int tmpTimeout =  timeout != null
+                ? timeout : getDescriptor().getDefaultTimeout();
+
         if (authentication != null) {
             final Authenticator auth = getDescriptor().getAuthentication(authentication);
             if (auth == null) {
@@ -127,24 +144,28 @@ public class HttpRequest extends Builder {
             }
 
             logger.println("Using authentication: " + auth.getKeyName());
-            auth.authenticate(httpclient, method, logger);
+            auth.authenticate(httpClient, method, logger, tmpTimeout);
         }
-	
+
         boolean tmpLogResponseBody = logResponseBody != null
                 ? logResponseBody : getDescriptor().isDefaultLogResponseBody();
 
-        boolean tmpAccept200Only = accept200Only != null
-                ? accept200Only : getDescriptor().isDefaultAccept200Only();
-
-        final HttpResponse execute = clientUtil.execute(httpclient, method, logger, tmpLogResponseBody);
+        final HttpResponse execute = clientUtil.execute(httpClient, method, logger, tmpLogResponseBody, tmpTimeout);
 
         // use global configuration as default if it is unset for this job
         boolean returnCodeRelevant = returnCodeBuildRelevant != null
                 ? returnCodeBuildRelevant : getDescriptor().isDefaultReturnCodeBuildRelevant();
-        
+
+        boolean tmpAccept200Only = accept200Only != null
+                ? accept200Only : getDescriptor().isDefaultAccept200Only();
+
         LOGGER.debug("---> config local: {}", returnCodeBuildRelevant);
         LOGGER.debug("---> global: {}", getDescriptor().isDefaultReturnCodeBuildRelevant());
         LOGGER.debug("---> returnCodeRelevant: {}", returnCodeRelevant);
+        LOGGER.debug("---> Accept200Only: {}", tmpAccept200Only);
+        LOGGER.debug("---> Timeout: {}", tmpTimeout);
+
+        logger.println("");
 
         if (returnCodeRelevant) {
             // return false if status from 400(client error) to 599(server error)
@@ -152,6 +173,7 @@ public class HttpRequest extends Builder {
         } else {
             // ignore status code from HTTP response
             logger.println("Ignoring return code as " + (returnCodeBuildRelevant != null ? "Local" : "Global") + " configuration");
+            logger.println("");
             return true;
         }
     }
@@ -190,6 +212,7 @@ public class HttpRequest extends Builder {
         private boolean defaultReturnCodeBuildRelevant = true;
 	    private boolean defaultLogResponseBody = true;
         private boolean defaultAccept200Only = false;
+        private int defaultTimeout = 0;
 
         public DescriptorImpl() {
             load();
@@ -209,6 +232,14 @@ public class HttpRequest extends Builder {
 
         public void setDefaultAccept200Only(boolean defaultAccept200Only) {
             this.defaultAccept200Only = defaultAccept200Only;
+        }
+
+        public int getDefaultTimeout() {
+            return defaultTimeout;
+        }
+
+        public void setDefaultTimeout(int defaultTimeout) {
+            this.defaultTimeout = defaultTimeout;
         }
 
         public HttpMode getDefaultHttpMode() {

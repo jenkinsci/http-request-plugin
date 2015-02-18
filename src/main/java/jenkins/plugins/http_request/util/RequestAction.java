@@ -53,6 +53,15 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> {
             return HttpRequestValidation.checkUrl(value);
         }
 
+        public FormValidation doCheckTimeout(@QueryParameter String timeout) {
+            try {
+                Integer.parseInt(timeout);
+                return FormValidation.ok();
+            } catch (NumberFormatException e) {
+                return FormValidation.error("Not a number");
+            }
+        }
+
         public ListBoxModel doFillModeItems() {
             return HttpMode.getFillItems();
         }

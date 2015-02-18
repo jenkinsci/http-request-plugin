@@ -11,7 +11,7 @@ public class HttpRequestValidation {
 
     public static FormValidation checkUrl(String value) {
         try {
-            URL url = new URL(value);
+            new URL(value);
             return FormValidation.ok();
         } catch (MalformedURLException ex) {
             return FormValidation.error("Invalid url");

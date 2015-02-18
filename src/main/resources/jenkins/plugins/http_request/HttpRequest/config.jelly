@@ -11,7 +11,7 @@
             <f:select />
         </f:entry>
 
-        <f:entry field="returnCodeBuildRelevant" title="Fail build?">
+        <f:entry field="returnCodeBuildRelevant" title="Fail build on error status code?">
             <f:select />
         </f:entry>
 
@@ -23,5 +23,8 @@
             <f:select />
         </f:entry>
 
+        <f:entry field="timeout" title="Connection timeout?">
+            <f:number />
+        </f:entry>
     </f:advanced>
 </j:jelly>

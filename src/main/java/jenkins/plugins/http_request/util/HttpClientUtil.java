@@ -19,7 +19,6 @@ import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.util.EntityUtils;
 
 /**
@@ -101,22 +100,24 @@ public class HttpClientUtil {
     }
 
     public HttpResponse execute(DefaultHttpClient client, HttpRequestBase method,
-            PrintStream logger, boolean logResponseBody) throws IOException {
+            PrintStream logger, boolean logResponseBody, int timeout) throws IOException {
         doSecurity(client, method.getURI());
 
-        int timeout = 3;
-
         logger.println("Sending request to url: " + method.getURI());
-        client.getParams().setParameter("http.socket.timeout", timeout * 1000);
-        client.getParams().setParameter("http.connection.timeout", timeout * 1000);
-        client.getParams().setParameter("http.connection-manager.timeout", new Long(timeout * 1000));
-        client.getParams().setParameter("http.protocol.head-body-timeout", timeout * 1000);
+
+        if (timeout > 0) {
+            client.getParams().setParameter("http.socket.timeout", timeout * 1000);
+            client.getParams().setParameter("http.connection.timeout", timeout * 1000);
+            client.getParams().setParameter("http.connection-manager.timeout", new Long(timeout * 1000));
+            client.getParams().setParameter("http.protocol.head-body-timeout", timeout * 1000);
+        }
 
         final HttpResponse execute = client.execute(method);
         logger.println("Response Code: " + execute.getStatusLine());
-	if (logResponseBody){
-	    logger.println("Response: \n" + EntityUtils.toString(execute.getEntity()));
-	}
+
+        if (logResponseBody){
+            logger.println("Response: \n" + EntityUtils.toString(execute.getEntity()));
+        }
         
         EntityUtils.consume(execute.getEntity());
 

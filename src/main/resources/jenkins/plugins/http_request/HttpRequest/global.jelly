@@ -87,7 +87,7 @@
             </f:repeatable>
         </f:entry>
 
-        <f:entry field="defaultReturnCodeBuildRelevant" title="Fail build by default?"
+        <f:entry field="defaultReturnCodeBuildRelevant" title="Fail build on error status code by default?"
                  help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-returnCodeBuildRelevant.html">
             <f:booleanRadio />
         </f:entry>
@@ -100,6 +100,11 @@
         <f:entry field="defaultLogResponseBody" title="Log Response body by default?"
                  help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-logResponseBody.html">
             <f:booleanRadio />
+        </f:entry>
+
+        <f:entry field="defaultTimeout" title="Connection timeout by default?">
+            help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-timeout.html">
+            <f:textbox />
         </f:entry>
 
     </f:section>
