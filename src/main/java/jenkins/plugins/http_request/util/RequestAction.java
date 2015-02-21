@@ -18,15 +18,21 @@ import org.kohsuke.stapler.QueryParameter;
  */
 public class RequestAction extends AbstractDescribableImpl<RequestAction> {
 
+    private final String name;
     private final URL url;
     private final HttpMode mode;
     private final List<NameValuePair> params;
 
     @DataBoundConstructor
-    public RequestAction(URL url, HttpMode mode, List<NameValuePair> params) {
+    public RequestAction(String name, URL url, HttpMode mode, List<NameValuePair> params) {
+        this.name = name;
         this.url = url;
         this.mode = mode;
         this.params = params == null ? new ArrayList<NameValuePair>() : params;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public URL getUrl() {

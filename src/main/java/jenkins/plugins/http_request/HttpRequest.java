@@ -43,6 +43,7 @@ import java.util.Map;
 public class HttpRequest extends Builder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpRequest.class);
+    private final String name;
     private final String url;
     private final HttpMode httpMode;
     private final String authentication;
@@ -52,8 +53,9 @@ public class HttpRequest extends Builder {
     private final Integer timeout;
 
     @DataBoundConstructor
-    public HttpRequest(String url, String httpMode, String authentication, String returnCodeBuildRelevant, String accept200Only, String logResponseBody, String timeout)
+    public HttpRequest(String name, String url, String httpMode, String authentication, String returnCodeBuildRelevant, String accept200Only, String logResponseBody, String timeout)
             throws URISyntaxException {
+        this.name = name;
         this.url = url;
         this.httpMode = Util.fixEmpty(httpMode) == null ? null : HttpMode.valueOf(httpMode);
         this.authentication = Util.fixEmpty(authentication);
@@ -90,6 +92,10 @@ public class HttpRequest extends Builder {
         return accept200Only;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public String getUrl() {
         return url;
     }
@@ -114,6 +120,9 @@ public class HttpRequest extends Builder {
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
         final PrintStream logger = listener.getLogger();
 
+        if ((name != null) && !name.isEmpty())
+            logger.println("Name: " + name);
+
         final HttpMode mode = httpMode != null ? httpMode : getDescriptor().getDefaultHttpMode();
         logger.println("HttpMode: " + mode);
 
@@ -128,6 +137,7 @@ public class HttpRequest extends Builder {
         String evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
         logger.println(String.format("URL: %s", evaluatedUrl));
         final RequestAction requestAction = new RequestAction(
+                name,
                 new URL(evaluatedUrl),
                 mode,
                 params);
