@@ -39,7 +39,6 @@ public class HttpClientUtil {
         this.outputFilePath = filePath;
     }
 
-
     public HttpRequestBase createRequestBase(RequestAction requestAction) throws
             UnsupportedEncodingException, IOException {
 

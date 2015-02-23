@@ -110,12 +110,6 @@ public class HttpRequest extends Builder {
 
         final HttpMode mode = httpMode != null ? httpMode : getDescriptor().getDefaultHttpMode();
         logger.println("HttpMode: " + mode);
-        logger.println("Request Headers:-");
-        logger.println("Content-type: " + contentType);
-        logger.println("Accept: " + acceptType);
-        if(customHeader != null && !customHeader.isEmpty()) {
-            logger.println(customHeader);
-        }
 
         final SystemDefaultHttpClient httpclient = new SystemDefaultHttpClient();
 
@@ -137,12 +131,20 @@ public class HttpRequest extends Builder {
         }
         final HttpRequestBase httpRequestBase = clientUtil.createRequestBase(requestAction);
 
-        httpRequestBase.setHeader("Content-type", getMimeType(contentType));
-        httpRequestBase.setHeader("Accept", getMimeType(acceptType));
+        if (contentType != MimeType.NOT_SET) {
+            httpRequestBase.setHeader("Content-type", contentType.getValue());
+            logger.println("Content-type: " + contentType);
+        }
+
+        if (acceptType != MimeType.NOT_SET){
+            httpRequestBase.setHeader("Accept", acceptType.getValue());
+            logger.println("Accept: " + acceptType);
+        }
 
         if(customHeader != null && !customHeader.isEmpty()) {
             String[] parts = customHeader.split(":");
             httpRequestBase.setHeader(parts[0], parts[1]);
+            logger.println(customHeader);
         }
 
         if (authentication != null) {
@@ -172,22 +174,6 @@ public class HttpRequest extends Builder {
             // ignore status code from HTTP response
             logger.println("Ignoring return code as " + (returnCodeBuildRelevant != null ? "Local" : "Global") + " configuration");
             return true;
-        }
-    }
-
-    private String getMimeType(MimeType mimeType) {
-        if (mimeType == MimeType.TEXT_HTML) {
-            return "text/html";
-        } else if (mimeType == MimeType.APPLICATION_JSON) {
-            return "application/json";
-        } else if (mimeType == MimeType.APPLICATION_TAR) {
-            return "application/x-tar";
-        } else if (mimeType == MimeType.APPLICATION_ZIP) {
-            return "application/zip";
-        } else if (mimeType == MimeType.APPLICATION_OCTETSTREAM) {
-            return "application/octet-stream";
-        } else {
-            return "text/html";
         }
     }
 
@@ -322,8 +308,6 @@ public class HttpRequest extends Builder {
 
         public ListBoxModel doFillContentTypeItems() {
             ListBoxModel items = MimeType.getContentTypeFillItems();
-            items.add(0, new ListBoxModel.Option("Default", ""));
-
             return items;
         }
 
@@ -333,8 +317,6 @@ public class HttpRequest extends Builder {
 
         public ListBoxModel doFillAcceptTypeItems() {
             ListBoxModel items = MimeType.getContentTypeFillItems();
-            items.add(0, new ListBoxModel.Option("Default", ""));
-
             return items;
         }
 
