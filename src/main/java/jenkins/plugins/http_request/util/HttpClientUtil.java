@@ -1,21 +1,24 @@
 package jenkins.plugins.http_request.util;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
 import hudson.FilePath;
-import hudson.util.IOUtils;
 import jenkins.plugins.http_request.HttpMode;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
@@ -30,10 +33,6 @@ import org.apache.http.util.EntityUtils;
 public class HttpClientUtil {
 
     private FilePath outputFilePath;
-
-    public String getOutputFile() {
-        return outputFilePath.getName();
-    }
 
     public void setOutputFile(FilePath filePath) {
         this.outputFilePath = filePath;
@@ -111,11 +110,15 @@ public class HttpClientUtil {
         logger.println("Sending request to url: " + method.getURI());
         final HttpResponse httpResponse = client.execute(method);
         logger.println("Response Code: " + httpResponse.getStatusLine());
-        String httpData = EntityUtils.toString(httpResponse.getEntity());
-        if (consolLogResponseBody) {
-            logger.println("Response: \n" + httpData);
+        if (consolLogResponseBody || outputFilePath != null) {
+            String httpData = EntityUtils.toString(httpResponse.getEntity());
+            if (consolLogResponseBody) {
+                logger.println("Response: \n" + httpData);
+            }
+            if (outputFilePath != null) {
+                outputFilePath.write().write(httpData.getBytes());
+            }
         }
-        outputFilePath.write().write(httpData.getBytes());
         EntityUtils.consume(httpResponse.getEntity());
 
         return httpResponse;
