@@ -1,9 +1,26 @@
 package jenkins.plugins.http_request;
 
-import hudson.*;
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.google.common.base.Objects;
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.FilePath;
+import hudson.Launcher;
+import hudson.Util;
+import hudson.init.InitMilestone;
+import hudson.init.Initializer;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
+import hudson.model.Items;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
@@ -22,37 +39,25 @@ import org.apache.http.impl.client.SystemDefaultHttpClient;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.servlet.ServletException;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Janario Oliveira
  */
 public class HttpRequest extends Builder {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(HttpRequest.class);
     private final String url;
-    private final HttpMode httpMode;
-    private final MimeType contentType;
-    private final MimeType acceptType;
+    private HttpMode httpMode;
+    private MimeType contentType;
+    private MimeType acceptType;
     private final String customHeader;
     private final String outputFile;
     private final String authentication;
-    private final Boolean returnCodeBuildRelevant;
-    private final Boolean consoleLogResponseBody;
-    private final Boolean passBuildParameters;
+    private Boolean returnCodeBuildRelevant;
+    private Boolean consoleLogResponseBody;
+    private Boolean passBuildParameters;
 
     @DataBoundConstructor
-    public HttpRequest(String url, String httpMode, String authentication, MimeType contentType,
+    public HttpRequest(String url, HttpMode httpMode, String authentication, MimeType contentType,
                        MimeType acceptType, String customHeader, String outputFile, Boolean returnCodeBuildRelevant,
                        Boolean consoleLogResponseBody, Boolean passBuildParameters)
                        throws URISyntaxException {
@@ -61,11 +66,29 @@ public class HttpRequest extends Builder {
         this.acceptType = acceptType;
         this.customHeader = customHeader;
         this.outputFile = outputFile;
-        this.httpMode = Util.fixEmpty(httpMode) == null ? null : HttpMode.valueOf(httpMode);
+        this.httpMode = httpMode;
         this.authentication = Util.fixEmpty(authentication);
         this.returnCodeBuildRelevant = returnCodeBuildRelevant;
         this.consoleLogResponseBody = consoleLogResponseBody;
         this.passBuildParameters = passBuildParameters;
+    }
+
+    @Initializer(before = InitMilestone.JOB_LOADED)
+    public static void xStreamCompatibility() {
+        Items.XSTREAM2.aliasField("logResponseBody", HttpRequest.class, "consoleLogResponseBody");
+        Items.XSTREAM2.aliasField("consoleLogResponseBody", HttpRequest.class, "consoleLogResponseBody");
+    }
+
+    public Object readResolve() {
+        returnCodeBuildRelevant = Objects.firstNonNull(returnCodeBuildRelevant, getDescriptor().defaultReturnCodeBuildRelevant);
+        consoleLogResponseBody = Objects.firstNonNull(consoleLogResponseBody, getDescriptor().defaultLogResponseBody);
+        httpMode = Objects.firstNonNull(httpMode, getDescriptor().defaultHttpMode);
+
+        contentType = Objects.firstNonNull(contentType, MimeType.NOT_SET);
+        acceptType = Objects.firstNonNull(acceptType, MimeType.NOT_SET);
+        passBuildParameters = Objects.firstNonNull(passBuildParameters, true);
+
+        return this;
     }
 
     public Boolean getConsoleLogResponseBody() {
@@ -104,12 +127,15 @@ public class HttpRequest extends Builder {
         return returnCodeBuildRelevant;
     }
 
+    public Boolean getPassBuildParameters() {
+        return passBuildParameters;
+    }
+
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
         final PrintStream logger = listener.getLogger();
 
-        final HttpMode mode = httpMode != null ? httpMode : getDescriptor().getDefaultHttpMode();
-        logger.println("HttpMode: " + mode);
+        logger.println("HttpMode: " + httpMode);
 
         final SystemDefaultHttpClient httpclient = new SystemDefaultHttpClient();
 
@@ -119,10 +145,10 @@ public class HttpRequest extends Builder {
         String evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
         logger.println(String.format("URL: %s", evaluatedUrl));
         final RequestAction requestAction;
-        if (this.passBuildParameters) {
-            requestAction = new RequestAction(new URL(evaluatedUrl), mode, params);
+        if (passBuildParameters) {
+            requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, params);
         } else {
-            requestAction = new RequestAction(new URL(evaluatedUrl), mode, null);
+            requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, null);
         }
         final HttpClientUtil clientUtil = new HttpClientUtil();
         if(outputFile != null && !outputFile.isEmpty()) {
@@ -159,20 +185,12 @@ public class HttpRequest extends Builder {
 	
         final HttpResponse execute = clientUtil.execute(httpclient, httpRequestBase, logger, consoleLogResponseBody);
 
-        // use global configuration as default if it is unset for this job
-        boolean returnCodeRelevant = returnCodeBuildRelevant != null
-                ? returnCodeBuildRelevant : getDescriptor().isDefaultReturnCodeBuildRelevant();
-        
-        LOGGER.debug("---> config local: {}", returnCodeBuildRelevant);
-        LOGGER.debug("---> global: {}", getDescriptor().isDefaultReturnCodeBuildRelevant());
-        LOGGER.debug("---> returnCodeRelevant: {}", returnCodeRelevant);
-
-        if (returnCodeRelevant) {
+        if (returnCodeBuildRelevant) {
             // return false if status from 400(client error) to 599(server error)
             return !(execute.getStatusLine().getStatusCode() >= 400 && execute.getStatusLine().getStatusCode() <= 599);
         } else {
             // ignore status code from HTTP response
-            logger.println("Ignoring return code as " + (returnCodeBuildRelevant != null ? "Local" : "Global") + " configuration");
+            logger.println("Ignoring return code");
             return true;
         }
     }
@@ -222,7 +240,7 @@ public class HttpRequest extends Builder {
 	    public void setDefaultLogResponseBody(boolean defaultLogResponseBody) {
 		    this.defaultLogResponseBody = defaultLogResponseBody;
 	    }
-	
+
         public HttpMode getDefaultHttpMode() {
             return defaultHttpMode;
         }
@@ -296,10 +314,7 @@ public class HttpRequest extends Builder {
         }
 
         public ListBoxModel doFillHttpModeItems() {
-            ListBoxModel items = HttpMode.getFillItems();
-            items.add(0, new ListBoxModel.Option("Default", ""));
-
-            return items;
+            return HttpMode.getFillItems();
         }
 
         public ListBoxModel doFillDefaultContentTypeItems() {
