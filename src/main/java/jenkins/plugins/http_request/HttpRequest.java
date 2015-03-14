@@ -57,7 +57,7 @@ public class HttpRequest extends Builder {
     private Boolean consoleLogResponseBody;
     private Boolean passBuildParameters;
     private List<NameValuePair> customHeaders = new ArrayList<NameValuePair>();
-    private final Boolean accept200Only;
+    private Boolean accept200Only;
     private final Integer timeout;
 
     @DataBoundConstructor
@@ -65,7 +65,7 @@ public class HttpRequest extends Builder {
                        MimeType acceptType, String outputFile, Boolean returnCodeBuildRelevant,
                        Boolean consoleLogResponseBody, Boolean passBuildParameters,
                        List<NameValuePair> customHeaders,
-                       String accept200Only, String timeout)
+                       Boolean accept200Only, Integer timeout)
                        throws URISyntaxException {
         this.name = name;
         this.url = url;
@@ -79,16 +79,8 @@ public class HttpRequest extends Builder {
         this.consoleLogResponseBody = consoleLogResponseBody;
         this.passBuildParameters = passBuildParameters;
 
-        if (accept200Only != null && accept200Only.trim().length() > 0) {
-            this.accept200Only = Boolean.parseBoolean(accept200Only);
-        } else {
-            this.accept200Only = null;
-        }
-        if (timeout != null && timeout.trim().length() > 0) {
-            this.timeout = Integer.parseInt(timeout);
-        } else {
-            this.timeout = null;
-        }
+        this.accept200Only = accept200Only;
+        this.timeout = timeout;
     }
 
     @Initializer(before = InitMilestone.PLUGINS_STARTED)
@@ -107,6 +99,8 @@ public class HttpRequest extends Builder {
         acceptType = Objects.firstNonNull(acceptType, MimeType.NOT_SET);
         passBuildParameters = Objects.firstNonNull(passBuildParameters, true);
         customHeaders = Objects.firstNonNull(customHeaders, Collections.<NameValuePair>emptyList());
+
+        accept200Only = Objects.firstNonNull(accept200Only, false);
 
         return this;
     }
@@ -209,15 +203,6 @@ public class HttpRequest extends Builder {
             httpRequestBase.addHeader(header.getName(), header.getValue());
         }
 
-        
-        
-        int tmpTimeout =  timeout != null
-                ? timeout : getDescriptor().getDefaultTimeout();
-        boolean tmpAccept200Only = accept200Only != null
-                ? accept200Only : getDescriptor().isDefaultAccept200Only();
-
-
-
         if (authentication != null) {
             final Authenticator auth = getDescriptor().getAuthentication(authentication);
             if (auth == null) {
@@ -225,14 +210,14 @@ public class HttpRequest extends Builder {
             }
 
             logger.println("Using authentication: " + auth.getKeyName());
-            auth.authenticate(httpclient, httpRequestBase, logger, tmpTimeout);
+            auth.authenticate(httpclient, httpRequestBase, logger, timeout);
         }
         
-        final HttpResponse execute = clientUtil.execute(httpclient, httpRequestBase, logger, consoleLogResponseBody, tmpTimeout);
+        final HttpResponse execute = clientUtil.execute(httpclient, httpRequestBase, logger, consoleLogResponseBody, timeout);
 
         if (returnCodeBuildRelevant) {
             // return false if status from 400(client error) to 599(server error)
-            return !((tmpAccept200Only && execute.getStatusLine().getStatusCode() != 200) || (!tmpAccept200Only && execute.getStatusLine().getStatusCode() >= 400 && execute.getStatusLine().getStatusCode() <= 599));
+            return !((accept200Only && execute.getStatusLine().getStatusCode() != 200) || (!accept200Only && execute.getStatusLine().getStatusCode() >= 400 && execute.getStatusLine().getStatusCode() <= 599));
         } else {
             // ignore status code from HTTP response
             logger.println("Ignoring return code");
@@ -273,9 +258,6 @@ public class HttpRequest extends Builder {
         private List<FormAuthentication> formAuthentications = new ArrayList<FormAuthentication>();
         private boolean defaultReturnCodeBuildRelevant = true;
     	private boolean defaultLogResponseBody = true;
-
-        private boolean defaultAccept200Only = false;
-        private int defaultTimeout = 0;
 
         public DescriptorImpl() {
             load();
@@ -418,31 +400,5 @@ public class HttpRequest extends Builder {
 
             return FormValidation.validateRequired(value);
         }
-
-
-        public boolean isDefaultAccept200Only() {
-            return defaultAccept200Only;
-        }
-
-        public void setDefaultAccept200Only(boolean defaultAccept200Only) {
-            this.defaultAccept200Only = defaultAccept200Only;
-        }
-
-        public int getDefaultTimeout() {
-            return defaultTimeout;
-        }
-
-        public void setDefaultTimeout(int defaultTimeout) {
-            this.defaultTimeout = defaultTimeout;
-        }
-        
-        public ListBoxModel doFillAccept200OnlyItems() {
-            ListBoxModel items = new ListBoxModel();
-            items.add("Default", "");
-            items.add("Yes", "true");
-            items.add("No", "false");
-            return items;
-        }
-
     }
 }
