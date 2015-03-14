@@ -1,10 +1,11 @@
 package jenkins.plugins.http_request.auth;
 
+import java.io.PrintStream;
+
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
-import java.io.PrintStream;
 import jenkins.model.Jenkins;
 import jenkins.plugins.http_request.HttpRequest;
 import org.apache.http.auth.AuthScope;
@@ -45,7 +46,7 @@ public class BasicDigestAuthentication extends AbstractDescribableImpl<BasicDige
     }
 
     public void authenticate(DefaultHttpClient client,
-            HttpRequestBase requestBase, PrintStream logger) {
+            HttpRequestBase requestBase, PrintStream logger, int timeout) {
         client.getCredentialsProvider().setCredentials(
                 new AuthScope(requestBase.getURI().getHost(), requestBase.getURI().getPort()),
                 new UsernamePasswordCredentials(userName, password));
