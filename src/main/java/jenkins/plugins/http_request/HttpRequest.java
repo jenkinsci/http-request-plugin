@@ -6,6 +6,7 @@ import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -49,34 +50,36 @@ public class HttpRequest extends Builder {
     private HttpMode httpMode;
     private MimeType contentType;
     private MimeType acceptType;
-    private final String customHeader;
     private final String outputFile;
     private final String authentication;
     private Boolean returnCodeBuildRelevant;
     private Boolean consoleLogResponseBody;
     private Boolean passBuildParameters;
+    private List<NameValuePair> customHeaders = new ArrayList<NameValuePair>();
 
     @DataBoundConstructor
     public HttpRequest(String url, HttpMode httpMode, String authentication, MimeType contentType,
-                       MimeType acceptType, String customHeader, String outputFile, Boolean returnCodeBuildRelevant,
-                       Boolean consoleLogResponseBody, Boolean passBuildParameters)
+                       MimeType acceptType, String outputFile, Boolean returnCodeBuildRelevant,
+                       Boolean consoleLogResponseBody, Boolean passBuildParameters,
+                       List<NameValuePair> customHeaders)
                        throws URISyntaxException {
         this.url = url;
         this.contentType = contentType;
         this.acceptType = acceptType;
-        this.customHeader = customHeader;
         this.outputFile = outputFile;
         this.httpMode = httpMode;
+        this.customHeaders = customHeaders;
         this.authentication = Util.fixEmpty(authentication);
         this.returnCodeBuildRelevant = returnCodeBuildRelevant;
         this.consoleLogResponseBody = consoleLogResponseBody;
         this.passBuildParameters = passBuildParameters;
     }
 
-    @Initializer(before = InitMilestone.JOB_LOADED)
+    @Initializer(before = InitMilestone.PLUGINS_STARTED)
     public static void xStreamCompatibility() {
         Items.XSTREAM2.aliasField("logResponseBody", HttpRequest.class, "consoleLogResponseBody");
         Items.XSTREAM2.aliasField("consoleLogResponseBody", HttpRequest.class, "consoleLogResponseBody");
+        Items.XSTREAM2.alias("pair", NameValuePair.class);
     }
 
     public Object readResolve() {
@@ -87,6 +90,7 @@ public class HttpRequest extends Builder {
         contentType = Objects.firstNonNull(contentType, MimeType.NOT_SET);
         acceptType = Objects.firstNonNull(acceptType, MimeType.NOT_SET);
         passBuildParameters = Objects.firstNonNull(passBuildParameters, true);
+        customHeaders = Objects.firstNonNull(customHeaders, Collections.<NameValuePair>emptyList());
 
         return this;
     }
@@ -111,8 +115,8 @@ public class HttpRequest extends Builder {
         return acceptType;
     }
 
-    public String getCustomHeader() {
-        return customHeader;
+    public List<NameValuePair> getCustomHeaders() {
+        return customHeaders;
     }
 
     public String getOutputFile() {
@@ -167,10 +171,8 @@ public class HttpRequest extends Builder {
             logger.println("Accept: " + acceptType);
         }
 
-        if(customHeader != null && !customHeader.isEmpty()) {
-            String[] parts = customHeader.split(":");
-            httpRequestBase.setHeader(parts[0], parts[1]);
-            logger.println(customHeader);
+        for (NameValuePair header : customHeaders) {
+            httpRequestBase.addHeader(header.getName(), header.getValue());
         }
 
         if (authentication != null) {

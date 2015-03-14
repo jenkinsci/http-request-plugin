@@ -19,10 +19,6 @@
         <f:select />
     </f:entry>
 
-    <f:entry field="customHeader" title="Custom header">
-        <f:textbox />
-    </f:entry>
-
     <f:entry field="outputFile" title="Output file">
         <f:textbox />
     </f:entry>
@@ -37,6 +33,24 @@
 
     <f:entry field="passBuildParameters" title="Pass build params to URL?">
         <f:booleanRadio default="No" />
+    </f:entry>
+
+    <f:entry title="Custom headers">
+        <f:repeatable field="customHeaders">
+            <table width="100%">
+                <f:entry title="Header" field="name">
+                    <f:textbox/>
+                </f:entry>
+                <f:entry title="Value" field="value">
+                    <f:textbox/>
+                </f:entry>
+                <f:entry>
+                    <div align="right">
+                        <f:repeatableDeleteButton/>
+                    </div>
+                </f:entry>
+            </table>
+        </f:repeatable>
     </f:entry>
     
 </j:jelly>
