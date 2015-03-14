@@ -1,8 +1,12 @@
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:entry title="name" field="name">
+        <f:textbox />
+    </f:entry>
     <f:entry field="url" title="URL">
         <f:textbox />
     </f:entry>
 
+    <f:advanced>
     <f:entry field="httpMode" title="HTTP mode">
         <f:select />
     </f:entry>
@@ -23,10 +27,18 @@
         <f:textbox />
     </f:entry>
 
-    <f:entry field="returnCodeBuildRelevant" title="Fail build from 400 to 599 response code?">
+        
+    <f:entry field="returnCodeBuildRelevant" title="Fail build on error status code?">
         <f:booleanRadio default="No" />
     </f:entry>
+    <f:entry field="accept200Only" title="Fail unless 200 status code?">
+        <f:select />
+    </f:entry>
+    <f:entry field="timeout" title="Connection timeout?">
+        <f:number />
+    </f:entry>
 
+        
     <f:entry field="consoleLogResponseBody" title="Response body in console?">
         <f:booleanRadio default="No" />
     </f:entry>
@@ -52,5 +64,6 @@
             </table>
         </f:repeatable>
     </f:entry>
-    
+        
+    </f:advanced>
 </j:jelly>

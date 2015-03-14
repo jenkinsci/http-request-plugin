@@ -17,6 +17,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -41,7 +42,10 @@ public class HttpClientUtil {
     public HttpRequestBase createRequestBase(RequestAction requestAction) throws
             UnsupportedEncodingException, IOException {
 
-        if (requestAction.getMode() == HttpMode.GET) {
+        if (requestAction.getMode() == HttpMode.HEAD) {
+            return makeHead(requestAction);
+
+        } else if (requestAction.getMode() == HttpMode.GET) {
             return makeGet(requestAction);
 
         } else if (requestAction.getMode() == HttpMode.POST) {
@@ -80,6 +84,12 @@ public class HttpClientUtil {
         return new HttpGet(sb.toString());
     }
 
+    public HttpHead makeHead(RequestAction requestAction) throws UnsupportedEncodingException {
+        final HttpHead httpHead = new HttpHead(requestAction.getUrl().toString());
+
+        return httpHead;
+    }
+
     public HttpPost makePost(RequestAction requestAction) throws UnsupportedEncodingException {
         final HttpEntity httpEntity = makeEntity(requestAction.getParams());
         final HttpPost httpPost = new HttpPost(requestAction.getUrl().toString());
@@ -97,19 +107,27 @@ public class HttpClientUtil {
     }
 
     public HttpDelete makeDelete(RequestAction requestAction) throws UnsupportedEncodingException {
-        final HttpEntity httpEntity = makeEntity(requestAction.getParams());
         final HttpDelete httpDelete = new HttpDelete(requestAction.getUrl().toString());
 
         return httpDelete;
     }
 
     public HttpResponse execute(DefaultHttpClient client, HttpRequestBase method,
-            PrintStream logger, boolean consolLogResponseBody) throws IOException, InterruptedException {
-
+            PrintStream logger, boolean consolLogResponseBody, int timeout) throws IOException, InterruptedException {
         doSecurity(client, method.getURI());
+
         logger.println("Sending request to url: " + method.getURI());
+        
+        if (timeout > 0) {
+            client.getParams().setParameter("http.socket.timeout", timeout * 1000);
+            client.getParams().setParameter("http.connection.timeout", timeout * 1000);
+            client.getParams().setParameter("http.connection-manager.timeout", new Long(timeout * 1000));
+            client.getParams().setParameter("http.protocol.head-body-timeout", timeout * 1000);
+        }
+        
         final HttpResponse httpResponse = client.execute(method);
         logger.println("Response Code: " + httpResponse.getStatusLine());
+        
         if (consolLogResponseBody || outputFilePath != null) {
             String httpData = EntityUtils.toString(httpResponse.getEntity());
             if (consolLogResponseBody) {

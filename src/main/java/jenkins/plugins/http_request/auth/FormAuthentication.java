@@ -1,14 +1,15 @@
 package jenkins.plugins.http_request.auth;
 
-import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
-import hudson.model.Descriptor;
-import hudson.util.FormValidation;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import hudson.Extension;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
+import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import jenkins.plugins.http_request.HttpRequest;
 import jenkins.plugins.http_request.util.HttpClientUtil;
@@ -43,12 +44,12 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
     }
 
     public void authenticate(DefaultHttpClient client,
-            HttpRequestBase requestBase, PrintStream logger) throws IOException, InterruptedException {
+            HttpRequestBase requestBase, PrintStream logger, int timeout) throws IOException, InterruptedException {
         final HttpClientUtil clientUtil = new HttpClientUtil();
         for (RequestAction requestAction : actions) {
             final HttpRequestBase method = clientUtil.createRequestBase(requestAction);
 
-            final HttpResponse execute = clientUtil.execute(client, method, logger, true);
+            final HttpResponse execute = clientUtil.execute(client, method, logger, true, timeout);
             //from 400(client error) to 599(server error)
             if ((execute.getStatusLine().getStatusCode() >= 400
                     && execute.getStatusLine().getStatusCode() <= 599)) {

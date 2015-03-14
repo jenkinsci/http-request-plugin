@@ -1,15 +1,15 @@
 package jenkins.plugins.http_request.util;
 
-import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
-import hudson.model.Descriptor;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import hudson.Extension;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import jenkins.plugins.http_request.HttpMode;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -19,15 +19,21 @@ import org.kohsuke.stapler.QueryParameter;
  */
 public class RequestAction extends AbstractDescribableImpl<RequestAction> {
 
+    private final String name;
     private final URL url;
     private final HttpMode mode;
     private final List<NameValuePair> params;
 
     @DataBoundConstructor
-    public RequestAction(URL url, HttpMode mode, List<NameValuePair> params) {
+    public RequestAction(String name, URL url, HttpMode mode, List<NameValuePair> params) {
+        this.name = name;
         this.url = url;
         this.mode = mode;
         this.params = params == null ? new ArrayList<NameValuePair>() : params;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public URL getUrl() {
@@ -52,6 +58,15 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> {
 
         public FormValidation doCheckUrl(@QueryParameter String value) {
             return HttpRequestValidation.checkUrl(value);
+        }
+
+        public FormValidation doCheckTimeout(@QueryParameter String timeout) {
+            try {
+                Integer.parseInt(timeout);
+                return FormValidation.ok();
+            } catch (NumberFormatException e) {
+                return FormValidation.error("Not a number");
+            }
         }
 
         public ListBoxModel doFillModeItems() {

@@ -46,6 +46,7 @@ import org.kohsuke.stapler.StaplerRequest;
  */
 public class HttpRequest extends Builder {
 
+    private final String name;
     private final String url;
     private HttpMode httpMode;
     private MimeType contentType;
@@ -56,13 +57,17 @@ public class HttpRequest extends Builder {
     private Boolean consoleLogResponseBody;
     private Boolean passBuildParameters;
     private List<NameValuePair> customHeaders = new ArrayList<NameValuePair>();
+    private final Boolean accept200Only;
+    private final Integer timeout;
 
     @DataBoundConstructor
-    public HttpRequest(String url, HttpMode httpMode, String authentication, MimeType contentType,
+    public HttpRequest(String name, String url, HttpMode httpMode, String authentication, MimeType contentType,
                        MimeType acceptType, String outputFile, Boolean returnCodeBuildRelevant,
                        Boolean consoleLogResponseBody, Boolean passBuildParameters,
-                       List<NameValuePair> customHeaders)
+                       List<NameValuePair> customHeaders,
+                       String accept200Only, String timeout)
                        throws URISyntaxException {
+        this.name = name;
         this.url = url;
         this.contentType = contentType;
         this.acceptType = acceptType;
@@ -73,6 +78,17 @@ public class HttpRequest extends Builder {
         this.returnCodeBuildRelevant = returnCodeBuildRelevant;
         this.consoleLogResponseBody = consoleLogResponseBody;
         this.passBuildParameters = passBuildParameters;
+
+        if (accept200Only != null && accept200Only.trim().length() > 0) {
+            this.accept200Only = Boolean.parseBoolean(accept200Only);
+        } else {
+            this.accept200Only = null;
+        }
+        if (timeout != null && timeout.trim().length() > 0) {
+            this.timeout = Integer.parseInt(timeout);
+        } else {
+            this.timeout = null;
+        }
     }
 
     @Initializer(before = InitMilestone.PLUGINS_STARTED)
@@ -81,7 +97,7 @@ public class HttpRequest extends Builder {
         Items.XSTREAM2.aliasField("consoleLogResponseBody", HttpRequest.class, "consoleLogResponseBody");
         Items.XSTREAM2.alias("pair", NameValuePair.class);
     }
-
+    
     public Object readResolve() {
         returnCodeBuildRelevant = Objects.firstNonNull(returnCodeBuildRelevant, getDescriptor().defaultReturnCodeBuildRelevant);
         consoleLogResponseBody = Objects.firstNonNull(consoleLogResponseBody, getDescriptor().defaultLogResponseBody);
@@ -135,24 +151,42 @@ public class HttpRequest extends Builder {
         return passBuildParameters;
     }
 
+    public Boolean getAccept200Only() {
+        return accept200Only;
+    }
+
+    public String getName() {
+        return name;
+    }
+    
+    public Integer getTimeout() {
+        return timeout;
+    }
+
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
         final PrintStream logger = listener.getLogger();
 
+        if (!name.isEmpty())  {
+            logger.println("Name: " + name);
+        }
         logger.println("HttpMode: " + httpMode);
 
         final SystemDefaultHttpClient httpclient = new SystemDefaultHttpClient();
 
-        logger.println("Parameters: ");
         final EnvVars envVars = build.getEnvironment(listener);
+
+        if (!envVars.isEmpty())
+            logger.println("Parameters: ");
+
         final List<NameValuePair> params = createParameters(build, logger, envVars);
         String evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
         logger.println(String.format("URL: %s", evaluatedUrl));
         final RequestAction requestAction;
         if (passBuildParameters) {
-            requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, params);
+            requestAction = new RequestAction(name, new URL(evaluatedUrl), httpMode, params);
         } else {
-            requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, null);
+            requestAction = new RequestAction(name, new URL(evaluatedUrl), httpMode, null);
         }
         final HttpClientUtil clientUtil = new HttpClientUtil();
         if(outputFile != null && !outputFile.isEmpty()) {
@@ -175,6 +209,15 @@ public class HttpRequest extends Builder {
             httpRequestBase.addHeader(header.getName(), header.getValue());
         }
 
+        
+        
+        int tmpTimeout =  timeout != null
+                ? timeout : getDescriptor().getDefaultTimeout();
+        boolean tmpAccept200Only = accept200Only != null
+                ? accept200Only : getDescriptor().isDefaultAccept200Only();
+
+
+
         if (authentication != null) {
             final Authenticator auth = getDescriptor().getAuthentication(authentication);
             if (auth == null) {
@@ -182,14 +225,14 @@ public class HttpRequest extends Builder {
             }
 
             logger.println("Using authentication: " + auth.getKeyName());
-            auth.authenticate(httpclient, httpRequestBase, logger);
+            auth.authenticate(httpclient, httpRequestBase, logger, tmpTimeout);
         }
-	
-        final HttpResponse execute = clientUtil.execute(httpclient, httpRequestBase, logger, consoleLogResponseBody);
+        
+        final HttpResponse execute = clientUtil.execute(httpclient, httpRequestBase, logger, consoleLogResponseBody, tmpTimeout);
 
         if (returnCodeBuildRelevant) {
             // return false if status from 400(client error) to 599(server error)
-            return !(execute.getStatusLine().getStatusCode() >= 400 && execute.getStatusLine().getStatusCode() <= 599);
+            return !((tmpAccept200Only && execute.getStatusLine().getStatusCode() != 200) || (!tmpAccept200Only && execute.getStatusLine().getStatusCode() >= 400 && execute.getStatusLine().getStatusCode() <= 599));
         } else {
             // ignore status code from HTTP response
             logger.println("Ignoring return code");
@@ -230,6 +273,9 @@ public class HttpRequest extends Builder {
         private List<FormAuthentication> formAuthentications = new ArrayList<FormAuthentication>();
         private boolean defaultReturnCodeBuildRelevant = true;
     	private boolean defaultLogResponseBody = true;
+
+        private boolean defaultAccept200Only = false;
+        private int defaultTimeout = 0;
 
         public DescriptorImpl() {
             load();
@@ -371,6 +417,31 @@ public class HttpRequest extends Builder {
             }
 
             return FormValidation.validateRequired(value);
+        }
+
+
+        public boolean isDefaultAccept200Only() {
+            return defaultAccept200Only;
+        }
+
+        public void setDefaultAccept200Only(boolean defaultAccept200Only) {
+            this.defaultAccept200Only = defaultAccept200Only;
+        }
+
+        public int getDefaultTimeout() {
+            return defaultTimeout;
+        }
+
+        public void setDefaultTimeout(int defaultTimeout) {
+            this.defaultTimeout = defaultTimeout;
+        }
+        
+        public ListBoxModel doFillAccept200OnlyItems() {
+            ListBoxModel items = new ListBoxModel();
+            items.add("Default", "");
+            items.add("Yes", "true");
+            items.add("No", "false");
+            return items;
         }
 
     }
