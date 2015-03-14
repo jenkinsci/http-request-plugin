@@ -1,14 +1,13 @@
 package jenkins.plugins.http_request.util;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URI;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
+
+import hudson.FilePath;
+import hudson.util.IOUtils;
 import jenkins.plugins.http_request.HttpMode;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -29,6 +28,16 @@ import org.apache.http.util.EntityUtils;
  * @author Janario Oliveira
  */
 public class HttpClientUtil {
+
+    private FilePath outputFilePath;
+
+    public String getOutputFile() {
+        return outputFilePath.getName();
+    }
+
+    public void setOutputFile(FilePath filePath) {
+        this.outputFilePath = filePath;
+    }
 
     public HttpRequestBase createRequestBase(RequestAction requestAction) throws
             UnsupportedEncodingException, IOException {
@@ -73,9 +82,9 @@ public class HttpClientUtil {
     }
 
     public HttpPost makePost(RequestAction requestAction) throws UnsupportedEncodingException {
-        final HttpEntity entity = makeEntity(requestAction.getParams());
+        final HttpEntity httpEntity = makeEntity(requestAction.getParams());
         final HttpPost httpPost = new HttpPost(requestAction.getUrl().toString());
-        httpPost.setEntity(entity);
+        httpPost.setEntity(httpEntity);
 
         return httpPost;
     }
@@ -89,26 +98,27 @@ public class HttpClientUtil {
     }
 
     public HttpDelete makeDelete(RequestAction requestAction) throws UnsupportedEncodingException {
-        final HttpEntity entity = makeEntity(requestAction.getParams());
+        final HttpEntity httpEntity = makeEntity(requestAction.getParams());
         final HttpDelete httpDelete = new HttpDelete(requestAction.getUrl().toString());
 
         return httpDelete;
     }
 
     public HttpResponse execute(DefaultHttpClient client, HttpRequestBase method,
-            PrintStream logger, boolean logResponseBody) throws IOException {
+            PrintStream logger, boolean consolLogResponseBody) throws IOException, InterruptedException {
+
         doSecurity(client, method.getURI());
-
         logger.println("Sending request to url: " + method.getURI());
-        final HttpResponse execute = client.execute(method);
-        logger.println("Response Code: " + execute.getStatusLine());
-	if (logResponseBody){
-	    logger.println("Response: \n" + EntityUtils.toString(execute.getEntity()));
-	}
-        
-        EntityUtils.consume(execute.getEntity());
+        final HttpResponse httpResponse = client.execute(method);
+        logger.println("Response Code: " + httpResponse.getStatusLine());
+        String httpData = EntityUtils.toString(httpResponse.getEntity());
+        if (consolLogResponseBody) {
+            logger.println("Response: \n" + httpData);
+        }
+        outputFilePath.write().write(httpData.getBytes());
+        EntityUtils.consume(httpResponse.getEntity());
 
-        return execute;
+        return httpResponse;
     }
 
     private void doSecurity(DefaultHttpClient base, URI uri) throws IOException {

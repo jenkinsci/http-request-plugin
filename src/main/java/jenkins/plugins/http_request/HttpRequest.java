@@ -1,9 +1,6 @@
 package jenkins.plugins.http_request;
 
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.Launcher;
-import hudson.Util;
+import hudson.*;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
@@ -45,32 +42,34 @@ public class HttpRequest extends Builder {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpRequest.class);
     private final String url;
     private final HttpMode httpMode;
+    private final MimeType contentType;
+    private final MimeType acceptType;
+    private final String customHeader;
+    private final String outputFile;
     private final String authentication;
     private final Boolean returnCodeBuildRelevant;
-    private final Boolean logResponseBody;
+    private final Boolean consoleLogResponseBody;
+    private final Boolean passBuildParameters;
 
     @DataBoundConstructor
-    public HttpRequest(String url, String httpMode, String authentication, String returnCodeBuildRelevant, String logResponseBody)
-            throws URISyntaxException {
+    public HttpRequest(String url, String httpMode, String authentication, MimeType contentType,
+                       MimeType acceptType, String customHeader, String outputFile, Boolean returnCodeBuildRelevant,
+                       Boolean consoleLogResponseBody, Boolean passBuildParameters)
+                       throws URISyntaxException {
         this.url = url;
+        this.contentType = contentType;
+        this.acceptType = acceptType;
+        this.customHeader = customHeader;
+        this.outputFile = outputFile;
         this.httpMode = Util.fixEmpty(httpMode) == null ? null : HttpMode.valueOf(httpMode);
         this.authentication = Util.fixEmpty(authentication);
-        if (returnCodeBuildRelevant != null && returnCodeBuildRelevant.trim().length() > 0) {
-            this.returnCodeBuildRelevant = Boolean.parseBoolean(returnCodeBuildRelevant);
-        } else {
-            this.returnCodeBuildRelevant = null;
-        }
-	
-        if (logResponseBody != null && logResponseBody.trim().length() > 0) {
-            this.logResponseBody = Boolean.parseBoolean(logResponseBody);
-        } else {
-            this.logResponseBody = null;
-        }
-	
+        this.returnCodeBuildRelevant = returnCodeBuildRelevant;
+        this.consoleLogResponseBody = consoleLogResponseBody;
+        this.passBuildParameters = passBuildParameters;
     }
 
-    public Boolean getLogResponseBody() {
-        return logResponseBody;
+    public Boolean getConsoleLogResponseBody() {
+        return consoleLogResponseBody;
     }
 
     public String getUrl() {
@@ -79,6 +78,22 @@ public class HttpRequest extends Builder {
 
     public HttpMode getHttpMode() {
         return httpMode;
+    }
+
+    public MimeType getContentType() {
+        return contentType;
+    }
+
+    public MimeType getAcceptType() {
+        return acceptType;
+    }
+
+    public String getCustomHeader() {
+        return customHeader;
+    }
+
+    public String getOutputFile() {
+        return outputFile;
     }
 
     public String getAuthentication() {
@@ -103,12 +118,34 @@ public class HttpRequest extends Builder {
         final List<NameValuePair> params = createParameters(build, logger, envVars);
         String evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
         logger.println(String.format("URL: %s", evaluatedUrl));
-        final RequestAction requestAction = new RequestAction(
-                new URL(evaluatedUrl),
-                mode,
-                params);
+        final RequestAction requestAction;
+        if (this.passBuildParameters) {
+            requestAction = new RequestAction(new URL(evaluatedUrl), mode, params);
+        } else {
+            requestAction = new RequestAction(new URL(evaluatedUrl), mode, null);
+        }
         final HttpClientUtil clientUtil = new HttpClientUtil();
-        final HttpRequestBase method = clientUtil.createRequestBase(requestAction);
+        if(outputFile != null && !outputFile.isEmpty()) {
+            FilePath outputFilePath = build.getWorkspace().child(outputFile);
+            clientUtil.setOutputFile(outputFilePath);
+        }
+        final HttpRequestBase httpRequestBase = clientUtil.createRequestBase(requestAction);
+
+        if (contentType != MimeType.NOT_SET) {
+            httpRequestBase.setHeader("Content-type", contentType.getValue());
+            logger.println("Content-type: " + contentType);
+        }
+
+        if (acceptType != MimeType.NOT_SET){
+            httpRequestBase.setHeader("Accept", acceptType.getValue());
+            logger.println("Accept: " + acceptType);
+        }
+
+        if(customHeader != null && !customHeader.isEmpty()) {
+            String[] parts = customHeader.split(":");
+            httpRequestBase.setHeader(parts[0], parts[1]);
+            logger.println(customHeader);
+        }
 
         if (authentication != null) {
             final Authenticator auth = getDescriptor().getAuthentication(authentication);
@@ -117,13 +154,10 @@ public class HttpRequest extends Builder {
             }
 
             logger.println("Using authentication: " + auth.getKeyName());
-            auth.authenticate(httpclient, method, logger);
+            auth.authenticate(httpclient, httpRequestBase, logger);
         }
 	
-        boolean tmpLogResponseBody = logResponseBody != null
-        ? logResponseBody : getDescriptor().isDefaultLogResponseBody();	
-
-        final HttpResponse execute = clientUtil.execute(httpclient, method, logger, tmpLogResponseBody);
+        final HttpResponse execute = clientUtil.execute(httpclient, httpRequestBase, logger, consoleLogResponseBody);
 
         // use global configuration as default if it is unset for this job
         boolean returnCodeRelevant = returnCodeBuildRelevant != null
@@ -175,19 +209,19 @@ public class HttpRequest extends Builder {
         private List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<BasicDigestAuthentication>();
         private List<FormAuthentication> formAuthentications = new ArrayList<FormAuthentication>();
         private boolean defaultReturnCodeBuildRelevant = true;
-	private boolean defaultLogResponseBody = true;
+    	private boolean defaultLogResponseBody = true;
 
         public DescriptorImpl() {
             load();
         }
 
-	public boolean isDefaultLogResponseBody() {
-		return defaultLogResponseBody;
-	}
+	    public boolean isDefaultLogResponseBody() {
+		    return defaultLogResponseBody;
+	    }
 
-	public void setDefaultLogResponseBody(boolean defaultLogResponseBody) {
-		this.defaultLogResponseBody = defaultLogResponseBody;
-	}
+	    public void setDefaultLogResponseBody(boolean defaultLogResponseBody) {
+		    this.defaultLogResponseBody = defaultLogResponseBody;
+	    }
 	
         public HttpMode getDefaultHttpMode() {
             return defaultHttpMode;
@@ -268,6 +302,24 @@ public class HttpRequest extends Builder {
             return items;
         }
 
+        public ListBoxModel doFillDefaultContentTypeItems() {
+            return MimeType.getContentTypeFillItems();
+        }
+
+        public ListBoxModel doFillContentTypeItems() {
+            ListBoxModel items = MimeType.getContentTypeFillItems();
+            return items;
+        }
+
+        public ListBoxModel doFillDefaultAcceptTypeItems() {
+            return MimeType.getContentTypeFillItems();
+        }
+
+        public ListBoxModel doFillAcceptTypeItems() {
+            ListBoxModel items = MimeType.getContentTypeFillItems();
+            return items;
+        }
+
         public ListBoxModel doFillAuthenticationItems() {
             ListBoxModel items = new ListBoxModel();
             items.add("");
@@ -303,22 +355,6 @@ public class HttpRequest extends Builder {
 
             return FormValidation.validateRequired(value);
         }
-        
-        public ListBoxModel doFillReturnCodeBuildRelevantItems() {
-            ListBoxModel items = new ListBoxModel();
-            items.add("Default", "");
-            items.add("Yes", "true");
-            items.add("No", "false");
-            return items;
-        }
-	
-        public ListBoxModel doFillLogResponseBodyItems() {
-            ListBoxModel items = new ListBoxModel();
-            items.add("Default", "");
-            items.add("Yes", "true");
-            items.add("No", "false");
-            return items;
-        }
-	
+
     }
 }

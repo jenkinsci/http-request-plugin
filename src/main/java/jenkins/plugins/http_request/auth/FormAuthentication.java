@@ -43,7 +43,7 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
     }
 
     public void authenticate(DefaultHttpClient client,
-            HttpRequestBase requestBase, PrintStream logger) throws IOException {
+            HttpRequestBase requestBase, PrintStream logger) throws IOException, InterruptedException {
         final HttpClientUtil clientUtil = new HttpClientUtil();
         for (RequestAction requestAction : actions) {
             final HttpRequestBase method = clientUtil.createRequestBase(requestAction);
