@@ -113,15 +113,15 @@ public class HttpClientUtil {
     }
 
     public HttpResponse execute(DefaultHttpClient client, HttpRequestBase method,
-            PrintStream logger, boolean consolLogResponseBody, int timeout) throws IOException, InterruptedException {
+            PrintStream logger, boolean consolLogResponseBody, Integer timeout) throws IOException, InterruptedException {
         doSecurity(client, method.getURI());
 
         logger.println("Sending request to url: " + method.getURI());
         
-        if (timeout > 0) {
+        if (timeout !=null) {
             client.getParams().setParameter("http.socket.timeout", timeout * 1000);
             client.getParams().setParameter("http.connection.timeout", timeout * 1000);
-            client.getParams().setParameter("http.connection-manager.timeout", new Long(timeout * 1000));
+            client.getParams().setParameter("http.connection-manager.timeout", timeout * 1000);
             client.getParams().setParameter("http.protocol.head-body-timeout", timeout * 1000);
         }
         

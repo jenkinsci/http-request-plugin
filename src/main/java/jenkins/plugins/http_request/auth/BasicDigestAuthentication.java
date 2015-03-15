@@ -46,7 +46,7 @@ public class BasicDigestAuthentication extends AbstractDescribableImpl<BasicDige
     }
 
     public void authenticate(DefaultHttpClient client,
-            HttpRequestBase requestBase, PrintStream logger, int timeout) {
+            HttpRequestBase requestBase, PrintStream logger, Integer timeout) {
         client.getCredentialsProvider().setCredentials(
                 new AuthScope(requestBase.getURI().getHost(), requestBase.getURI().getPort()),
                 new UsernamePasswordCredentials(userName, password));
