@@ -5,6 +5,9 @@
     <f:entry field="httpMode" title="HTTP mode">
         <f:select />
     </f:entry>
+    <f:entry field="passBuildParameters" title="Pass build params to URL?">
+        <f:booleanRadio />
+    </f:entry>
 
     <f:advanced>
         <f:entry title="Name" field="name">
@@ -27,9 +30,6 @@
         </f:entry>
 
         <f:entry field="consoleLogResponseBody" title="Response body in console?">
-            <f:booleanRadio />
-        </f:entry>
-        <f:entry field="passBuildParameters" title="Pass build params to URL?">
             <f:booleanRadio />
         </f:entry>
 
