@@ -1,5 +1,7 @@
 package jenkins.plugins.http_request;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -11,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.Range;
+import com.google.common.collect.Ranges;
+import com.google.common.primitives.Ints;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -53,19 +58,24 @@ public class HttpRequest extends Builder {
     private MimeType acceptType;
     private final String outputFile;
     private final String authentication;
-    private Boolean returnCodeBuildRelevant;
     private Boolean consoleLogResponseBody;
     private Boolean passBuildParameters;
     private List<NameValuePair> customHeaders = new ArrayList<NameValuePair>();
-    private Boolean accept200Only;
     private final Integer timeout;
+    private String validResponseCodes;
+
+    /**
+     * @deprecated only to deserialize and serialize in a new form
+     */
+    @Deprecated
+    private Boolean returnCodeBuildRelevant;
 
     @DataBoundConstructor
     public HttpRequest(String name, String url, HttpMode httpMode, String authentication, MimeType contentType,
                        MimeType acceptType, String outputFile, Boolean returnCodeBuildRelevant,
                        Boolean consoleLogResponseBody, Boolean passBuildParameters,
-                       List<NameValuePair> customHeaders,
-                       Boolean accept200Only, Integer timeout)
+                       List<NameValuePair> customHeaders, Integer timeout,
+                       String validResponseCodes)
                        throws URISyntaxException {
         this.name = name;
         this.url = url;
@@ -74,13 +84,13 @@ public class HttpRequest extends Builder {
         this.outputFile = outputFile;
         this.httpMode = httpMode;
         this.customHeaders = customHeaders;
+        this.validResponseCodes = validResponseCodes;
         this.authentication = Util.fixEmpty(authentication);
-        this.returnCodeBuildRelevant = returnCodeBuildRelevant;
         this.consoleLogResponseBody = consoleLogResponseBody;
         this.passBuildParameters = passBuildParameters;
-
-        this.accept200Only = accept200Only;
         this.timeout = timeout;
+
+        this.returnCodeBuildRelevant = returnCodeBuildRelevant;
     }
 
     @Initializer(before = InitMilestone.PLUGINS_STARTED)
@@ -89,8 +99,13 @@ public class HttpRequest extends Builder {
         Items.XSTREAM2.aliasField("consoleLogResponseBody", HttpRequest.class, "consoleLogResponseBody");
         Items.XSTREAM2.alias("pair", NameValuePair.class);
     }
-    
+
     public Object readResolve() {
+        defineDefaultConfigurations();
+        return this;
+    }
+
+    public void defineDefaultConfigurations() {
         returnCodeBuildRelevant = Objects.firstNonNull(returnCodeBuildRelevant, getDescriptor().defaultReturnCodeBuildRelevant);
         consoleLogResponseBody = Objects.firstNonNull(consoleLogResponseBody, getDescriptor().defaultLogResponseBody);
         httpMode = Objects.firstNonNull(httpMode, getDescriptor().defaultHttpMode);
@@ -100,9 +115,9 @@ public class HttpRequest extends Builder {
         passBuildParameters = Objects.firstNonNull(passBuildParameters, true);
         customHeaders = Objects.firstNonNull(customHeaders, Collections.<NameValuePair>emptyList());
 
-        accept200Only = Objects.firstNonNull(accept200Only, false);
-
-        return this;
+        if (validResponseCodes == null || validResponseCodes.trim().isEmpty()) {
+            validResponseCodes = returnCodeBuildRelevant ? "100:399" : "100:599";
+        }
     }
 
     public Boolean getConsoleLogResponseBody() {
@@ -137,28 +152,26 @@ public class HttpRequest extends Builder {
         return authentication;
     }
 
-    public Boolean getReturnCodeBuildRelevant() {
-        return returnCodeBuildRelevant;
-    }
-
     public Boolean getPassBuildParameters() {
         return passBuildParameters;
-    }
-
-    public Boolean getAccept200Only() {
-        return accept200Only;
     }
 
     public String getName() {
         return name;
     }
-    
+
     public Integer getTimeout() {
         return timeout;
     }
 
+    public String getValidResponseCodes() {
+        return validResponseCodes;
+    }
+
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
+        defineDefaultConfigurations();
+
         final PrintStream logger = listener.getLogger();
 
         if (!name.isEmpty())  {
@@ -212,17 +225,22 @@ public class HttpRequest extends Builder {
             logger.println("Using authentication: " + auth.getKeyName());
             auth.authenticate(httpclient, httpRequestBase, logger, timeout);
         }
-        
+
         final HttpResponse execute = clientUtil.execute(httpclient, httpRequestBase, logger, consoleLogResponseBody, timeout);
 
-        if (returnCodeBuildRelevant) {
-            // return false if status from 400(client error) to 599(server error)
-            return !((accept200Only && execute.getStatusLine().getStatusCode() != 200) || (!accept200Only && execute.getStatusLine().getStatusCode() >= 400 && execute.getStatusLine().getStatusCode() <= 599));
-        } else {
-            // ignore status code from HTTP response
-            logger.println("Ignoring return code");
-            return true;
+        boolean successCode = false;
+        List<Range<Integer>> ranges = getDescriptor().parseToRange(validResponseCodes);
+        for (Range<Integer> range : ranges) {
+            if (range.contains(execute.getStatusLine().getStatusCode())) {
+                logger.println("Success code from " + range);
+                successCode = true;
+                break;
+            }
         }
+        if (!successCode) {
+            logger.println("Fail: Any code list (" + ranges + ") match the returned code " + execute.getStatusLine().getStatusCode());
+        }
+        return successCode;
     }
 
     private List<NameValuePair> createParameters(
@@ -399,6 +417,42 @@ public class HttpRequest extends Builder {
             }
 
             return FormValidation.validateRequired(value);
+        }
+
+        List<Range<Integer>> parseToRange(String value) {
+            List<Range<Integer>> validRanges = new ArrayList<Range<Integer>>();
+
+            String[] codes = value.split(",");
+            for (String code : codes) {
+                String[] fromTo = code.trim().split(":");
+                checkArgument(fromTo.length <= 2, "Code %s should be an interval from:to or a single value", code);
+                Integer from = Ints.tryParse(fromTo[0]);
+                checkArgument(from !=null , "Invalid number %s", fromTo[0]);
+
+                Integer to = from;
+                if (fromTo.length != 1) {
+                    to = Ints.tryParse(fromTo[1]);
+                    checkArgument(to != null, "Invalid number %s", fromTo[1]);
+                }
+
+                checkArgument(from <= to, "Interval %s should be FROM less than TO", code);
+                validRanges.add(Ranges.closed(from, to));
+            }
+
+            return validRanges;
+        }
+
+        public FormValidation doCheckValidResponseCodes(@QueryParameter String value) {
+            if (value == null || value.trim().isEmpty()) {
+                return FormValidation.ok();
+            }
+
+            try {
+                parseToRange(value);
+            } catch (IllegalArgumentException iae) {
+                return FormValidation.error(iae.getMessage());
+            }
+            return FormValidation.ok();
         }
     }
 }
