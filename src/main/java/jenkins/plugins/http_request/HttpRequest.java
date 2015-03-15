@@ -182,21 +182,13 @@ public class HttpRequest extends Builder {
         final SystemDefaultHttpClient httpclient = new SystemDefaultHttpClient();
 
         final EnvVars envVars = build.getEnvironment(listener);
-
-        if (!envVars.isEmpty())
-            logger.println("Parameters: ");
-
         final List<NameValuePair> params = createParameters(build, logger, envVars);
         String evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
         logger.println(String.format("URL: %s", evaluatedUrl));
-        final RequestAction requestAction;
-        if (passBuildParameters) {
-            requestAction = new RequestAction(name, new URL(evaluatedUrl), httpMode, params);
-        } else {
-            requestAction = new RequestAction(name, new URL(evaluatedUrl), httpMode, null);
-        }
+
+        final RequestAction requestAction = new RequestAction(name, new URL(evaluatedUrl), httpMode, params);
         final HttpClientUtil clientUtil = new HttpClientUtil();
-        if(outputFile != null && !outputFile.isEmpty()) {
+        if (outputFile != null && !outputFile.isEmpty()) {
             FilePath outputFilePath = build.getWorkspace().child(outputFile);
             clientUtil.setOutputFile(outputFilePath);
         }
@@ -246,6 +238,13 @@ public class HttpRequest extends Builder {
     private List<NameValuePair> createParameters(
             AbstractBuild<?, ?> build, PrintStream logger,
             EnvVars envVars) {
+        if (!passBuildParameters) {
+            return Collections.emptyList();
+        }
+        if (!envVars.isEmpty()) {
+            logger.println("Parameters: ");
+        }
+
         final VariableResolver<String> vars = build.getBuildVariableResolver();
 
         List<NameValuePair> l = new ArrayList<NameValuePair>();

@@ -39,9 +39,7 @@ public class HttpClientUtil {
         this.outputFilePath = filePath;
     }
 
-    public HttpRequestBase createRequestBase(RequestAction requestAction) throws
-            UnsupportedEncodingException, IOException {
-
+    public HttpRequestBase createRequestBase(RequestAction requestAction) throws IOException {
         if (requestAction.getMode() == HttpMode.HEAD) {
             return makeHead(requestAction);
 
@@ -66,8 +64,7 @@ public class HttpClientUtil {
         return new UrlEncodedFormEntity(params);
     }
 
-    public HttpGet makeGet(RequestAction requestAction) throws
-            UnsupportedEncodingException, IOException {
+    public HttpGet makeGet(RequestAction requestAction) throws IOException {
         final String url = requestAction.getUrl().toString();
         final StringBuilder sb = new StringBuilder(url);
 
