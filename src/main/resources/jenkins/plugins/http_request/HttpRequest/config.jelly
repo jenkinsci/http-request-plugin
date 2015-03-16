@@ -10,9 +10,6 @@
     </f:entry>
 
     <f:advanced>
-        <f:entry title="Name" field="name">
-            <f:textbox />
-        </f:entry>
         <f:entry field="validResponseCodes" title="Response codes expected">
             <f:textbox />
         </f:entry>

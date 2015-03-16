@@ -51,7 +51,6 @@ import org.kohsuke.stapler.StaplerRequest;
  */
 public class HttpRequest extends Builder {
 
-    private final String name;
     private final String url;
     private HttpMode httpMode;
     private MimeType contentType;
@@ -71,13 +70,12 @@ public class HttpRequest extends Builder {
     private Boolean returnCodeBuildRelevant;
 
     @DataBoundConstructor
-    public HttpRequest(String name, String url, HttpMode httpMode, String authentication, MimeType contentType,
+    public HttpRequest(String url, HttpMode httpMode, String authentication, MimeType contentType,
                        MimeType acceptType, String outputFile, Boolean returnCodeBuildRelevant,
                        Boolean consoleLogResponseBody, Boolean passBuildParameters,
                        List<NameValuePair> customHeaders, Integer timeout,
                        String validResponseCodes)
                        throws URISyntaxException {
-        this.name = name;
         this.url = url;
         this.contentType = contentType;
         this.acceptType = acceptType;
@@ -156,10 +154,6 @@ public class HttpRequest extends Builder {
         return passBuildParameters;
     }
 
-    public String getName() {
-        return name;
-    }
-
     public Integer getTimeout() {
         return timeout;
     }
@@ -173,10 +167,6 @@ public class HttpRequest extends Builder {
         defineDefaultConfigurations();
 
         final PrintStream logger = listener.getLogger();
-
-        if (!name.isEmpty())  {
-            logger.println("Name: " + name);
-        }
         logger.println("HttpMode: " + httpMode);
 
         final SystemDefaultHttpClient httpclient = new SystemDefaultHttpClient();
@@ -186,7 +176,7 @@ public class HttpRequest extends Builder {
         String evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
         logger.println(String.format("URL: %s", evaluatedUrl));
 
-        final RequestAction requestAction = new RequestAction(name, new URL(evaluatedUrl), httpMode, params);
+        final RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, params);
         final HttpClientUtil clientUtil = new HttpClientUtil();
         if (outputFile != null && !outputFile.isEmpty()) {
             FilePath outputFilePath = build.getWorkspace().child(outputFile);
