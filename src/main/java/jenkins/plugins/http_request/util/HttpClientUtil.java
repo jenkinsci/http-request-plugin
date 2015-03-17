@@ -26,6 +26,7 @@ import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
 /**
@@ -109,7 +110,7 @@ public class HttpClientUtil {
         return httpDelete;
     }
 
-    public HttpResponse execute(DefaultHttpClient client, HttpRequestBase method,
+    public HttpResponse execute(DefaultHttpClient client, HttpContext context, HttpRequestBase method,
             PrintStream logger, boolean consolLogResponseBody, Integer timeout) throws IOException, InterruptedException {
         doSecurity(client, method.getURI());
 
@@ -122,7 +123,7 @@ public class HttpClientUtil {
             client.getParams().setParameter("http.protocol.head-body-timeout", timeout * 1000);
         }
         
-        final HttpResponse httpResponse = client.execute(method);
+        final HttpResponse httpResponse = client.execute(method, context);
         logger.println("Response Code: " + httpResponse.getStatusLine());
         
         if (consolLogResponseBody || outputFilePath != null) {

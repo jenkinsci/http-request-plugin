@@ -17,6 +17,7 @@ import jenkins.plugins.http_request.util.RequestAction;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.HttpContext;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -43,13 +44,13 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
         return Collections.unmodifiableList(actions);
     }
 
-    public void authenticate(DefaultHttpClient client,
+    public void authenticate(DefaultHttpClient client, HttpContext context,
             HttpRequestBase requestBase, PrintStream logger, Integer timeout) throws IOException, InterruptedException {
         final HttpClientUtil clientUtil = new HttpClientUtil();
         for (RequestAction requestAction : actions) {
             final HttpRequestBase method = clientUtil.createRequestBase(requestAction);
 
-            final HttpResponse execute = clientUtil.execute(client, method, logger, true, timeout);
+            final HttpResponse execute = clientUtil.execute(client, context, method, logger, true, timeout);
             //from 400(client error) to 599(server error)
             if ((execute.getStatusLine().getStatusCode() >= 400
                     && execute.getStatusLine().getStatusCode() <= 599)) {

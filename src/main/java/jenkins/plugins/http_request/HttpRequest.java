@@ -41,7 +41,10 @@ import jenkins.plugins.http_request.util.RequestAction;
 import net.sf.json.JSONObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.SystemDefaultHttpClient;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -169,7 +172,8 @@ public class HttpRequest extends Builder {
         final PrintStream logger = listener.getLogger();
         logger.println("HttpMode: " + httpMode);
 
-        final SystemDefaultHttpClient httpclient = new SystemDefaultHttpClient();
+        final DefaultHttpClient httpclient = new SystemDefaultHttpClient();
+        final HttpContext context = new BasicHttpContext();
 
         final EnvVars envVars = build.getEnvironment(listener);
         final List<NameValuePair> params = createParameters(build, logger, envVars);
@@ -205,10 +209,10 @@ public class HttpRequest extends Builder {
             }
 
             logger.println("Using authentication: " + auth.getKeyName());
-            auth.authenticate(httpclient, httpRequestBase, logger, timeout);
+            auth.authenticate(httpclient, context, httpRequestBase, logger, timeout);
         }
 
-        final HttpResponse execute = clientUtil.execute(httpclient, httpRequestBase, logger, consoleLogResponseBody, timeout);
+        final HttpResponse execute = clientUtil.execute(httpclient, context, httpRequestBase, logger, consoleLogResponseBody, timeout);
 
         boolean successCode = false;
         List<Range<Integer>> ranges = getDescriptor().parseToRange(validResponseCodes);
