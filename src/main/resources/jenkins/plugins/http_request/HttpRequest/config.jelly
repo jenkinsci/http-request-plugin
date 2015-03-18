@@ -13,6 +13,9 @@
         <f:entry field="validResponseCodes" title="Response codes expected">
             <f:textbox />
         </f:entry>
+         <f:entry field="validResponseContent" title="Response content expected">
+                    <f:textbox />
+                </f:entry>
         <f:entry field="acceptType" title="Accept">
             <f:select />
         </f:entry>

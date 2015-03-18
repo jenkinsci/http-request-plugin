@@ -1,33 +1,23 @@
 package jenkins.plugins.http_request.util;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.List;
-
 import hudson.FilePath;
 import jenkins.plugins.http_request.HttpMode;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.*;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
+
+import java.io.*;
+import java.net.URI;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.List;
 
 /**
  * @author Janario Oliveira
@@ -111,7 +101,7 @@ public class HttpClientUtil {
     }
 
     public HttpResponse execute(DefaultHttpClient client, HttpContext context, HttpRequestBase method,
-            PrintStream logger, boolean consolLogResponseBody, Integer timeout) throws IOException, InterruptedException {
+                                PrintStream logger, Integer timeout) throws IOException, InterruptedException {
         doSecurity(client, method.getURI());
 
         logger.println("Sending request to url: " + method.getURI());
@@ -126,17 +116,6 @@ public class HttpClientUtil {
         final HttpResponse httpResponse = client.execute(method, context);
         logger.println("Response Code: " + httpResponse.getStatusLine());
         
-        if (consolLogResponseBody || outputFilePath != null) {
-            String httpData = EntityUtils.toString(httpResponse.getEntity());
-            if (consolLogResponseBody) {
-                logger.println("Response: \n" + httpData);
-            }
-            if (outputFilePath != null) {
-                outputFilePath.write().write(httpData.getBytes());
-            }
-        }
-        EntityUtils.consume(httpResponse.getEntity());
-
         return httpResponse;
     }
 
@@ -157,7 +136,7 @@ public class HttpClientUtil {
             final int port = uri.getPort() < 0 ? 443 : uri.getPort();
             schemeRegistry.register(new Scheme(uri.getScheme(), port, ssf));
         } catch (Exception ex) {
-            throw new IOException("Error unknow", ex);
+            throw new IOException("Error unknown", ex);
         }
     }
 }
