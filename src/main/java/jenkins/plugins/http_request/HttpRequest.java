@@ -1,12 +1,29 @@
 package jenkins.plugins.http_request;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Range;
 import com.google.common.collect.Ranges;
 import com.google.common.primitives.Ints;
-import hudson.*;
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.FilePath;
+import hudson.Launcher;
+import hudson.Util;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
 import hudson.model.AbstractBuild;
@@ -35,18 +52,6 @@ import org.apache.http.util.EntityUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
-
-import javax.servlet.ServletException;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * @author Janario Oliveira
@@ -244,7 +249,15 @@ public class HttpRequest extends Builder {
                 logger.println("Response: \n" + responseContentSupplier.get());
             }
             if (outputFilePath != null && responseContentSupplier.get() != null) {
-                outputFilePath.write().write(responseContentSupplier.get().getBytes());
+                OutputStream write = null;
+                try {
+                    write = outputFilePath.write();
+                    write.write(responseContentSupplier.get().getBytes());
+                } finally {
+                    if (write != null) {
+                        write.close();
+                    }
+                }
             }
         }
     }
