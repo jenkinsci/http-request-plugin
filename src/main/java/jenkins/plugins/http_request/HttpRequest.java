@@ -3,15 +3,10 @@ package jenkins.plugins.http_request;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import javax.servlet.ServletException;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
@@ -42,8 +37,14 @@ import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.NameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
 import net.sf.json.JSONObject;
+import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.BasicHttpEntity;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.SystemDefaultHttpClient;
 import org.apache.http.protocol.BasicHttpContext;
@@ -71,6 +72,11 @@ public class HttpRequest extends Builder {
     private String validResponseCodes;
     private String validResponseContent;
 
+    private String team;
+    private String application;
+    private String artifactName;
+    private String artifactPath;
+    private String baseUrl = "http://localhost:9000";
     /**
      * @deprecated only to deserialize and serialize in a new form
      */
@@ -98,6 +104,11 @@ public class HttpRequest extends Builder {
         this.timeout = timeout;
 
         this.returnCodeBuildRelevant = returnCodeBuildRelevant;
+
+        this.team = "testTeam";
+        this.application = "testApplication";
+        this.artifactName = "testArtifactName.zip";
+        this.artifactPath = "testArtifactName.zip";
     }
 
     @Initializer(before = InitMilestone.PLUGINS_STARTED)
@@ -177,43 +188,88 @@ public class HttpRequest extends Builder {
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
-        defineDefaultConfigurations();
+//        defineDefaultConfigurations();
+//
+//        final PrintStream logger = listener.getLogger();
+//        logger.println("HttpMode: " + httpMode);
+//
+//
+//        final EnvVars envVars = build.getEnvironment(listener);
+//        final List<NameValuePair> params = createParameters(build, logger, envVars);
+//        String evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
+//        logger.println(String.format("URL: %s", evaluatedUrl));
+//
+//
+//        DefaultHttpClient httpclient = new SystemDefaultHttpClient();
+//        RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, params);
+//        HttpClientUtil clientUtil = new HttpClientUtil();
+//        HttpRequestBase httpRequestBase = getHttpRequestBase(logger, requestAction, clientUtil);
+//        HttpContext context = new BasicHttpContext();
+//
+//        if (authentication != null) {
+//            final Authenticator auth = getDescriptor().getAuthentication(authentication);
+//            if (auth == null) {
+//                throw new IllegalStateException("Authentication " + authentication + " doesn't exists anymore");
+//            }
+//
+//            logger.println("Using authentication: " + auth.getKeyName());
+//            auth.authenticate(httpclient, context, httpRequestBase, logger, timeout);
+//        }
+//        final HttpResponse response = clientUtil.execute(httpclient, context, httpRequestBase, logger, timeout);
+//
+//        try {
+//            ResponseContentSupplier responseContentSupplier = new ResponseContentSupplier(response);
+//            logResponse(build, logger, responseContentSupplier);
+//
+//            return responseCodeIsValid(response, logger) && contentIsValid(responseContentSupplier, logger);
+//        } finally {
+//            EntityUtils.consume(response.getEntity());
+//        }
+        //return createNewArtifact();
+        return true;
+    }
 
-        final PrintStream logger = listener.getLogger();
-        logger.println("HttpMode: " + httpMode);
-
-
-        final EnvVars envVars = build.getEnvironment(listener);
-        final List<NameValuePair> params = createParameters(build, logger, envVars);
-        String evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
-        logger.println(String.format("URL: %s", evaluatedUrl));
-
-
-        DefaultHttpClient httpclient = new SystemDefaultHttpClient();
-        RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, params);
-        HttpClientUtil clientUtil = new HttpClientUtil();
-        HttpRequestBase httpRequestBase = getHttpRequestBase(logger, requestAction, clientUtil);
-        HttpContext context = new BasicHttpContext();
-
-        if (authentication != null) {
-            final Authenticator auth = getDescriptor().getAuthentication(authentication);
-            if (auth == null) {
-                throw new IllegalStateException("Authentication " + authentication + " doesn't exists anymore");
-            }
-
-            logger.println("Using authentication: " + auth.getKeyName());
-            auth.authenticate(httpclient, context, httpRequestBase, logger, timeout);
+    private boolean createNewArtifact() throws IOException {
+        DefaultHttpClient client = new DefaultHttpClient();
+        HttpPost metadataPost = getMetadataPostRequest();
+        HttpResponse metadataResponse = client.execute(metadataPost);
+        if(requestWasSuccessful(metadataResponse)) {
+            HttpPost artifactPost = getArtifactPostRequest();
+            HttpResponse artifactResponse = client.execute(artifactPost);
+            return requestWasSuccessful(artifactResponse);
         }
-        final HttpResponse response = clientUtil.execute(httpclient, context, httpRequestBase, logger, timeout);
-
-        try {
-            ResponseContentSupplier responseContentSupplier = new ResponseContentSupplier(response);
-            logResponse(build, logger, responseContentSupplier);
-
-            return responseCodeIsValid(response, logger) && contentIsValid(responseContentSupplier, logger);
-        } finally {
-            EntityUtils.consume(response.getEntity());
+        else {
+            return false;
         }
+    }
+
+    private Boolean requestWasSuccessful(HttpResponse response) {
+        return response.getStatusLine().getStatusCode() == 200;
+    }
+
+    private HttpPost getArtifactPostRequest() {
+        String artifactPostUrl = String.format(baseUrl + "/artifact/%s/%s/%s", team, application, artifactName);
+        HttpPost artifactPost = new HttpPost(artifactPostUrl);
+        File artifact = new File(artifactPath);
+        HttpEntity body = MultipartEntityBuilder.create()
+                .addBinaryBody(artifactName, artifact)
+                .build();
+        artifactPost.setEntity(body);
+        artifactPost.addHeader("content-type", "multipart/form-data");
+        return artifactPost;
+    }
+
+    private HttpPost getMetadataPostRequest() throws UnsupportedEncodingException {
+        HttpPost post = new HttpPost(baseUrl + "/metadata");
+        StringEntity body = new StringEntity(createMetadataPostBody());
+        post.addHeader("content-type", "application/json");
+        post.setEntity(body);
+        return post;
+    }
+
+    private String createMetadataPostBody() {
+        return String.format("\"name\":\"%s\",\"state\":\"test\",\"team\":\"%s\",\"application\":\"%s\",\"tags\":{}}",
+                artifactName, team, application);
     }
 
     private boolean contentIsValid(ResponseContentSupplier responseContentSupplier, PrintStream logger) {
@@ -324,6 +380,7 @@ public class HttpRequest extends Builder {
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
         private HttpMode defaultHttpMode = HttpMode.POST;
+        private String defaultDeploymentAction = "Create new artifact";
         private List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<BasicDigestAuthentication>();
         private List<FormAuthentication> formAuthentications = new ArrayList<FormAuthentication>();
         private boolean defaultReturnCodeBuildRelevant = true;
@@ -411,6 +468,15 @@ public class HttpRequest extends Builder {
 
         public ListBoxModel doFillDefaultHttpModeItems() {
             return HttpMode.getFillItems();
+        }
+
+        public ListBoxModel doFillDefaultDeploymentActionItems() {
+            ListBoxModel items = new ListBoxModel();
+            List<String> vals = Arrays.asList("Create new artifact", "Update state to production");
+            for (String action : vals) {
+                items.add(action);
+            }
+            return items;
         }
 
         public ListBoxModel doFillHttpModeItems() {

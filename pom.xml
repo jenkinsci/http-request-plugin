@@ -36,6 +36,12 @@
             <artifactId>httpclient</artifactId>
             <version>4.2.2</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpmime</artifactId>
+            <version>4.3.6</version>
+        </dependency>
         
         <dependency>
             <groupId>org.slf4j</groupId>
