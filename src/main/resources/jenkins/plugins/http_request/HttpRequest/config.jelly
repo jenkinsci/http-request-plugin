@@ -15,7 +15,7 @@
       <f:textbox />
    </f:entry>
    <f:entry title="Tags">
-       <f:repeatable field="customHeaders">
+       <f:repeatable field="tags">
            <table width="100%">
                <f:entry title="Name" field="name">
                    <f:textbox/>
@@ -30,8 +30,5 @@
                </f:entry>
            </table>
        </f:repeatable>
-   </f:entry>
-   <f:entry field="deploymentAction" title="Deployment Action">
-      <f:select />
    </f:entry>
 </j:jelly>

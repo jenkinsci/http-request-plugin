@@ -6,8 +6,5 @@
         <f:entry field="team" title="Team">
             <f:textbox />
         </f:entry>
-        <f:entry field="defaultDeploymentAction" title="Deployment Action">
-            <f:select />
-        </f:entry>
     </f:section>
 </j:jelly>
