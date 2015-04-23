@@ -7,11 +7,11 @@
         <version>1.509.4</version>
     </parent>
     
-    <artifactId>http_request</artifactId>
+    <artifactId>search_deployment</artifactId>
     <version>1.8.9-SNAPSHOT</version>
     <packaging>hpi</packaging>
-    <name>HTTP Request Plugin</name>
-    <url>http://wiki.jenkins-ci.org/display/JENKINS/HTTP+Request+Plugin</url>
+    <name>Search Deployment Plugin</name>
+    <!--<url>http://wiki.jenkins-ci.org/display/JENKINS/HTTP+Request+Plugin</url>-->
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -49,17 +49,17 @@
             <version>1.7.5</version>
         </dependency>
     </dependencies>
-  
-    <scm>
-        <connection>scm:git:ssh://github.com/jenkinsci/http-request-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/http-request-plugin.git</developerConnection>
-        <url>https://github.com/jenkinsci/http-request-plugin</url>
-    </scm>
-    <developers>
-        <developer>
-            <id>janario</id>
-            <name>Janario Oliveira</name>
-            <email>janarioliver@gmail.com</email>
-        </developer>
-    </developers>
+  <!---->
+    <!--<scm>-->
+        <!--<connection>scm:git:ssh://github.com/jenkinsci/http-request-plugin.git</connection>-->
+        <!--<developerConnection>scm:git:ssh://git@github.com/jenkinsci/http-request-plugin.git</developerConnection>-->
+        <!--<url>https://github.com/jenkinsci/http-request-plugin</url>-->
+    <!--</scm>-->
+    <!--<developers>-->
+        <!--<developer>-->
+            <!--<id>janario</id>-->
+            <!--<name>Janario Oliveira</name>-->
+            <!--<email>janarioliver@gmail.com</email>-->
+        <!--</developer>-->
+    <!--</developers>-->
 </project>

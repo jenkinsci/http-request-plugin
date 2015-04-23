@@ -5,18 +5,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 import javax.servlet.ServletException;
 import java.io.*;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.*;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Range;
 import com.google.common.collect.Ranges;
 import com.google.common.primitives.Ints;
-import hudson.EnvVars;
 import hudson.Extension;
-import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
 import hudson.init.InitMilestone;
@@ -33,22 +28,16 @@ import hudson.util.VariableResolver;
 import jenkins.plugins.http_request.auth.Authenticator;
 import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
-import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.NameValuePair;
-import jenkins.plugins.http_request.util.RequestAction;
 import net.sf.json.JSONObject;
-import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.SystemDefaultHttpClient;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -59,56 +48,27 @@ import org.kohsuke.stapler.StaplerRequest;
  */
 public class HttpRequest extends Builder {
 
-    private final String url;
-    private HttpMode httpMode;
-    private MimeType contentType;
-    private MimeType acceptType;
-    private final String outputFile;
-    private final String authentication;
-    private Boolean consoleLogResponseBody;
-    private Boolean passBuildParameters;
-    private List<NameValuePair> customHeaders = new ArrayList<NameValuePair>();
-    private final Integer timeout;
-    private String validResponseCodes;
-    private String validResponseContent;
-
     private String team;
     private String application;
     private String artifactName;
-    private String artifactPath;
+    private String artifactSource;
+    private String state;
     private String baseUrl = "http://localhost:9000";
-    /**
-     * @deprecated only to deserialize and serialize in a new form
-     */
-    @Deprecated
-    private Boolean returnCodeBuildRelevant;
 
     @DataBoundConstructor
-    public HttpRequest(String url, HttpMode httpMode, String authentication, MimeType contentType,
-                       MimeType acceptType, String outputFile, Boolean returnCodeBuildRelevant,
-                       Boolean consoleLogResponseBody, Boolean passBuildParameters,
-                       List<NameValuePair> customHeaders, Integer timeout,
-                       String validResponseCodes, String validResponseContent)
+    public HttpRequest(String team, String application, String artifactName, String state, String artifactSource)
             throws URISyntaxException {
-        this.url = url;
-        this.contentType = contentType;
-        this.acceptType = acceptType;
-        this.outputFile = outputFile;
-        this.httpMode = httpMode;
-        this.customHeaders = customHeaders;
-        this.validResponseCodes = validResponseCodes;
-        this.validResponseContent = validResponseContent;
-        this.authentication = Util.fixEmpty(authentication);
-        this.consoleLogResponseBody = consoleLogResponseBody;
-        this.passBuildParameters = passBuildParameters;
-        this.timeout = timeout;
 
-        this.returnCodeBuildRelevant = returnCodeBuildRelevant;
+        this.team = team;
+        this.application = application;
+        this.artifactName = artifactName;
+        this.state = state;
+        this.artifactSource = artifactSource;
 
-        this.team = "testTeam";
-        this.application = "testApplication";
-        this.artifactName = "testArtifactName.zip";
-        this.artifactPath = "testArtifactName.zip";
+//        this.team = "testTeam";
+//        this.application = "testApplication";
+//        this.artifactName = "testArtifactName.zip";
+//        this.artifactSource = "testArtifactName.zip";
     }
 
     @Initializer(before = InitMilestone.PLUGINS_STARTED)
@@ -116,74 +76,6 @@ public class HttpRequest extends Builder {
         Items.XSTREAM2.aliasField("logResponseBody", HttpRequest.class, "consoleLogResponseBody");
         Items.XSTREAM2.aliasField("consoleLogResponseBody", HttpRequest.class, "consoleLogResponseBody");
         Items.XSTREAM2.alias("pair", NameValuePair.class);
-    }
-
-    public Object readResolve() {
-        defineDefaultConfigurations();
-        return this;
-    }
-
-    public void defineDefaultConfigurations() {
-        returnCodeBuildRelevant = Objects.firstNonNull(returnCodeBuildRelevant, getDescriptor().defaultReturnCodeBuildRelevant);
-        consoleLogResponseBody = Objects.firstNonNull(consoleLogResponseBody, getDescriptor().defaultLogResponseBody);
-        httpMode = Objects.firstNonNull(httpMode, getDescriptor().defaultHttpMode);
-
-        contentType = Objects.firstNonNull(contentType, MimeType.NOT_SET);
-        acceptType = Objects.firstNonNull(acceptType, MimeType.NOT_SET);
-        passBuildParameters = Objects.firstNonNull(passBuildParameters, true);
-        customHeaders = Objects.firstNonNull(customHeaders, Collections.<NameValuePair>emptyList());
-
-        if (validResponseCodes == null || validResponseCodes.trim().isEmpty()) {
-            validResponseCodes = returnCodeBuildRelevant ? "100:399" : "100:599";
-        }
-    }
-
-    public Boolean getConsoleLogResponseBody() {
-        return consoleLogResponseBody;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public HttpMode getHttpMode() {
-        return httpMode;
-    }
-
-    public MimeType getContentType() {
-        return contentType;
-    }
-
-    public MimeType getAcceptType() {
-        return acceptType;
-    }
-
-    public List<NameValuePair> getCustomHeaders() {
-        return customHeaders;
-    }
-
-    public String getOutputFile() {
-        return outputFile;
-    }
-
-    public String getAuthentication() {
-        return authentication;
-    }
-
-    public Boolean getPassBuildParameters() {
-        return passBuildParameters;
-    }
-
-    public Integer getTimeout() {
-        return timeout;
-    }
-
-    public String getValidResponseCodes() {
-        return validResponseCodes;
-    }
-
-    public String getValidResponseContent() {
-        return validResponseContent;
     }
 
     @Override
@@ -225,18 +117,33 @@ public class HttpRequest extends Builder {
 //        } finally {
 //            EntityUtils.consume(response.getEntity());
 //        }
-        //return createNewArtifact();
-        return true;
+        return weather();
     }
 
     private boolean createNewArtifact() throws IOException {
-        DefaultHttpClient client = new DefaultHttpClient();
+        DefaultHttpClient client = new SystemDefaultHttpClient();
         HttpPost metadataPost = getMetadataPostRequest();
         HttpResponse metadataResponse = client.execute(metadataPost);
         if(requestWasSuccessful(metadataResponse)) {
-            HttpPost artifactPost = getArtifactPostRequest();
-            HttpResponse artifactResponse = client.execute(artifactPost);
-            return requestWasSuccessful(artifactResponse);
+//            HttpPost artifactPost = getArtifactPostRequest();
+//            HttpResponse artifactResponse = client.execute(artifactPost);
+//            return requestWasSuccessful(artifactResponse);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    private boolean weather() throws IOException {
+        DefaultHttpClient client = new SystemDefaultHttpClient();
+        HttpGet get = new HttpGet("http://api.openweathermap.org/data/2.5/weather?q=London,uk");
+        HttpResponse metadataResponse = client.execute(get);
+        if(requestWasSuccessful(metadataResponse)) {
+//            HttpPost artifactPost = getArtifactPostRequest();
+//            HttpResponse artifactResponse = client.execute(artifactPost);
+//            return requestWasSuccessful(artifactResponse);
+            return true;
         }
         else {
             return false;
@@ -250,7 +157,7 @@ public class HttpRequest extends Builder {
     private HttpPost getArtifactPostRequest() {
         String artifactPostUrl = String.format(baseUrl + "/artifact/%s/%s/%s", team, application, artifactName);
         HttpPost artifactPost = new HttpPost(artifactPostUrl);
-        File artifact = new File(artifactPath);
+        File artifact = new File(artifactSource);
         HttpEntity body = MultipartEntityBuilder.create()
                 .addBinaryBody(artifactName, artifact)
                 .build();
@@ -268,104 +175,11 @@ public class HttpRequest extends Builder {
     }
 
     private String createMetadataPostBody() {
-        return String.format("\"name\":\"%s\",\"state\":\"test\",\"team\":\"%s\",\"application\":\"%s\",\"tags\":{}}",
-                artifactName, team, application);
+        return String.format("{\"name\":\"%s\",\"state\":\"%s\",\"team\":\"%s\",\"application\":\"%s\",\"tags\":{}}",
+                artifactName, state, team, application);
     }
 
-    private boolean contentIsValid(ResponseContentSupplier responseContentSupplier, PrintStream logger) {
-        if (Strings.isNullOrEmpty(validResponseContent)) {
-            return true;
-        }
 
-        String response = responseContentSupplier.get();
-        if (!response.contains(validResponseContent)) {
-            logger.println("Fail: Response with length " + response.length() + " doesn't contain '" + validResponseContent + "'");
-            return false;
-        }
-        return true;
-    }
-
-    private boolean responseCodeIsValid(HttpResponse response, PrintStream logger) {
-        List<Range<Integer>> ranges = getDescriptor().parseToRange(validResponseCodes);
-        for (Range<Integer> range : ranges) {
-            if (range.contains(response.getStatusLine().getStatusCode())) {
-                logger.println("Success code from " + range);
-                return true;
-            }
-        }
-        logger.println("Fail: Any code list (" + ranges + ") match the returned code " + response.getStatusLine().getStatusCode());
-        return false;
-
-    }
-
-    private void logResponse(AbstractBuild<?, ?> build, PrintStream logger, ResponseContentSupplier responseContentSupplier) throws IOException, InterruptedException {
-        FilePath outputFilePath = getOutputFilePath(build);
-        if (consoleLogResponseBody || outputFilePath != null) {
-            if (consoleLogResponseBody) {
-                logger.println("Response: \n" + responseContentSupplier.get());
-            }
-            if (outputFilePath != null && responseContentSupplier.get() != null) {
-                OutputStream write = null;
-                try {
-                    write = outputFilePath.write();
-                    write.write(responseContentSupplier.get().getBytes());
-                } finally {
-                    if (write != null) {
-                        write.close();
-                    }
-                }
-            }
-        }
-    }
-
-    private HttpRequestBase getHttpRequestBase(PrintStream logger, RequestAction requestAction, HttpClientUtil clientUtil) throws IOException {
-        HttpRequestBase httpRequestBase = clientUtil.createRequestBase(requestAction);
-
-        if (contentType != MimeType.NOT_SET) {
-            httpRequestBase.setHeader("Content-type", contentType.getValue());
-            logger.println("Content-type: " + contentType);
-        }
-
-        if (acceptType != MimeType.NOT_SET) {
-            httpRequestBase.setHeader("Accept", acceptType.getValue());
-            logger.println("Accept: " + acceptType);
-        }
-
-        for (NameValuePair header : customHeaders) {
-            httpRequestBase.addHeader(header.getName(), header.getValue());
-        }
-        return httpRequestBase;
-    }
-
-    private FilePath getOutputFilePath(AbstractBuild<?, ?> build) {
-        if (outputFile != null && !outputFile.isEmpty()) {
-            return build.getWorkspace().child(outputFile);
-        }
-        return null;
-    }
-
-    private List<NameValuePair> createParameters(
-            AbstractBuild<?, ?> build, PrintStream logger,
-            EnvVars envVars) {
-        if (!passBuildParameters) {
-            return Collections.emptyList();
-        }
-        if (!envVars.isEmpty()) {
-            logger.println("Parameters: ");
-        }
-
-        final VariableResolver<String> vars = build.getBuildVariableResolver();
-
-        List<NameValuePair> l = new ArrayList<NameValuePair>();
-        for (Map.Entry<String, String> entry : build.getBuildVariables().entrySet()) {
-            String value = evaluate(entry.getValue(), vars, envVars);
-            logger.println("  " + entry.getKey() + " = " + value);
-
-            l.add(new NameValuePair(entry.getKey(), value));
-        }
-
-        return l;
-    }
 
     private String evaluate(String value, VariableResolver<String> vars, Map<String, String> env) {
         return Util.replaceMacro(Util.replaceMacro(value, vars), env);
@@ -380,7 +194,7 @@ public class HttpRequest extends Builder {
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
         private HttpMode defaultHttpMode = HttpMode.POST;
-        private String defaultDeploymentAction = "Create new artifact";
+        private String deploymentAction = "Create new artifact";
         private List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<BasicDigestAuthentication>();
         private List<FormAuthentication> formAuthentications = new ArrayList<FormAuthentication>();
         private boolean defaultReturnCodeBuildRelevant = true;
@@ -455,7 +269,7 @@ public class HttpRequest extends Builder {
 
         @Override
         public String getDisplayName() {
-            return "HTTP Request";
+            return "Search Deployment";
         }
 
         @Override
@@ -470,7 +284,7 @@ public class HttpRequest extends Builder {
             return HttpMode.getFillItems();
         }
 
-        public ListBoxModel doFillDefaultDeploymentActionItems() {
+        public ListBoxModel doFillDeploymentActionItems() {
             ListBoxModel items = new ListBoxModel();
             List<String> vals = Arrays.asList("Create new artifact", "Update state to production");
             for (String action : vals) {
