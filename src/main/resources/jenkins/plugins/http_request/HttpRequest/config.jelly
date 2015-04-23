@@ -1,57 +1,34 @@
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-    <f:entry field="url" title="URL">
-        <f:textbox />
-    </f:entry>
-    <f:entry field="httpMode" title="HTTP mode">
-        <f:select />
-    </f:entry>
-    <f:entry field="passBuildParameters" title="Pass build params to URL?">
-        <f:booleanRadio />
-    </f:entry>
-
-    <f:advanced>
-        <f:entry field="validResponseCodes" title="Response codes expected">
-            <f:textbox />
-        </f:entry>
-         <f:entry field="validResponseContent" title="Response content expected">
-                    <f:textbox />
-                </f:entry>
-        <f:entry field="acceptType" title="Accept">
-            <f:select />
-        </f:entry>
-        <f:entry field="contentType" title="Content-type">
-            <f:select />
-        </f:entry>
-        <f:entry field="outputFile" title="Output response to file">
-            <f:textbox />
-        </f:entry>
-        <f:entry field="timeout" title="Connection timeout">
-            <f:number />
-        </f:entry>
-
-        <f:entry field="consoleLogResponseBody" title="Response body in console?">
-            <f:booleanRadio />
-        </f:entry>
-
-        <f:entry field="authentication" title="Authenticate" >
-            <f:select />
-        </f:entry>
-        <f:entry title="Custom headers">
-            <f:repeatable field="customHeaders">
-                <table width="100%">
-                    <f:entry title="Header" field="name">
-                        <f:textbox/>
-                    </f:entry>
-                    <f:entry title="Value" field="value">
-                        <f:textbox/>
-                    </f:entry>
-                    <f:entry>
-                        <div align="right">
-                            <f:repeatableDeleteButton/>
-                        </div>
-                    </f:entry>
-                </table>
-            </f:repeatable>
-        </f:entry>
-    </f:advanced>
+   <f:entry field="team" title="Team">
+      <f:textbox />
+   </f:entry>
+   <f:entry field="application" title="Application">
+      <f:textbox />
+   </f:entry>
+   <f:entry field="artifactName" title="Desired Artifact Name">
+      <f:textbox />
+   </f:entry>
+   <f:entry field="artifactSource" title="Artifact Source">
+      <f:textbox />
+   </f:entry>
+   <f:entry field="state" title="State">
+      <f:textbox />
+   </f:entry>
+   <f:entry title="Tags">
+       <f:repeatable field="tags">
+           <table width="100%">
+               <f:entry title="Name" field="name">
+                   <f:textbox/>
+               </f:entry>
+               <f:entry title="Value" field="value">
+                   <f:textbox/>
+               </f:entry>
+               <f:entry>
+                   <div align="right">
+                       <f:repeatableDeleteButton/>
+                   </div>
+               </f:entry>
+           </table>
+       </f:repeatable>
+   </f:entry>
 </j:jelly>
