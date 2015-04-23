@@ -53,16 +53,18 @@ public class HttpRequest extends Builder {
     private String artifactName;
     private String artifactSource;
     private String state;
+    private List<NameValuePair> tags = new ArrayList<NameValuePair>();
     private String baseUrl = "http://localhost:9000";
 
     @DataBoundConstructor
-    public HttpRequest(String team, String application, String artifactName, String state, String artifactSource)
+    public HttpRequest(String team, String application, String artifactName, String state, List<NameValuePair> tags, String artifactSource)
             throws URISyntaxException {
 
         this.team = team;
         this.application = application;
         this.artifactName = artifactName;
         this.state = state;
+        this.tags = tags;
         this.artifactSource = artifactSource;
 
 //        this.team = "testTeam";
@@ -175,7 +177,7 @@ public class HttpRequest extends Builder {
     }
 
     private String createMetadataPostBody() {
-        return String.format("{\"name\":\"%s\",\"state\":\"%s\",\"team\":\"%s\",\"application\":\"%s\",\"tags\":{}}",
+        return String.format("{\"name\":\"%s\",\"state\":\"test\",\"team\":\"%s\",\"application\":\"%s\",\"tags\":{}}",
                 artifactName, state, team, application);
     }
 
@@ -194,7 +196,7 @@ public class HttpRequest extends Builder {
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
         private HttpMode defaultHttpMode = HttpMode.POST;
-        private String deploymentAction = "Create new artifact";
+        private String defaultDeploymentAction = "Create new artifact";
         private List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<BasicDigestAuthentication>();
         private List<FormAuthentication> formAuthentications = new ArrayList<FormAuthentication>();
         private boolean defaultReturnCodeBuildRelevant = true;
@@ -269,7 +271,7 @@ public class HttpRequest extends Builder {
 
         @Override
         public String getDisplayName() {
-            return "Search Deployment";
+            return "HTTP Request";
         }
 
         @Override
@@ -284,7 +286,7 @@ public class HttpRequest extends Builder {
             return HttpMode.getFillItems();
         }
 
-        public ListBoxModel doFillDeploymentActionItems() {
+        public ListBoxModel doFillDefaultDeploymentActionItems() {
             ListBoxModel items = new ListBoxModel();
             List<String> vals = Arrays.asList("Create new artifact", "Update state to production");
             for (String action : vals) {
