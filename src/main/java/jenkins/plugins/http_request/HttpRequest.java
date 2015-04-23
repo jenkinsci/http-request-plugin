@@ -20,8 +20,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Items;
-import hudson.tasks.BuildStepDescriptor;
-import hudson.tasks.Builder;
+import hudson.tasks.*;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.VariableResolver;
@@ -46,7 +45,7 @@ import org.kohsuke.stapler.StaplerRequest;
 /**
  * @author Janario Oliveira
  */
-public class HttpRequest extends Builder {
+public class HttpRequest extends Recorder {
 
     private String team;
     private String application;
@@ -119,7 +118,17 @@ public class HttpRequest extends Builder {
 //        } finally {
 //            EntityUtils.consume(response.getEntity());
 //        }
-        return weather();
+        final PrintStream logger = listener.getLogger();
+        logger.println("team: " + team);
+        logger.println("application: " + application);
+        logger.println("state: " + state);
+        logger.println("artifactName: " + artifactName);
+
+        return weather(logger);
+    }
+
+    public BuildStepMonitor getRequiredMonitorService() {
+        return BuildStepMonitor.NONE;
     }
 
     private boolean createNewArtifact() throws IOException {
@@ -137,10 +146,11 @@ public class HttpRequest extends Builder {
         }
     }
 
-    private boolean weather() throws IOException {
+    private boolean weather(PrintStream logger) throws IOException {
         DefaultHttpClient client = new SystemDefaultHttpClient();
         HttpGet get = new HttpGet("http://api.openweathermap.org/data/2.5/weather?q=London,uk");
         HttpResponse metadataResponse = client.execute(get);
+        logger.println("weather: " + EntityUtils.toString(metadataResponse.getEntity()));
         if(requestWasSuccessful(metadataResponse)) {
 //            HttpPost artifactPost = getArtifactPostRequest();
 //            HttpResponse artifactResponse = client.execute(artifactPost);
@@ -193,7 +203,7 @@ public class HttpRequest extends Builder {
     }
 
     @Extension
-    public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
+    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
         private HttpMode defaultHttpMode = HttpMode.POST;
         private String defaultDeploymentAction = "Create new artifact";
@@ -271,7 +281,7 @@ public class HttpRequest extends Builder {
 
         @Override
         public String getDisplayName() {
-            return "HTTP Request";
+            return "Search Deployment";
         }
 
         @Override
