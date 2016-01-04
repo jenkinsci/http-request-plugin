@@ -30,6 +30,8 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Items;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
@@ -41,6 +43,7 @@ import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.NameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
+import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -56,7 +59,7 @@ import org.kohsuke.stapler.StaplerRequest;
 /**
  * @author Janario Oliveira
  */
-public class HttpRequest extends Builder {
+public class HttpRequest extends Builder implements SimpleBuildStep {
 
     private final String url;
     private HttpMode httpMode;
@@ -181,16 +184,24 @@ public class HttpRequest extends Builder {
     }
 
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
+    public void perform(Run<?,?> run, FilePath workspace, Launcher launcher, TaskListener listener)
+    throws InterruptedException, IOException
+    {
         defineDefaultConfigurations();
 
         final PrintStream logger = listener.getLogger();
         logger.println("HttpMode: " + httpMode);
 
 
-        final EnvVars envVars = build.getEnvironment(listener);
-        final List<NameValuePair> params = createParameters(build, logger, envVars);
-        String evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
+        final EnvVars envVars = run.getEnvironment(listener);
+        final List<NameValuePair> params = createParameters(run, logger, envVars);
+        String evaluatedUrl;
+        if (run instanceof AbstractBuild<?, ?>) {
+            final AbstractBuild<?, ?> build = (AbstractBuild<?, ?>) run;
+            evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
+        } else {
+            evaluatedUrl = url;
+        }
         logger.println(String.format("URL: %s", evaluatedUrl));
 
 
@@ -213,9 +224,9 @@ public class HttpRequest extends Builder {
 
         try {
             ResponseContentSupplier responseContentSupplier = new ResponseContentSupplier(response);
-            logResponse(build, logger, responseContentSupplier);
+            logResponse(workspace, logger, responseContentSupplier);
 
-            return responseCodeIsValid(response, logger) && contentIsValid(responseContentSupplier, logger);
+            return; // How to deal with this -> responseCodeIsValid(response, logger) && contentIsValid(responseContentSupplier, logger);
         } finally {
             EntityUtils.consume(response.getEntity());
         }
@@ -247,16 +258,16 @@ public class HttpRequest extends Builder {
 
     }
 
-    private void logResponse(AbstractBuild<?, ?> build, PrintStream logger, ResponseContentSupplier responseContentSupplier) throws IOException, InterruptedException {
-        FilePath outputFilePath = getOutputFilePath(build);
-        if (consoleLogResponseBody || outputFilePath != null) {
+    private void logResponse(FilePath workspace, PrintStream logger, ResponseContentSupplier responseContentSupplier) throws IOException, InterruptedException {
+
+        if (consoleLogResponseBody || workspace != null) {
             if (consoleLogResponseBody) {
                 logger.println("Response: \n" + responseContentSupplier.get());
             }
-            if (outputFilePath != null && responseContentSupplier.get() != null) {
+            if (workspace != null && responseContentSupplier.get() != null) {
                 OutputStream write = null;
                 try {
-                    write = outputFilePath.write();
+                    write = workspace.write();
                     write.write(responseContentSupplier.get().getBytes());
                 } finally {
                     if (write != null) {
@@ -286,19 +297,18 @@ public class HttpRequest extends Builder {
         return httpRequestBase;
     }
 
-    private FilePath getOutputFilePath(AbstractBuild<?, ?> build) {
-        if (outputFile != null && !outputFile.isEmpty()) {
-            return build.getWorkspace().child(outputFile);
-        }
-        return null;
-    }
-
     private List<NameValuePair> createParameters(
-            AbstractBuild<?, ?> build, PrintStream logger,
+            Run<?, ?> run, PrintStream logger,
             EnvVars envVars) {
         if (!passBuildParameters) {
             return Collections.emptyList();
         }
+
+        if (!(run instanceof AbstractBuild<?, ?>)) {
+            return Collections.emptyList();
+        }
+        final AbstractBuild<?, ?> build = (AbstractBuild<?, ?>) run;
+
         if (!envVars.isEmpty()) {
             logger.println("Parameters: ");
         }
