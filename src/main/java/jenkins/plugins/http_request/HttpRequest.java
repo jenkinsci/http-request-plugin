@@ -3,6 +3,8 @@ package jenkins.plugins.http_request;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import javax.servlet.ServletException;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -53,6 +55,7 @@ import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -61,18 +64,20 @@ import org.kohsuke.stapler.StaplerRequest;
  */
 public class HttpRequest extends Builder implements SimpleBuildStep {
 
-    private final String url;
-    private HttpMode httpMode;
-    private MimeType contentType;
-    private MimeType acceptType;
-    private final String outputFile;
-    private final String authentication;
-    private Boolean consoleLogResponseBody;
-    private Boolean passBuildParameters;
+    private @Nonnull String url;
+    private HttpMode httpMode = DescriptorImpl.defaultHttpMode;
+    private Boolean passBuildParameters = DescriptorImpl.defaultPassBuildParameters;
+    private @CheckForNull String validResponseCodes = DescriptorImpl.defaultValidResponseCodes;
+    private @CheckForNull String validResponseContent = DescriptorImpl.defaultValidResponseContent;
+    private MimeType acceptType = DescriptorImpl.defaultAcceptType;
+    private MimeType contentType = DescriptorImpl.defaultContentType;
+    private @CheckForNull String outputFile = DescriptorImpl.defaultOutputFile;
+    private Integer timeout;
+    private Boolean consoleLogResponseBody = DescriptorImpl.defaultConsoleLogResponseBody;
+    private @CheckForNull String authentication = DescriptorImpl.defaultAuthentication;
     private List<NameValuePair> customHeaders = new ArrayList<NameValuePair>();
-    private final Integer timeout;
-    private String validResponseCodes;
-    private String validResponseContent;
+
+    private TaskListener listener;
 
     /**
      * @deprecated only to deserialize and serialize in a new form
@@ -81,26 +86,69 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
     private Boolean returnCodeBuildRelevant;
 
     @DataBoundConstructor
-    public HttpRequest(String url, HttpMode httpMode, String authentication, MimeType contentType,
-                       MimeType acceptType, String outputFile, Boolean returnCodeBuildRelevant,
-                       Boolean consoleLogResponseBody, Boolean passBuildParameters,
-                       List<NameValuePair> customHeaders, Integer timeout,
-                       String validResponseCodes, String validResponseContent)
-            throws URISyntaxException {
+    public HttpRequest(@Nonnull String url)
+    throws URISyntaxException {
         this.url = url;
-        this.contentType = contentType;
-        this.acceptType = acceptType;
-        this.outputFile = outputFile;
-        this.httpMode = httpMode;
-        this.customHeaders = customHeaders;
-        this.validResponseCodes = validResponseCodes;
-        this.validResponseContent = validResponseContent;
-        this.authentication = Util.fixEmpty(authentication);
-        this.consoleLogResponseBody = consoleLogResponseBody;
-        this.passBuildParameters = passBuildParameters;
-        this.timeout = timeout;
+    }
 
+    @DataBoundSetter
+    public void setHttpMode(HttpMode httpMode) {
+        this.httpMode = httpMode;
+    }
+
+    @DataBoundSetter
+    public void setPassBuildParameters(Boolean passBuildParameters) {
+        this.passBuildParameters = passBuildParameters;
+    }
+
+    @DataBoundSetter
+    public void setValidResponseCodes(@Nonnull String validResponseCodes) {
+        this.validResponseCodes = Util.fixNull(validResponseCodes);
+    }
+
+    @DataBoundSetter
+    public void setValidResponseContent(@CheckForNull String validResponseContent) {
+        this.validResponseContent = Util.fixNull(validResponseContent);
+    }
+
+    @DataBoundSetter
+    public void setAcceptType(MimeType acceptType) {
+        this.acceptType = acceptType;
+    }
+
+    @DataBoundSetter
+    public void setContentType(MimeType contentType) {
+        this.contentType = contentType;
+    }
+
+    @DataBoundSetter
+    public void setOutputFile(@CheckForNull String outputFile) {
+        this.outputFile = Util.fixNull(outputFile);
+    }
+
+    @DataBoundSetter
+    public void setTimeout(Integer timeout) {
+        this.timeout = timeout;
+    }
+
+    @DataBoundSetter
+    public void setCustomHeaders(List<NameValuePair> customHeaders) {
+        this.customHeaders = customHeaders;
+    }
+
+    @DataBoundSetter
+    public void setAuthentication(@CheckForNull String authentication) {
+        this.authentication = Util.fixNull(authentication);
+    }
+
+    @DataBoundSetter
+    public void setReturnCodeBuildRelevant(Boolean returnCodeBuildRelevant) {
         this.returnCodeBuildRelevant = returnCodeBuildRelevant;
+    }
+
+    @DataBoundSetter
+    public void setConsoleLogResponseBody(Boolean consoleLogResponseBody) {
+        this.consoleLogResponseBody = consoleLogResponseBody;
     }
 
     @Initializer(before = InitMilestone.PLUGINS_STARTED)
@@ -111,17 +159,19 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
     }
 
     public Object readResolve() {
+        final PrintStream logger = listener.getLogger();
+        logger.println("Called readResolve()");
         defineDefaultConfigurations();
         return this;
     }
 
     public void defineDefaultConfigurations() {
         returnCodeBuildRelevant = Objects.firstNonNull(returnCodeBuildRelevant, getDescriptor().defaultReturnCodeBuildRelevant);
-        consoleLogResponseBody = Objects.firstNonNull(consoleLogResponseBody, getDescriptor().defaultLogResponseBody);
-        httpMode = Objects.firstNonNull(httpMode, getDescriptor().defaultHttpMode);
+        //consoleLogResponseBody = Objects.firstNonNull(consoleLogResponseBody, getDescriptor().defaultLogResponseBody);
+        //httpMode = Objects.firstNonNull(httpMode, getDescriptor().defaultHttpMode);
 
-        contentType = Objects.firstNonNull(contentType, MimeType.NOT_SET);
-        acceptType = Objects.firstNonNull(acceptType, MimeType.NOT_SET);
+        //contentType = Objects.firstNonNull(contentType, MimeType.NOT_SET);
+        //acceptType = Objects.firstNonNull(acceptType, MimeType.NOT_SET);
         passBuildParameters = Objects.firstNonNull(passBuildParameters, true);
         customHeaders = Objects.firstNonNull(customHeaders, Collections.<NameValuePair>emptyList());
 
@@ -130,11 +180,16 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
         }
     }
 
+    @Deprecated
+    public Boolean getReturnCodeBuildRelevant() {
+        return returnCodeBuildRelevant;
+    }
+
     public Boolean getConsoleLogResponseBody() {
         return consoleLogResponseBody;
     }
 
-    public String getUrl() {
+    public @Nonnull String getUrl() {
         return url;
     }
 
@@ -154,11 +209,11 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
         return customHeaders;
     }
 
-    public String getOutputFile() {
+    public @CheckForNull String getOutputFile() {
         return outputFile;
     }
 
-    public String getAuthentication() {
+    public @CheckForNull String getAuthentication() {
         return authentication;
     }
 
@@ -170,11 +225,11 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
         return timeout;
     }
 
-    public String getValidResponseCodes() {
+    public @Nonnull String getValidResponseCodes() {
         return validResponseCodes;
     }
 
-    public String getValidResponseContent() {
+    public @CheckForNull String getValidResponseContent() {
         return validResponseContent;
     }
 
@@ -187,9 +242,10 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
     public void perform(Run<?,?> run, FilePath workspace, Launcher launcher, TaskListener listener)
     throws InterruptedException, IOException
     {
-        defineDefaultConfigurations();
+        //defineDefaultConfigurations();
 
         final PrintStream logger = listener.getLogger();
+        this.listener = listener;
         logger.println("HttpMode: " + httpMode);
 
 
@@ -231,7 +287,7 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
             EntityUtils.consume(response.getEntity());
         }
     }
-
+/*
     private boolean contentIsValid(ResponseContentSupplier responseContentSupplier, PrintStream logger) {
         if (Strings.isNullOrEmpty(validResponseContent)) {
             return true;
@@ -244,7 +300,6 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
         }
         return true;
     }
-
     private boolean responseCodeIsValid(HttpResponse response, PrintStream logger) {
         List<Range<Integer>> ranges = getDescriptor().parseToRange(validResponseCodes);
         for (Range<Integer> range : ranges) {
@@ -257,6 +312,7 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
         return false;
 
     }
+*/
 
     private void logResponse(FilePath workspace, PrintStream logger, ResponseContentSupplier responseContentSupplier) throws IOException, InterruptedException {
 
@@ -337,23 +393,22 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
 
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
+        public static final HttpMode defaultHttpMode = HttpMode.GET;
+        public static final Boolean defaultPassBuildParameters = false;
+        public static final Boolean defaultConsoleLogResponseBody = false;
+        public static final MimeType defaultAcceptType = MimeType.NOT_SET;
+        public static final MimeType defaultContentType = MimeType.NOT_SET;
+        public static final String defaultValidResponseContent = "";
+        public static final Boolean defaultReturnCodeBuildRelevant = true;
+        public static final String defaultValidResponseCodes = "100:399";
+        public static final String defaultAuthentication = "";
+        public static final String defaultOutputFile = "";
 
-        private HttpMode defaultHttpMode = HttpMode.POST;
         private List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<BasicDigestAuthentication>();
         private List<FormAuthentication> formAuthentications = new ArrayList<FormAuthentication>();
-        private boolean defaultReturnCodeBuildRelevant = true;
-        private boolean defaultLogResponseBody = true;
 
         public DescriptorImpl() {
             load();
-        }
-
-        public boolean isDefaultLogResponseBody() {
-            return defaultLogResponseBody;
-        }
-
-        public void setDefaultLogResponseBody(boolean defaultLogResponseBody) {
-            this.defaultLogResponseBody = defaultLogResponseBody;
         }
 
         public HttpMode getDefaultHttpMode() {
@@ -400,14 +455,6 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
                 }
             }
             return null;
-        }
-
-        public boolean isDefaultReturnCodeBuildRelevant() {
-            return defaultReturnCodeBuildRelevant;
-        }
-
-        public void setDefaultReturnCodeBuildRelevant(boolean defaultReturnCodeBuildRelevant) {
-            this.defaultReturnCodeBuildRelevant = defaultReturnCodeBuildRelevant;
         }
 
         @Override
