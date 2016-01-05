@@ -175,6 +175,11 @@ public class HttpRequest extends Builder {
         return validResponseContent;
     }
 
+    @Deprecated
+    public Boolean getReturnCodeBuildRelevant() {
+        return returnCodeBuildRelevant;
+    }
+
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
         defineDefaultConfigurations();
@@ -343,6 +348,10 @@ public class HttpRequest extends Builder {
 
         public HttpMode getDefaultHttpMode() {
             return defaultHttpMode;
+        }
+
+        public boolean getDefaultLogResponseBody() {
+            return defaultLogResponseBody;
         }
 
         public void setDefaultHttpMode(HttpMode defaultHttpMode) {
