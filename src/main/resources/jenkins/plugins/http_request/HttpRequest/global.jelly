@@ -81,20 +81,5 @@
                 </table>
             </f:repeatable>
         </f:entry>
-
-        <f:section title="HTTP Request - Deprecated properties (this properties will be removed soon. They still here to re-apply while saving a job)">
-            <f:entry field="defaultHttpMode" title="HTTP default mode"
-                     help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-httpMode.html">
-                <f:select />
-            </f:entry>
-            <f:entry field="defaultReturnCodeBuildRelevant" title="Fail build on error status code by default?"
-                     help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-returnCodeBuildRelevant.html">
-                <f:booleanRadio />
-            </f:entry>
-            <f:entry field="defaultLogResponseBody" title="Log Response body by default?"
-                     help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-consoleLogResponseBody.html">
-                <f:booleanRadio />
-            </f:entry>
-        </f:section>
     </f:section>
 </j:jelly>

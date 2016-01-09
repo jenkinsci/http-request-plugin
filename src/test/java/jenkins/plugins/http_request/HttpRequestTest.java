@@ -27,88 +27,116 @@ public class HttpRequestTest {
     public JenkinsRule j = new JenkinsRule();
 
     @Test
-    public void defaultValues() throws Exception {
-        HttpRequest httpRequest = new HttpRequest("http://www.domain/", HttpMode.GET, "",
-            MimeType.NOT_SET, MimeType.NOT_SET,
-            "", null, false, false, null, 0, "", "");
-        assertEquals(httpRequest.getDescriptor().getDefaultHttpMode(),HttpMode.POST);
-        assertTrue(httpRequest.getDescriptor().getDefaultLogResponseBody());
-        assertTrue(httpRequest.getDescriptor().isDefaultReturnCodeBuildRelevant());
+    public void simpleGetTest() throws Exception {
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(j.getURL().toString()+"api/json");
+        httpRequest.setHttpMode(HttpMode.GET);
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatusSuccess(build);
+        String s = FileUtils.readFileToString(build.getLogFile());
+        Pattern p = Pattern.compile("HttpMode: GET");
+        Matcher m = p.matcher(s);
+        assertTrue(m.find());
     }
 
-   @Test
-   public void defaultSettingsTest() throws Exception {
-       FreeStyleProject project = j.createFreeStyleProject();
-       project.getBuildersList().add(new HttpRequest(j.getURL().toString()+"api/json", HttpMode.GET, "",
-           MimeType.NOT_SET, MimeType.NOT_SET,
-           "", null, true, false, null, 0, "", ""));
-       FreeStyleBuild build = project.scheduleBuild2(0).get();
-       j.assertBuildStatusSuccess(build);
-       String s = FileUtils.readFileToString(build.getLogFile());
-       Pattern p = Pattern.compile("HttpMode: GET");
-       Matcher m = p.matcher(s);
-       assertTrue(m.find());
-   }
+    @Test
+    public void detectActualContent() throws Exception {
+        // Setup
+        String findMe = "\"views\":[{\"name\":\"All\",\"url\":\"http://localhost:";
+        String findMePattern = Pattern.quote(findMe);
 
-   @Test
-   public void detectActualContent() throws Exception {
-       String findMe = "\"views\":[{\"name\":\"All\",\"url\":\"http://localhost:";
-       String findMePattern = Pattern.quote(findMe);
-       FreeStyleProject project = j.createFreeStyleProject();
-       project.getBuildersList().add(new HttpRequest(j.getURL().toString()+"api/json", HttpMode.GET, "",
-           MimeType.NOT_SET, MimeType.NOT_SET,
-           "", null, true, false, null, 0, "", findMe));
-       FreeStyleBuild build = project.scheduleBuild2(0).get();
-       j.assertBuildStatusSuccess(build);
-       String s = FileUtils.readFileToString(build.getLogFile());
-       Pattern p = Pattern.compile(findMePattern);
-       Matcher m = p.matcher(s);
-       assertTrue(m.find());
-   }
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(j.getURL().toString()+"api/json");
+        httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setValidResponseContent(findMe);
 
-   @Test
-   public void detectBadContent() throws Exception {
-       FreeStyleProject project = j.createFreeStyleProject();
-       project.getBuildersList().add(new HttpRequest(j.getURL().toString()+"api/json", HttpMode.GET, "",
-           MimeType.NOT_SET, MimeType.NOT_SET,
-           "", null, true, false, null, 0, "", "bad content"));
-       FreeStyleBuild build = project.scheduleBuild2(0).get();
-       j.assertBuildStatus(Result.FAILURE, build);
-       String s = FileUtils.readFileToString(build.getLogFile());
-       assertThat(s, org.hamcrest.CoreMatchers.containsString("Build step 'HTTP Request' marked build as failure"));
-       Pattern p = Pattern.compile("Fail: Response with length \\d+ doesn't contain 'bad content'");
-       Matcher m = p.matcher(s);
-       assertTrue(m.find());
-   }
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
 
-   @Test
-   public void expectMimeType() throws Exception {
-       FreeStyleProject project = j.createFreeStyleProject();
-       project.getBuildersList().add(new HttpRequest(j.getURL().toString()+"api/json", HttpMode.GET, "",
-           MimeType.NOT_SET, MimeType.APPLICATION_JSON,
-           "", null, true, false, null, 0, "", ""));
-       FreeStyleBuild build = project.scheduleBuild2(0).get();
-       j.assertBuildStatusSuccess(build);
-       String s = FileUtils.readFileToString(build.getLogFile());
-       System.out.println(s);
-       Pattern p = Pattern.compile("HttpMode: GET");
-       Matcher m = p.matcher(s);
-       assertTrue(m.find());
-   }
+        // Check expectations
+        j.assertBuildStatusSuccess(build);
+        String s = FileUtils.readFileToString(build.getLogFile());
+        Pattern p = Pattern.compile(findMePattern);
+        Matcher m = p.matcher(s);
+        assertTrue(m.find());
+    }
 
-   @Test
-   public void expectBadMimeType() throws Exception {
-       FreeStyleProject project = j.createFreeStyleProject();
-       project.getBuildersList().add(new HttpRequest(j.getURL().toString()+"api/json", HttpMode.GET, "",
-           MimeType.NOT_SET, MimeType.TEXT_HTML,
-           "", null, true, false, null, 0, "", ""));
-       FreeStyleBuild build = project.scheduleBuild2(0).get();
-       j.assertBuildStatusSuccess(build);
-       String s = FileUtils.readFileToString(build.getLogFile());
-       System.out.println(s);
-       //assertThat(s, org.hamcrest.CoreMatchers.containsString("Build step 'HTTP Request' marked build as failure"));
-       Pattern p = Pattern.compile("HttpMode: GET");
-       Matcher m = p.matcher(s);
-       assertTrue(m.find());
-   }
+    @Test
+    public void detectBadContent() throws Exception {
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(j.getURL().toString()+"api/json");
+        httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setValidResponseContent("bad content");
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.FAILURE, build);
+        String s = FileUtils.readFileToString(build.getLogFile());
+        assertThat(s, org.hamcrest.CoreMatchers.containsString("Expected content is not found. Aborting."));
+        Pattern p = Pattern.compile("Fail: Response with length \\d+ doesn't contain 'bad content'");
+        Matcher m = p.matcher(s);
+        assertTrue(m.find());
+    }
+
+    @Test
+    public void responseMatchAcceptedMimeType() throws Exception {
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(j.getURL().toString()+"api/json");
+        httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setAcceptType(MimeType.APPLICATION_JSON);
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatusSuccess(build);
+        String s = FileUtils.readFileToString(build.getLogFile());
+        Pattern p = Pattern.compile("HttpMode: GET");
+        Matcher m = p.matcher(s);
+        assertTrue(m.find());
+    }
+
+    @Test
+    public void responseDoesNotMatchAcceptedMimeType() throws Exception {
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(j.getURL().toString()+"api/json");
+        httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setAcceptType(MimeType.TEXT_HTML);
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatusSuccess(build);
+        String s = FileUtils.readFileToString(build.getLogFile());
+        Pattern p = Pattern.compile("HttpMode: GET");
+        Matcher m = p.matcher(s);
+        assertTrue(m.find());
+    }
+
+    // TODO: for all these future tests, it would be ideal to have a mock server that receives and checks the actual http packets
+    //    Different HttpModes (need mocking server?)
+    //    Pass build parameters set to false in the presence of build parameters
+    //    valid response codes, invalid response codes
+    //    send different content types, check that they are effectively produced in the outgoing packets
+    //    output file
+    //    timeout
+    //    set consoleLogResponseBody to false and check that nothing goes to console
+    //    authentication (basic, form)
 }
