@@ -8,3 +8,7 @@ target/
 work/*
 *.iml
 .idea/*
+
+# Vim files
+Session.vim
+*.swp
