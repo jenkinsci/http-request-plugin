@@ -27,6 +27,12 @@ public class HttpRequestTest {
     public JenkinsRule j = new JenkinsRule();
 
     @Test
+    public void canBeSerialized() throws Exception {
+        HttpRequest httpRequest = new HttpRequest("http://localhost");
+        httpRequest.readResolve();
+    }
+
+    @Test
     public void simpleGetTest() throws Exception {
         // Prepare HttpRequest
         HttpRequest httpRequest = new HttpRequest(j.getURL().toString()+"api/json");

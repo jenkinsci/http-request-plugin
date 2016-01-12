@@ -149,8 +149,6 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
     }
 
     public Object readResolve() {
-        final PrintStream logger = listener.getLogger();
-        logger.println("Called readResolve()");
         return this;
     }
 
