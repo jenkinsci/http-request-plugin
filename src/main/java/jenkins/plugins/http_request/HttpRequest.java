@@ -54,6 +54,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.SystemDefaultHttpClient;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -549,7 +550,11 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
         public String get() {
             try {
                 if (content == null) {
-                    content = EntityUtils.toString(response.getEntity());
+                    HttpEntity entity = response.getEntity();
+                    if (entity == null) {
+                        return null;
+                    }
+                    content = EntityUtils.toString(entity);
                 }
                 return content;
             } catch (IOException e) {

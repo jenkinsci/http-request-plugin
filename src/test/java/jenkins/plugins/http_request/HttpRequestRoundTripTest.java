@@ -26,8 +26,6 @@ import jenkins.plugins.http_request.auth.FormAuthentication;
 
 public class HttpRequestRoundTripTest {
 
-    HttpRequest httpRequest;
-
     @Rule
     public JenkinsRule j = new JenkinsRule();
 
@@ -103,6 +101,7 @@ public class HttpRequestRoundTripTest {
 
     @Test
     public void customHeaders() throws Exception {
+        HttpRequest httpRequest;
         List<NameValuePair> customHeaders = new ArrayList<NameValuePair>();
         customHeaders.add(new NameValuePair("param1","value1"));
         httpRequest = new HttpRequest("http://foo.bar");
@@ -112,7 +111,8 @@ public class HttpRequestRoundTripTest {
 
     private void configRoundTrip(HttpRequest before) throws Exception {
         HttpRequest after = doRoundTrip(before, HttpRequest.class);
-        j.assertEqualBeans(before, after, "url,httpMode,passBuildParameters");
+        j.assertEqualBeans(before, after, "httpMode,passBuildParameters");
+        j.assertEqualBeans(before, after, "url");
         j.assertEqualBeans(before, after, "validResponseCodes,validResponseContent");
         j.assertEqualBeans(before, after, "acceptType,contentType");
         j.assertEqualBeans(before, after, "outputFile,timeout");
