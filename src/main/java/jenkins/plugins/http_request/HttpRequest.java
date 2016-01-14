@@ -201,6 +201,13 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
         return validResponseContent;
     }
 
+    @Deprecated
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
+    throws InterruptedException, IOException {
+        perform(build, build.getWorkspace(), launcher, listener);
+        return true;
+    }
+
     @Override
     public void perform(Run<?,?> run, FilePath workspace, Launcher launcher, TaskListener listener)
     throws InterruptedException, IOException
@@ -249,7 +256,6 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
             if (!contentIsValid(responseContentSupplier, logger)) {
                 throw new AbortException("Expected content is not found. Aborting.");
             }
-            return;
         } finally {
             EntityUtils.consume(response.getEntity());
         }
@@ -275,7 +281,7 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
                 return true;
             }
         }
-        logger.println("Fail: Any code list (" + ranges + ") match the returned code " + response.getStatusLine().getStatusCode());
+        logger.println("Fail: the returned code " + response.getStatusLine().getStatusCode()+" is not in the accepted range: "+ranges);
         return false;
 
     }

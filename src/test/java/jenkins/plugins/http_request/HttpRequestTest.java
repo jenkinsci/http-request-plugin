@@ -1,5 +1,6 @@
 package jenkins.plugins.http_request;
 
+import hudson.FilePath;
 import hudson.model.Cause.UserIdCause;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
@@ -20,13 +21,16 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import org.jvnet.hudson.test.JenkinsRule;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -45,15 +49,16 @@ public class HttpRequestTest extends LocalServerTestBase {
     @Rule
     public JenkinsRule j = new JenkinsRule();
 
-    public void setupRequestChecker(final String path, final String method) {
-        this.serverBootstrap.registerHandler(path, new HttpRequestHandler() {
+    public void setupRequestChecker(final HttpMode httpMode) {
+        this.serverBootstrap.registerHandler("/do"+httpMode.toString(), new HttpRequestHandler() {
             @Override
             public void handle(
-                    final org.apache.http.HttpRequest request,
-                    final HttpResponse response,
-                    final HttpContext context) throws HttpException, IOException {
+                final org.apache.http.HttpRequest request,
+                final HttpResponse response,
+                final HttpContext context
+            ) throws HttpException, IOException {
                 List<NameValuePair> parameters;
-                assertEquals(request.getRequestLine().getMethod(), method);
+                assertEquals(httpMode.toString(), request.getRequestLine().getMethod());
                 String uriStr = request.getRequestLine().getUri();
                 String query;
                 try {
@@ -65,29 +70,60 @@ public class HttpRequestTest extends LocalServerTestBase {
                 response.setEntity(new StringEntity("All is well", ContentType.TEXT_PLAIN));
             }
         });
+    }
 
+    public void setupRequestChecker(final MimeType mimeType) {
+        this.serverBootstrap.registerHandler("/incoming_"+mimeType.toString(), new HttpRequestHandler() {
+            @Override
+            public void handle(
+                final org.apache.http.HttpRequest request,
+                final HttpResponse response,
+                final HttpContext context
+            ) throws HttpException, IOException {
+                System.out.println("Handling "+mimeType);
+                assertEquals("GET", request.getRequestLine().getMethod());
+                Header[] headers = request.getHeaders("Content-type");
+                if (mimeType == MimeType.NOT_SET) {
+                    assertEquals(0, headers.length);
+                } else {
+                    assertEquals(1, headers.length);
+                    assertEquals(mimeType.getValue(), headers[0].getValue());
+                }
+                String uriStr = request.getRequestLine().getUri();
+                String query;
+                try {
+                    query = new URI(uriStr).getQuery();
+                } catch (URISyntaxException ex) {
+                    throw new IOException("A URISyntaxException occured: "+ex.getCause().getMessage());
+                }
+                assertNull(query);
+                response.setEntity(new StringEntity("All is well", ContentType.TEXT_PLAIN));
+            }
+        });
     }
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
 
-        setupRequestChecker("/",         "GET");
-        setupRequestChecker("/doGET",    "GET");
-        setupRequestChecker("/doPOST",   "POST");
-        setupRequestChecker("/doDELETE", "DELETE");
-        setupRequestChecker("/doPUT",    "PUT");
-        setupRequestChecker("/doHEAD",   "HEAD");
+        for (HttpMode httpMode : HttpMode.values()) {
+            setupRequestChecker(httpMode);
+        }
+
+        for (MimeType mimeType : MimeType.values()) {
+            setupRequestChecker(mimeType);
+        }
 
         // Check that exactly one build parameter is passed
         this.serverBootstrap.registerHandler("/checkBuildParameters", new HttpRequestHandler() {
             @Override
             public void handle(
-                    final org.apache.http.HttpRequest request,
-                    final HttpResponse response,
-                    final HttpContext context) throws HttpException, IOException {
+                final org.apache.http.HttpRequest request,
+                final HttpResponse response,
+                final HttpContext context
+            ) throws HttpException, IOException {
+                assertEquals("GET", request.getRequestLine().getMethod());
                 List<NameValuePair> parameters;
-                assertEquals(request.getRequestLine().getMethod(), "GET");
                 try {
                     parameters = URLEncodedUtils.parse(new URI(request.getRequestLine().getUri()).getQuery(), StandardCharsets.UTF_8);
                 } catch (URISyntaxException ex) {
@@ -100,6 +136,27 @@ public class HttpRequestTest extends LocalServerTestBase {
             }
         });
 
+        // Return an invalid status code
+        this.serverBootstrap.registerHandler("/invalidStatusCode", new HttpRequestHandler() {
+            @Override
+            public void handle(
+                final org.apache.http.HttpRequest request,
+                final HttpResponse response,
+                final HttpContext context
+            ) throws HttpException, IOException {
+                assertEquals("GET", request.getRequestLine().getMethod());
+                String uriStr = request.getRequestLine().getUri();
+                String query;
+                try {
+                    query = new URI(uriStr).getQuery();
+                } catch (URISyntaxException ex) {
+                    throw new IOException("A URISyntaxException occured: "+ex.getCause().getMessage());
+                }
+                assertNull(query);
+                response.setEntity(new StringEntity("Throwing status 400 for test", ContentType.TEXT_PLAIN));
+                response.setStatusCode(400);
+            }
+        });
     }
 
     @After
@@ -121,7 +178,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         final String baseURL = "http://localhost:" + target.getPort();
 
         // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL);
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setHttpMode(HttpMode.GET);
 
         // Run build
@@ -148,7 +205,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         final String baseURL = "http://localhost:" + target.getPort();
 
         // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL);
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setHttpMode(HttpMode.GET);
         httpRequest.setValidResponseContent(findMe);
 
@@ -172,7 +229,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         final String baseURL = "http://localhost:" + target.getPort();
 
         // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL);
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setHttpMode(HttpMode.GET);
         httpRequest.setValidResponseContent("bad content");
 
@@ -197,7 +254,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         final String baseURL = "http://localhost:" + target.getPort();
 
         // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL);
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setHttpMode(HttpMode.GET);
 
         // Expect a mime type that matches the response
@@ -223,7 +280,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         final String baseURL = "http://localhost:" + target.getPort();
 
         // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL);
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setHttpMode(HttpMode.GET);
 
         // Expect a mime type that does not matche the response
@@ -278,7 +335,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         final String baseURL = "http://localhost:" + target.getPort();
 
         // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL);
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setHttpMode(HttpMode.GET);
 
         // Activate passBuildParameters
@@ -304,7 +361,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         final String baseURL = "http://localhost:" + target.getPort();
 
         // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL);
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setHttpMode(HttpMode.GET);
 
         // Activate passBuildParameters
@@ -358,11 +415,151 @@ public class HttpRequestTest extends LocalServerTestBase {
         assertTrue(m.find());
     }
 
+    @Test
+    public void invalidResponseCodeFailsTheBuild() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/invalidStatusCode");
+        httpRequest.setHttpMode(HttpMode.GET);
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.FAILURE, build);
+        String s = FileUtils.readFileToString(build.getLogFile());
+        System.out.println(s);
+        Pattern p = Pattern.compile("Throwing status 400 for test");
+        Matcher m = p.matcher(s);
+        assertTrue(m.find());
+    }
+
+    @Test
+    public void invalidResponseCodeIsAccepted() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/invalidStatusCode");
+        httpRequest.setValidResponseCodes("100:599");
+        httpRequest.setHttpMode(HttpMode.GET);
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatusSuccess(build);
+        String s = FileUtils.readFileToString(build.getLogFile());
+        Pattern p = Pattern.compile("Throwing status 400 for test");
+        Matcher m = p.matcher(s);
+        assertTrue(m.find());
+    }
+
+    @Test
+    public void sendAllContentTypes() throws Exception {
+        for (MimeType mimeType : MimeType.values()) {
+            sendContentType(mimeType);
+        }
+    }
+
+    public void sendContentType(final MimeType mimeType) throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/incoming_"+mimeType.toString());
+        httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setContentType(mimeType);
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatusSuccess(build);
+
+        String s = FileUtils.readFileToString(build.getLogFile());
+        Pattern p = Pattern.compile("All is well");
+        Matcher m = p.matcher(s);
+        assertTrue(m.find());
+    }
+
+    @Test
+    public void canPutResponseInOutputFile() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
+        httpRequest.setOutputFile("file.txt");
+        httpRequest.setHttpMode(HttpMode.GET);
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatusSuccess(build);
+
+        // By default, the response is printed to the console even if an outputFile is used
+        String s = FileUtils.readFileToString(build.getLogFile());
+        Pattern p = Pattern.compile("All is well");
+        Matcher m = p.matcher(s);
+        assertTrue(m.find());
+
+        // The response is in the output file
+        String outputFile = build.getWorkspace().child("file.txt").readToString();
+        p = Pattern.compile("All is well");
+        m = p.matcher(outputFile);
+        assertTrue(m.find());
+    }
+
+    @Test
+    public void canPutResponseInOutputFileWhenNotSetToGoToConsole() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
+        httpRequest.setOutputFile("file.txt");
+        httpRequest.setConsoleLogResponseBody(false);
+        httpRequest.setHttpMode(HttpMode.GET);
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatusSuccess(build);
+
+        // Check that the console does NOT have the response body
+        String s = FileUtils.readFileToString(build.getLogFile());
+        System.out.println("Logfile:\n"+s+"\nEOF");
+        Pattern p = Pattern.compile("All is well");
+        Matcher m = p.matcher(s);
+        assertFalse(m.find());
+
+        // The response is in the output file
+        String outputFile = build.getWorkspace().child("file.txt").readToString();
+        p = Pattern.compile("All is well");
+        m = p.matcher(outputFile);
+        assertTrue(m.find());
+    }
     // TODO: for all these future tests, it would be ideal to have a mock server that receives and checks the actual http packets
-    //    valid response codes, invalid response codes
-    //    send different content types, check that they are effectively produced in the outgoing packets
-    //    output file
     //    timeout
-    //    set consoleLogResponseBody to false and check that nothing goes to console
     //    authentication (basic, form)
 }
