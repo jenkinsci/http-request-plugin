@@ -27,7 +27,7 @@
             <f:textbox />
         </f:entry>
         <f:entry field="timeout" title="Connection timeout">
-            <f:number />
+            <f:number default="${descriptor.defaultTimeout}"/>
         </f:entry>
 
         <f:entry field="consoleLogResponseBody" title="Response body in console?">
