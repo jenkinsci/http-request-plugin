@@ -1,3 +1,4 @@
+<?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
     <f:entry field="url" title="URL">
         <f:textbox />
@@ -11,7 +12,7 @@
 
     <f:advanced>
         <f:entry field="validResponseCodes" title="Response codes expected">
-            <f:textbox />
+            <f:textbox default="${descriptor.defaultValidResponseCodes}"/>
         </f:entry>
          <f:entry field="validResponseContent" title="Response content expected">
                     <f:textbox />
@@ -26,7 +27,7 @@
             <f:textbox />
         </f:entry>
         <f:entry field="timeout" title="Connection timeout">
-            <f:number />
+            <f:number default="${descriptor.defaultTimeout}"/>
         </f:entry>
 
         <f:entry field="consoleLogResponseBody" title="Response body in console?">
