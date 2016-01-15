@@ -10,6 +10,7 @@ import hudson.model.StringParameterValue;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -18,7 +19,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
+import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.NameValuePair;
+import jenkins.plugins.http_request.util.RequestAction;
 
 import org.junit.After;
 import org.junit.Before;
@@ -46,6 +49,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.localserver.LocalServerTestBase;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
+import org.apache.http.util.EntityUtils;
 
 public class HttpRequestTest extends LocalServerTestBase {
 
@@ -76,7 +80,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         });
     }
 
-    public void setupRequestChecker(final MimeType mimeType) {
+    public void setupContentTypeRequestChecker(final MimeType mimeType) {
         this.serverBootstrap.registerHandler("/incoming_"+mimeType.toString(), new HttpRequestHandler() {
             @Override
             public void handle(
@@ -105,6 +109,35 @@ public class HttpRequestTest extends LocalServerTestBase {
         });
     }
 
+    public void setupAcceptedTypeRequestChecker(final MimeType mimeType) {
+        this.serverBootstrap.registerHandler("/accept_"+mimeType.toString(), new HttpRequestHandler() {
+            @Override
+            public void handle(
+                final org.apache.http.HttpRequest request,
+                final HttpResponse response,
+                final HttpContext context
+            ) throws HttpException, IOException {
+                assertEquals("GET", request.getRequestLine().getMethod());
+                Header[] headers = request.getHeaders("Accept");
+                if (mimeType == MimeType.NOT_SET) {
+                    assertEquals(0, headers.length);
+                } else {
+                    assertEquals(1, headers.length);
+                    assertEquals(mimeType.getValue(), headers[0].getValue());
+                }
+                String uriStr = request.getRequestLine().getUri();
+                String query;
+                try {
+                    query = new URI(uriStr).getQuery();
+                } catch (URISyntaxException ex) {
+                    throw new IOException("A URISyntaxException occured: "+ex.getCause().getMessage());
+                }
+                assertNull(query);
+                response.setEntity(new StringEntity("All is well", ContentType.TEXT_PLAIN));
+            }
+        });
+    }
+
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -114,7 +147,11 @@ public class HttpRequestTest extends LocalServerTestBase {
         }
 
         for (MimeType mimeType : MimeType.values()) {
-            setupRequestChecker(mimeType);
+            setupContentTypeRequestChecker(mimeType);
+        }
+
+        for (MimeType mimeType : MimeType.values()) {
+            setupAcceptedTypeRequestChecker(mimeType);
         }
 
         // Check that exactly one build parameter is passed
@@ -199,6 +236,55 @@ public class HttpRequestTest extends LocalServerTestBase {
             }
         });
 
+        // Accept the form authentication
+        this.serverBootstrap.registerHandler("/reqAction", new HttpRequestHandler() {
+            @Override
+            public void handle(
+                final org.apache.http.HttpRequest request,
+                final HttpResponse response,
+                final HttpContext context
+            ) throws HttpException, IOException {
+                assertEquals("GET", request.getRequestLine().getMethod());
+                List<org.apache.http.NameValuePair> parameters;
+                try {
+                    parameters = URLEncodedUtils.parse(new URI(request.getRequestLine().getUri()).getQuery(), StandardCharsets.UTF_8);
+                } catch (URISyntaxException ex) {
+                    throw new IOException("A URISyntaxException occured: "+ex.getCause().getMessage());
+                }
+                assertEquals(2,parameters.size());
+                assertEquals("param1",parameters.get(0).getName());
+                assertEquals("value1",parameters.get(0).getValue());
+                assertEquals("param2",parameters.get(1).getName());
+                assertEquals("value2",parameters.get(1).getValue());
+                response.setEntity(new StringEntity("All is well", ContentType.TEXT_PLAIN));
+            }
+        });
+
+        // Check the form authentication
+        this.serverBootstrap.registerHandler("/formAuth", new HttpRequestHandler() {
+            @Override
+            public void handle(
+                final org.apache.http.HttpRequest request,
+                final HttpResponse response,
+                final HttpContext context
+            ) throws HttpException, IOException {
+                response.setEntity(new StringEntity("All is well", ContentType.TEXT_PLAIN));
+            }
+        });
+
+        // Check the form authentication header
+        this.serverBootstrap.registerHandler("/formAuthBad", new HttpRequestHandler() {
+            @Override
+            public void handle(
+                final org.apache.http.HttpRequest request,
+                final HttpResponse response,
+                final HttpContext context
+            ) throws HttpException, IOException {
+                response.setEntity(new StringEntity("Not allowed", ContentType.TEXT_PLAIN));
+                response.setStatusCode(400);
+            }
+        });
+
         // Check the basic authentication header
         this.serverBootstrap.registerHandler("/customHeaders", new HttpRequestHandler() {
             @Override
@@ -253,7 +339,7 @@ public class HttpRequestTest extends LocalServerTestBase {
     }
 
     @Test
-    public void detectActualContent() throws Exception {
+    public void canDetectActualContent() throws Exception {
         // Setup the expected pattern
         String findMe = "All is well";
         String findMePattern = Pattern.quote(findMe);
@@ -281,7 +367,7 @@ public class HttpRequestTest extends LocalServerTestBase {
     }
 
     @Test
-    public void detectBadContent() throws Exception {
+    public void badContentFailsTheBuild() throws Exception {
         // Prepare the server
         final HttpHost target = start();
         final String baseURL = "http://localhost:" + target.getPort();
@@ -332,7 +418,7 @@ public class HttpRequestTest extends LocalServerTestBase {
     }
 
     @Test
-    public void responseDoesNotMatchAcceptedMimeType() throws Exception {
+    public void responseDoesNotMatchAcceptedMimeTypeDoesNotFailTheBuild() throws Exception {
         // Prepare the server
         final HttpHost target = start();
         final String baseURL = "http://localhost:" + target.getPort();
@@ -358,7 +444,7 @@ public class HttpRequestTest extends LocalServerTestBase {
     }
 
     @Test
-    public void passBuildParametersWithBuildParameters() throws Exception {
+    public void passBuildParametersWhenAskedAndParamtersArePresent() throws Exception {
         // Prepare the server
         final HttpHost target = start();
         final String baseURL = "http://localhost:" + target.getPort();
@@ -387,7 +473,7 @@ public class HttpRequestTest extends LocalServerTestBase {
     }
 
     @Test
-    public void passBuildParametersWithNoBuildParameters() throws Exception {
+    public void silentlyIgnoreNonExistentBuildParameters() throws Exception {
         // Prepare the server
         final HttpHost target = start();
         final String baseURL = "http://localhost:" + target.getPort();
@@ -396,7 +482,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setHttpMode(HttpMode.GET);
 
-        // Activate passBuildParameters
+        // Activate passBuildParameters without parameters present
         httpRequest.setPassBuildParameters(true);
 
         // Run build
@@ -491,7 +577,6 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, build);
         String s = FileUtils.readFileToString(build.getLogFile());
-        System.out.println(s);
         Pattern p = Pattern.compile("Throwing status 400 for test");
         Matcher m = p.matcher(s);
         assertTrue(m.find());
@@ -537,6 +622,37 @@ public class HttpRequestTest extends LocalServerTestBase {
         HttpRequest httpRequest = new HttpRequest(baseURL+"/incoming_"+mimeType.toString());
         httpRequest.setHttpMode(HttpMode.GET);
         httpRequest.setContentType(mimeType);
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatusSuccess(build);
+
+        String s = FileUtils.readFileToString(build.getLogFile());
+        Pattern p = Pattern.compile("All is well");
+        Matcher m = p.matcher(s);
+        assertTrue(m.find());
+    }
+
+    @Test
+    public void sendAllAcceptTypes() throws Exception {
+        for (MimeType mimeType : MimeType.values()) {
+            sendAcceptType(mimeType);
+        }
+    }
+
+    public void sendAcceptType(final MimeType mimeType) throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/accept_"+mimeType.toString());
+        httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setAcceptType(mimeType);
 
         // Run build
         FreeStyleProject project = j.createFreeStyleProject();
@@ -606,7 +722,6 @@ public class HttpRequestTest extends LocalServerTestBase {
 
         // Check that the console does NOT have the response body
         String s = FileUtils.readFileToString(build.getLogFile());
-        System.out.println("Logfile:\n"+s+"\nEOF");
         Pattern p = Pattern.compile("All is well");
         Matcher m = p.matcher(s);
         assertFalse(m.find());
@@ -685,7 +800,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Check expectations
         j.assertBuildStatus(Result.SUCCESS, build);
     }
-/*
+
     @Test
     public void canDoFormAuthentication() throws Exception {
         // Prepare the server
@@ -693,29 +808,107 @@ public class HttpRequestTest extends LocalServerTestBase {
         final String baseURL = "http://localhost:" + target.getPort();
 
         // Prepare the authentication
-        List<BasicDigestAuthentication> bda = new ArrayList<BasicDigestAuthentication>();
-        bda.add(new BasicDigestAuthentication("keyname1","username1","password1"));
-        bda.add(new BasicDigestAuthentication("keyname2","username2","password2"));
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        params.add(new NameValuePair("param1","value1"));
+        params.add(new NameValuePair("param2","value2"));
+
+        RequestAction action = new RequestAction(new URL(baseURL+"/reqAction"),HttpMode.GET,params);
+        List<RequestAction> actions = new ArrayList<RequestAction>();
+        actions.add(action);
+
+        FormAuthentication formAuth = new FormAuthentication("keyname",actions);
+        List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
+        formAuthList.add(formAuth);
 
         // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/basicAuth");
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/formAuth");
         httpRequest.setHttpMode(HttpMode.GET);
-        httpRequest.getDescriptor().setBasicDigestAuthentications(bda);
-        httpRequest.setAuthentication("keyname1");
+        httpRequest.getDescriptor().setFormAuthentications(formAuthList);
+        httpRequest.setAuthentication("keyname");
 
         // Run build
         FreeStyleProject project = j.createFreeStyleProject();
         project.getBuildersList().add(httpRequest);
         FreeStyleBuild build = project.scheduleBuild2(0).get();
 
-        String s = FileUtils.readFileToString(build.getLogFile());
-        System.out.println("Logfile:\n"+s+"\nEOF");
-
         // Check expectations
         j.assertBuildStatus(Result.SUCCESS, build);
     }
-*/
-    // TODO: for all these future tests, it would be ideal to have a mock server that receives and checks the actual http packets
-    //    authentication (form)
-    //    accepted Type test
+
+    @Test
+    public void rejectedFormCredentialsFailTheBuild() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare the authentication
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        params.add(new NameValuePair("param1","value1"));
+        params.add(new NameValuePair("param2","value2"));
+
+        RequestAction action = new RequestAction(new URL(baseURL+"/formAuthBad"),HttpMode.GET,params);
+        List<RequestAction> actions = new ArrayList<RequestAction>();
+        actions.add(action);
+
+        FormAuthentication formAuth = new FormAuthentication("keyname",actions);
+        List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
+        formAuthList.add(formAuth);
+
+        // Prepare HttpRequest (this request won't be sent)
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/formAuthBad");
+        httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.getDescriptor().setFormAuthentications(formAuthList);
+        httpRequest.setAuthentication("keyname");
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.FAILURE, build);
+
+        String s = FileUtils.readFileToString(build.getLogFile());
+        assertThat(s, org.hamcrest.CoreMatchers.containsString("Error doing authentication"));
+    }
+
+    @Test
+    public void invalidKeyFormAuthenticationFailsTheBuild() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare the authentication
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        params.add(new NameValuePair("param1","value1"));
+        params.add(new NameValuePair("param2","value2"));
+
+        // The request action won't be sent but we need to prepare it
+        RequestAction action = new RequestAction(new URL(baseURL+"/non-existent"),HttpMode.GET,params);
+        List<RequestAction> actions = new ArrayList<RequestAction>();
+        actions.add(action);
+
+        FormAuthentication formAuth = new FormAuthentication("keyname",actions);
+        List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
+        formAuthList.add(formAuth);
+
+        // Prepare HttpRequest - the actual request won't be sent
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/non-existent");
+        httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.getDescriptor().setFormAuthentications(formAuthList);
+
+        // Select a non-existent form authentication, this will error the build before any request is made
+        httpRequest.setAuthentication("non-existent");
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.FAILURE, build);
+
+        String s = FileUtils.readFileToString(build.getLogFile());
+        assertThat(s, org.hamcrest.CoreMatchers.containsString("Authentication 'non-existent' doesn't exist anymore"));
+    }
 }

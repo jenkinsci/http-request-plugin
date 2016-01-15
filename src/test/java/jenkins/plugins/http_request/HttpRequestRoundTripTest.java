@@ -1,15 +1,15 @@
 package jenkins.plugins.http_request;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNotNull;
-import hudson.model.Result;
 import hudson.model.FreeStyleProject;
+import hudson.model.Result;
 import hudson.tasks.Builder;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.Ignore;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.io.File;
@@ -19,10 +19,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import jenkins.plugins.http_request.util.NameValuePair;
-import jenkins.plugins.http_request.util.RequestAction;
 import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
+import jenkins.plugins.http_request.util.NameValuePair;
+import jenkins.plugins.http_request.util.RequestAction;
 
 public class HttpRequestRoundTripTest {
 

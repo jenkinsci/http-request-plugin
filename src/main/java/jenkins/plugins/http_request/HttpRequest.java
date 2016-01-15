@@ -19,6 +19,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Range;
+import com.google.common.collect.Ranges;
 import com.google.common.primitives.Ints;
 import hudson.AbortException;
 import hudson.EnvVars;
@@ -237,7 +238,7 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
         if (authentication != null && !authentication.isEmpty()) {
             final Authenticator auth = getDescriptor().getAuthentication(authentication);
             if (auth == null) {
-                throw new IllegalStateException("Authentication " + authentication + " doesn't exists anymore");
+                throw new IllegalStateException("Authentication '" + authentication + "' doesn't exist anymore");
             }
 
             logger.println("Using authentication: " + auth.getKeyName());
@@ -523,7 +524,7 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
                 }
 
                 checkArgument(from <= to, "Interval %s should be FROM less than TO", code);
-                validRanges.add(Range.closed(from, to));
+                validRanges.add(Ranges.closed(from, to));
             }
 
             return validRanges;
