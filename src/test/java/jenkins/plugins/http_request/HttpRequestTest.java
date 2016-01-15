@@ -12,9 +12,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
+import jenkins.plugins.http_request.util.NameValuePair;
 
 import org.junit.After;
 import org.junit.Before;
@@ -29,12 +33,12 @@ import static org.junit.Assert.assertFalse;
 
 import org.jvnet.hudson.test.JenkinsRule;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.ContentType;
@@ -57,7 +61,7 @@ public class HttpRequestTest extends LocalServerTestBase {
                 final HttpResponse response,
                 final HttpContext context
             ) throws HttpException, IOException {
-                List<NameValuePair> parameters;
+                List<org.apache.http.NameValuePair> parameters;
                 assertEquals(httpMode.toString(), request.getRequestLine().getMethod());
                 String uriStr = request.getRequestLine().getUri();
                 String query;
@@ -80,7 +84,6 @@ public class HttpRequestTest extends LocalServerTestBase {
                 final HttpResponse response,
                 final HttpContext context
             ) throws HttpException, IOException {
-                System.out.println("Handling "+mimeType);
                 assertEquals("GET", request.getRequestLine().getMethod());
                 Header[] headers = request.getHeaders("Content-type");
                 if (mimeType == MimeType.NOT_SET) {
@@ -123,7 +126,7 @@ public class HttpRequestTest extends LocalServerTestBase {
                 final HttpContext context
             ) throws HttpException, IOException {
                 assertEquals("GET", request.getRequestLine().getMethod());
-                List<NameValuePair> parameters;
+                List<org.apache.http.NameValuePair> parameters;
                 try {
                     parameters = URLEncodedUtils.parse(new URI(request.getRequestLine().getUri()).getQuery(), StandardCharsets.UTF_8);
                 } catch (URISyntaxException ex) {
@@ -155,6 +158,61 @@ public class HttpRequestTest extends LocalServerTestBase {
                 assertNull(query);
                 response.setEntity(new StringEntity("Throwing status 400 for test", ContentType.TEXT_PLAIN));
                 response.setStatusCode(400);
+            }
+        });
+
+        // Timeout, do not respond!
+        this.serverBootstrap.registerHandler("/timeout", new HttpRequestHandler() {
+            @Override
+            public void handle(
+                final org.apache.http.HttpRequest request,
+                final HttpResponse response,
+                final HttpContext context
+            ) throws HttpException, IOException {
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException ex) {
+                    // do nothing the sleep will be interrupted when the test ends
+                }
+            }
+        });
+
+        // Check the basic authentication header
+        this.serverBootstrap.registerHandler("/basicAuth", new HttpRequestHandler() {
+            @Override
+            public void handle(
+                final org.apache.http.HttpRequest request,
+                final HttpResponse response,
+                final HttpContext context
+            ) throws HttpException, IOException {
+                Header[] headers = request.getAllHeaders();
+                headers = request.getHeaders("Authorization");
+                assertEquals(1, headers.length);
+                Header auth = headers[0];
+                Base64 base64 = new Base64();
+                byte[] bytes = base64.decodeBase64(auth.getValue().substring(6));
+                String usernamePasswordPair = new String(bytes);
+                String[] usernamePassword = usernamePasswordPair.split(":");
+                assertEquals("username1", usernamePassword[0]);
+                assertEquals("password1", usernamePassword[1]);
+                response.setEntity(new StringEntity("All is well", ContentType.TEXT_PLAIN));
+            }
+        });
+
+        // Check the basic authentication header
+        this.serverBootstrap.registerHandler("/customHeaders", new HttpRequestHandler() {
+            @Override
+            public void handle(
+                final org.apache.http.HttpRequest request,
+                final HttpResponse response,
+                final HttpContext context
+            ) throws HttpException, IOException {
+                Header[] headers = request.getAllHeaders();
+                headers = request.getHeaders("customHeader");
+                assertEquals(2, headers.length);
+                assertEquals("value1", headers[0].getValue());
+                assertEquals("value2", headers[1].getValue());
+                response.setEntity(new StringEntity("All is well", ContentType.TEXT_PLAIN));
             }
         });
     }
@@ -283,7 +341,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setHttpMode(HttpMode.GET);
 
-        // Expect a mime type that does not matche the response
+        // Expect a mime type that does not match the response
         httpRequest.setAcceptType(MimeType.TEXT_HTML);
 
         // Run build
@@ -559,7 +617,105 @@ public class HttpRequestTest extends LocalServerTestBase {
         m = p.matcher(outputFile);
         assertTrue(m.find());
     }
+
+    @Test
+    public void timeoutFailsTheBuild() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/timeout");
+        httpRequest.setTimeout(2);
+        httpRequest.setHttpMode(HttpMode.GET);
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.FAILURE, build);
+    }
+
+    @Test
+    public void canDoCustomHeaders() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        List<NameValuePair> customHeaders = new ArrayList<NameValuePair>();
+        customHeaders.add(new NameValuePair("customHeader","value1"));
+        customHeaders.add(new NameValuePair("customHeader","value2"));
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/customHeaders");
+        httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setCustomHeaders(customHeaders);
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.SUCCESS, build);
+    }
+
+    @Test
+    public void canDoBasicDigestAuthentication() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare the authentication
+        List<BasicDigestAuthentication> bda = new ArrayList<BasicDigestAuthentication>();
+        bda.add(new BasicDigestAuthentication("keyname1","username1","password1"));
+        bda.add(new BasicDigestAuthentication("keyname2","username2","password2"));
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/basicAuth");
+        httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.getDescriptor().setBasicDigestAuthentications(bda);
+        httpRequest.setAuthentication("keyname1");
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.SUCCESS, build);
+    }
+/*
+    @Test
+    public void canDoFormAuthentication() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare the authentication
+        List<BasicDigestAuthentication> bda = new ArrayList<BasicDigestAuthentication>();
+        bda.add(new BasicDigestAuthentication("keyname1","username1","password1"));
+        bda.add(new BasicDigestAuthentication("keyname2","username2","password2"));
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/basicAuth");
+        httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.getDescriptor().setBasicDigestAuthentications(bda);
+        httpRequest.setAuthentication("keyname1");
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        String s = FileUtils.readFileToString(build.getLogFile());
+        System.out.println("Logfile:\n"+s+"\nEOF");
+
+        // Check expectations
+        j.assertBuildStatus(Result.SUCCESS, build);
+    }
+*/
     // TODO: for all these future tests, it would be ideal to have a mock server that receives and checks the actual http packets
-    //    timeout
-    //    authentication (basic, form)
+    //    authentication (form)
+    //    accepted Type test
 }
