@@ -56,4 +56,16 @@
             <email>janarioliver@gmail.com</email>
         </developer>
     </developers>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.jenkins-ci.tools</groupId>
+                    <artifactId>maven-hpi-plugin</artifactId>
+                    <version>1.115</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>
