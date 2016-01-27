@@ -54,6 +54,8 @@ public class HttpRequestTest extends LocalServerTestBase {
     @Rule
     public JenkinsRule j = new JenkinsRule();
 
+    final String allIsWellMessage = "All is well";
+
     public void setupRequestChecker(final HttpMode httpMode) {
         this.serverBootstrap.registerHandler("/do"+httpMode.toString(), new HttpRequestHandler() {
             @Override
@@ -72,7 +74,7 @@ public class HttpRequestTest extends LocalServerTestBase {
                     throw new IOException("A URISyntaxException occured: "+ex.getCause().getMessage());
                 }
                 assertNull(query);
-                response.setEntity(new StringEntity("All is well", ContentType.TEXT_PLAIN));
+                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
             }
         });
     }
@@ -101,7 +103,7 @@ public class HttpRequestTest extends LocalServerTestBase {
                     throw new IOException("A URISyntaxException occured: "+ex.getCause().getMessage());
                 }
                 assertNull(query);
-                response.setEntity(new StringEntity("All is well", ContentType.TEXT_PLAIN));
+                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
             }
         });
     }
@@ -130,7 +132,7 @@ public class HttpRequestTest extends LocalServerTestBase {
                     throw new IOException("A URISyntaxException occured: "+ex.getCause().getMessage());
                 }
                 assertNull(query);
-                response.setEntity(new StringEntity("All is well", ContentType.TEXT_PLAIN));
+                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
             }
         });
     }
@@ -169,7 +171,7 @@ public class HttpRequestTest extends LocalServerTestBase {
                 assertEquals(1,parameters.size());
                 assertEquals("foo",parameters.get(0).getName());
                 assertEquals("value",parameters.get(0).getValue());
-                response.setEntity(new StringEntity("All is well", ContentType.TEXT_PLAIN));
+                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
             }
         });
 
@@ -229,7 +231,7 @@ public class HttpRequestTest extends LocalServerTestBase {
                 String[] usernamePassword = usernamePasswordPair.split(":");
                 assertEquals("username1", usernamePassword[0]);
                 assertEquals("password1", usernamePassword[1]);
-                response.setEntity(new StringEntity("All is well", ContentType.TEXT_PLAIN));
+                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
             }
         });
 
@@ -253,7 +255,7 @@ public class HttpRequestTest extends LocalServerTestBase {
                 assertEquals("value1",parameters.get(0).getValue());
                 assertEquals("param2",parameters.get(1).getName());
                 assertEquals("value2",parameters.get(1).getValue());
-                response.setEntity(new StringEntity("All is well", ContentType.TEXT_PLAIN));
+                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
             }
         });
 
@@ -265,7 +267,7 @@ public class HttpRequestTest extends LocalServerTestBase {
                 final HttpResponse response,
                 final HttpContext context
             ) throws HttpException, IOException {
-                response.setEntity(new StringEntity("All is well", ContentType.TEXT_PLAIN));
+                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
             }
         });
 
@@ -295,7 +297,7 @@ public class HttpRequestTest extends LocalServerTestBase {
                 assertEquals(2, headers.length);
                 assertEquals("value1", headers[0].getValue());
                 assertEquals("value2", headers[1].getValue());
-                response.setEntity(new StringEntity("All is well", ContentType.TEXT_PLAIN));
+                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
             }
         });
     }
@@ -329,16 +331,13 @@ public class HttpRequestTest extends LocalServerTestBase {
 
         // Check expectations
         j.assertBuildStatusSuccess(build);
-        String s = FileUtils.readFileToString(build.getLogFile());
-        Pattern p = Pattern.compile("All is well");
-        Matcher m = p.matcher(s);
-        assertTrue(m.find());
+        j.assertLogContains(allIsWellMessage,build);
     }
 
     @Test
     public void canDetectActualContent() throws Exception {
         // Setup the expected pattern
-        String findMe = "All is well";
+        String findMe = allIsWellMessage;
         String findMePattern = Pattern.quote(findMe);
 
         // Prepare the server
@@ -357,10 +356,7 @@ public class HttpRequestTest extends LocalServerTestBase {
 
         // Check expectations
         j.assertBuildStatusSuccess(build);
-        String s = FileUtils.readFileToString(build.getLogFile());
-        Pattern p = Pattern.compile(findMePattern);
-        Matcher m = p.matcher(s);
-        assertTrue(m.find());
+        j.assertLogContains(findMe,build);
     }
 
     @Test
@@ -382,7 +378,6 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, build);
         String s = FileUtils.readFileToString(build.getLogFile());
-        assertThat(s, org.hamcrest.CoreMatchers.containsString("Expected content is not found. Aborting."));
         Pattern p = Pattern.compile("Fail: Response with length \\d+ doesn't contain 'bad content'");
         Matcher m = p.matcher(s);
         assertTrue(m.find());
@@ -408,10 +403,7 @@ public class HttpRequestTest extends LocalServerTestBase {
 
         // Check expectations
         j.assertBuildStatusSuccess(build);
-        String s = FileUtils.readFileToString(build.getLogFile());
-        Pattern p = Pattern.compile("All is well");
-        Matcher m = p.matcher(s);
-        assertTrue(m.find());
+        j.assertLogContains(allIsWellMessage,build);
     }
 
     @Test
@@ -434,10 +426,7 @@ public class HttpRequestTest extends LocalServerTestBase {
 
         // Check expectations
         j.assertBuildStatusSuccess(build);
-        String s = FileUtils.readFileToString(build.getLogFile());
-        Pattern p = Pattern.compile("All is well");
-        Matcher m = p.matcher(s);
-        assertTrue(m.find());
+        j.assertLogContains(allIsWellMessage,build);
     }
 
     @Test
@@ -463,10 +452,7 @@ public class HttpRequestTest extends LocalServerTestBase {
 
         // Check expectations
         j.assertBuildStatusSuccess(build);
-        String s = FileUtils.readFileToString(build.getLogFile());
-        Pattern p = Pattern.compile("All is well");
-        Matcher m = p.matcher(s);
-        assertTrue(m.find());
+        j.assertLogContains(allIsWellMessage,build);
     }
 
     @Test
@@ -489,10 +475,7 @@ public class HttpRequestTest extends LocalServerTestBase {
 
         // Check expectations
         j.assertBuildStatusSuccess(build);
-        String s = FileUtils.readFileToString(build.getLogFile());
-        Pattern p = Pattern.compile("All is well");
-        Matcher m = p.matcher(s);
-        assertTrue(m.find());
+        j.assertLogContains(allIsWellMessage,build);
     }
 
     @Test
@@ -518,10 +501,7 @@ public class HttpRequestTest extends LocalServerTestBase {
 
         // Check expectations
         j.assertBuildStatusSuccess(build);
-        String s = FileUtils.readFileToString(build.getLogFile());
-        Pattern p = Pattern.compile("All is well");
-        Matcher m = p.matcher(s);
-        assertTrue(m.find());
+        j.assertLogContains(allIsWellMessage,build);
     }
 
     @Test
@@ -550,10 +530,7 @@ public class HttpRequestTest extends LocalServerTestBase {
 
         if (mode == HttpMode.HEAD) return;
 
-        String s = FileUtils.readFileToString(build.getLogFile());
-        Pattern p = Pattern.compile("All is well");
-        Matcher m = p.matcher(s);
-        assertTrue(m.find());
+        j.assertLogContains(allIsWellMessage,build);
     }
 
     @Test
@@ -573,10 +550,7 @@ public class HttpRequestTest extends LocalServerTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, build);
-        String s = FileUtils.readFileToString(build.getLogFile());
-        Pattern p = Pattern.compile("Throwing status 400 for test");
-        Matcher m = p.matcher(s);
-        assertTrue(m.find());
+        j.assertLogContains("Throwing status 400 for test",build);
     }
 
     @Test
@@ -597,10 +571,7 @@ public class HttpRequestTest extends LocalServerTestBase {
 
         // Check expectations
         j.assertBuildStatusSuccess(build);
-        String s = FileUtils.readFileToString(build.getLogFile());
-        Pattern p = Pattern.compile("Throwing status 400 for test");
-        Matcher m = p.matcher(s);
-        assertTrue(m.find());
+        j.assertLogContains("Throwing status 400 for test",build);
     }
 
     @Test
@@ -627,11 +598,7 @@ public class HttpRequestTest extends LocalServerTestBase {
 
         // Check expectations
         j.assertBuildStatusSuccess(build);
-
-        String s = FileUtils.readFileToString(build.getLogFile());
-        Pattern p = Pattern.compile("All is well");
-        Matcher m = p.matcher(s);
-        assertTrue(m.find());
+        j.assertLogContains(allIsWellMessage,build);
     }
 
     @Test
@@ -658,11 +625,7 @@ public class HttpRequestTest extends LocalServerTestBase {
 
         // Check expectations
         j.assertBuildStatusSuccess(build);
-
-        String s = FileUtils.readFileToString(build.getLogFile());
-        Pattern p = Pattern.compile("All is well");
-        Matcher m = p.matcher(s);
-        assertTrue(m.find());
+        j.assertLogContains(allIsWellMessage,build);
     }
 
     @Test
@@ -685,15 +648,12 @@ public class HttpRequestTest extends LocalServerTestBase {
         j.assertBuildStatusSuccess(build);
 
         // By default, the response is printed to the console even if an outputFile is used
-        String s = FileUtils.readFileToString(build.getLogFile());
-        Pattern p = Pattern.compile("All is well");
-        Matcher m = p.matcher(s);
-        assertTrue(m.find());
+        j.assertLogContains(allIsWellMessage,build);
 
-        // The response is in the output file
+        // The response is in the output file as well
         String outputFile = build.getWorkspace().child("file.txt").readToString();
-        p = Pattern.compile("All is well");
-        m = p.matcher(outputFile);
+        Pattern p = Pattern.compile(allIsWellMessage);
+        Matcher m = p.matcher(outputFile);
         assertTrue(m.find());
     }
 
@@ -718,15 +678,12 @@ public class HttpRequestTest extends LocalServerTestBase {
         j.assertBuildStatusSuccess(build);
 
         // Check that the console does NOT have the response body
-        String s = FileUtils.readFileToString(build.getLogFile());
-        Pattern p = Pattern.compile("All is well");
-        Matcher m = p.matcher(s);
-        assertFalse(m.find());
+        j.assertLogNotContains(allIsWellMessage,build);
 
         // The response is in the output file
         String outputFile = build.getWorkspace().child("file.txt").readToString();
-        p = Pattern.compile("All is well");
-        m = p.matcher(outputFile);
+        Pattern p = Pattern.compile(allIsWellMessage);
+        Matcher m = p.matcher(outputFile);
         assertTrue(m.find());
     }
 
@@ -864,9 +821,7 @@ public class HttpRequestTest extends LocalServerTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, build);
-
-        String s = FileUtils.readFileToString(build.getLogFile());
-        assertThat(s, org.hamcrest.CoreMatchers.containsString("Error doing authentication"));
+        j.assertLogContains("Error doing authentication",build);
     }
 
     @Test
@@ -904,8 +859,6 @@ public class HttpRequestTest extends LocalServerTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, build);
-
-        String s = FileUtils.readFileToString(build.getLogFile());
-        assertThat(s, org.hamcrest.CoreMatchers.containsString("Authentication 'non-existent' doesn't exist anymore"));
+        j.assertLogContains("Authentication 'non-existent' doesn't exist anymore",build);
     }
 }
