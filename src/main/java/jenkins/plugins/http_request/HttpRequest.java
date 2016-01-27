@@ -239,40 +239,38 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
             ResponseContentSupplier responseContentSupplier = new ResponseContentSupplier(response);
             logResponse(workspace, logger, responseContentSupplier);
 
-            if (!responseCodeIsValid(response, logger)) {
-                throw new AbortException("Response code is invalid. Aborting.");
-            }
-            if (!contentIsValid(responseContentSupplier, logger)) {
-                throw new AbortException("Expected content is not found. Aborting.");
-            }
+            responseCodeIsValid(response, logger);
+            contentIsValid(responseContentSupplier, logger);
         } finally {
             EntityUtils.consume(response.getEntity());
         }
     }
 
-    private boolean contentIsValid(ResponseContentSupplier responseContentSupplier, PrintStream logger) {
+    private void contentIsValid(ResponseContentSupplier responseContentSupplier, PrintStream logger)
+    throws AbortException
+    {
         if (Strings.isNullOrEmpty(validResponseContent)) {
-            return true;
+            return;
         }
 
         String response = responseContentSupplier.get();
         if (!response.contains(validResponseContent)) {
-            logger.println("Fail: Response with length " + response.length() + " doesn't contain '" + validResponseContent + "'");
-            return false;
+            throw new AbortException("Fail: Response with length " + response.length() + " doesn't contain '" + validResponseContent + "'");
         }
-        return true;
+        return;
     }
-    private boolean responseCodeIsValid(HttpResponse response, PrintStream logger) {
+
+    private void responseCodeIsValid(HttpResponse response, PrintStream logger)
+    throws AbortException
+    {
         List<Range<Integer>> ranges = getDescriptor().parseToRange(validResponseCodes);
         for (Range<Integer> range : ranges) {
             if (range.contains(response.getStatusLine().getStatusCode())) {
                 logger.println("Success code from " + range);
-                return true;
+                return;
             }
         }
-        logger.println("Fail: the returned code " + response.getStatusLine().getStatusCode()+" is not in the accepted range: "+ranges);
-        return false;
-
+        throw new AbortException("Fail: the returned code " + response.getStatusLine().getStatusCode()+" is not in the accepted range: "+ranges);
     }
 
     private void logResponse(FilePath workspace, PrintStream logger, ResponseContentSupplier responseContentSupplier) throws IOException, InterruptedException {
