@@ -104,7 +104,7 @@ public class HttpRequestRoundTripTest {
     }
 
     private void configRoundTrip(HttpRequest before) throws Exception {
-        HttpRequest after = doRoundTrip(before, HttpRequest.class);
+        HttpRequest after = j.configRoundtrip(before);
         j.assertEqualBeans(before, after, "httpMode,passBuildParameters");
         j.assertEqualBeans(before, after, "url");
         j.assertEqualBeans(before, after, "validResponseCodes,validResponseContent");
@@ -161,14 +161,5 @@ public class HttpRequestRoundTripTest {
                 }
             }
         }
-    }
-
-    private <T extends Builder> T doRoundTrip(T before, Class<T> clazz) throws Exception {
-        FreeStyleProject p = j.createFreeStyleProject();
-        p.getBuildersList().add(before);
-
-        j.submit(j.createWebClient().getPage(p,"configure").getFormByName("config"));
-        T after = p.getBuildersList().get(clazz);
-        return after;
     }
 }
