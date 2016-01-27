@@ -197,13 +197,6 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
         return validResponseContent;
     }
 
-    @Deprecated
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
-    throws InterruptedException, IOException {
-        perform(build, build.getWorkspace(), launcher, listener);
-        return true;
-    }
-
     @Override
     public void perform(Run<?,?> run, FilePath workspace, Launcher launcher, TaskListener listener)
     throws InterruptedException, IOException
