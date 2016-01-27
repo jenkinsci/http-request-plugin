@@ -315,10 +315,7 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
     }
 
     private FilePath getOutputFilePath(FilePath workspace, PrintStream logger) {
-        if (workspace == null) {
-            logger.println("Workspace is null, will not save to the outputFile. To get a workspace, execute inside a Workflow node block.");
-            return null;
-        }
+        // No need to check for a null workspace, the workflow node step prevents workspace from being null.
         if (outputFile != null && !outputFile.isEmpty()) {
             return workspace.child(outputFile);
         }
