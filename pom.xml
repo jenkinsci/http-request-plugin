@@ -4,7 +4,7 @@
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
 
-        <version>1.609.1</version>
+        <version>1.580.1</version>
     </parent>
     
     <artifactId>http_request</artifactId>
