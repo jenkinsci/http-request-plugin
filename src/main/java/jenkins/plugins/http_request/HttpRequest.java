@@ -365,14 +365,14 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
         public static final HttpMode defaultHttpMode                  = HttpMode.POST;
-        public static final Boolean  defaultPassBuildParameters       = true;
+        public static final Boolean  defaultPassBuildParameters       = false;
         public static final String   defaultValidResponseCodes        = "100:399";
         public static final String   defaultValidResponseContent      = "";
         public static final MimeType defaultAcceptType                = MimeType.NOT_SET;
         public static final MimeType defaultContentType               = MimeType.NOT_SET;
         public static final String   defaultOutputFile                = "";
         public static final int      defaultTimeout                   = 0;
-        public static final Boolean  defaultConsoleLogResponseBody    = true;
+        public static final Boolean  defaultConsoleLogResponseBody    = false;
         public static final String   defaultAuthentication            = "";
         public static final List <NameValuePair> defaultCustomHeaders = Collections.<NameValuePair>emptyList();
 

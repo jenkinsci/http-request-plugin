@@ -323,6 +323,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Prepare HttpRequest
         HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setConsoleLogResponseBody(true);
 
         // Run build
         FreeStyleProject project = j.createFreeStyleProject();
@@ -347,6 +348,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Prepare HttpRequest
         HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setConsoleLogResponseBody(true);
         httpRequest.setValidResponseContent(findMe);
 
         // Run build
@@ -368,6 +370,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Prepare HttpRequest
         HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setConsoleLogResponseBody(true);
         httpRequest.setValidResponseContent("bad content");
 
         // Run build
@@ -392,6 +395,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Prepare HttpRequest
         HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setConsoleLogResponseBody(true);
 
         // Expect a mime type that matches the response
         httpRequest.setAcceptType(MimeType.TEXT_PLAIN);
@@ -415,6 +419,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Prepare HttpRequest
         HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setConsoleLogResponseBody(true);
 
         // Expect a mime type that does not match the response
         httpRequest.setAcceptType(MimeType.TEXT_HTML);
@@ -438,6 +443,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Prepare HttpRequest
         HttpRequest httpRequest = new HttpRequest(baseURL+"/checkBuildParameters");
         httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setConsoleLogResponseBody(true);
 
         // Activate passBuildParameters
         httpRequest.setPassBuildParameters(true);
@@ -464,6 +470,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Prepare HttpRequest
         HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setConsoleLogResponseBody(true);
 
         // Activate passBuildParameters without parameters present
         httpRequest.setPassBuildParameters(true);
@@ -487,6 +494,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Prepare HttpRequest
         HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setConsoleLogResponseBody(true);
 
         // Activate passBuildParameters
         httpRequest.setPassBuildParameters(false);
@@ -519,6 +527,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Prepare HttpRequest
         HttpRequest httpRequest = new HttpRequest(baseURL+"/do"+mode.toString());
         httpRequest.setHttpMode(mode);
+        httpRequest.setConsoleLogResponseBody(true);
 
         // Run build
         FreeStyleProject project = j.createFreeStyleProject();
@@ -542,6 +551,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Prepare HttpRequest
         HttpRequest httpRequest = new HttpRequest(baseURL+"/invalidStatusCode");
         httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setConsoleLogResponseBody(true);
 
         // Run build
         FreeStyleProject project = j.createFreeStyleProject();
@@ -563,6 +573,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         HttpRequest httpRequest = new HttpRequest(baseURL+"/invalidStatusCode");
         httpRequest.setValidResponseCodes("100:599");
         httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setConsoleLogResponseBody(true);
 
         // Run build
         FreeStyleProject project = j.createFreeStyleProject();
@@ -589,6 +600,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Prepare HttpRequest
         HttpRequest httpRequest = new HttpRequest(baseURL+"/incoming_"+mimeType.toString());
         httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setConsoleLogResponseBody(true);
         httpRequest.setContentType(mimeType);
 
         // Run build
@@ -616,6 +628,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Prepare HttpRequest
         HttpRequest httpRequest = new HttpRequest(baseURL+"/accept_"+mimeType.toString());
         httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setConsoleLogResponseBody(true);
         httpRequest.setAcceptType(mimeType);
 
         // Run build
@@ -637,6 +650,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Prepare HttpRequest
         HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setOutputFile("file.txt");
+        httpRequest.setConsoleLogResponseBody(true);
         httpRequest.setHttpMode(HttpMode.GET);
 
         // Run build
@@ -666,7 +680,6 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Prepare HttpRequest
         HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
         httpRequest.setOutputFile("file.txt");
-        httpRequest.setConsoleLogResponseBody(false);
         httpRequest.setHttpMode(HttpMode.GET);
 
         // Run build
@@ -811,6 +824,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Prepare HttpRequest (this request won't be sent)
         HttpRequest httpRequest = new HttpRequest(baseURL+"/formAuthBad");
         httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setConsoleLogResponseBody(true);
         httpRequest.getDescriptor().setFormAuthentications(formAuthList);
         httpRequest.setAuthentication("keyname");
 
@@ -847,6 +861,7 @@ public class HttpRequestTest extends LocalServerTestBase {
         // Prepare HttpRequest - the actual request won't be sent
         HttpRequest httpRequest = new HttpRequest(baseURL+"/non-existent");
         httpRequest.setHttpMode(HttpMode.GET);
+        httpRequest.setConsoleLogResponseBody(true);
         httpRequest.getDescriptor().setFormAuthentications(formAuthList);
 
         // Select a non-existent form authentication, this will error the build before any request is made
