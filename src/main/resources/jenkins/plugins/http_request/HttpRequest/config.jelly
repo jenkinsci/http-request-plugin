@@ -38,21 +38,7 @@
             <f:select />
         </f:entry>
         <f:entry title="Custom headers">
-            <f:repeatable field="customHeaders">
-                <table width="100%">
-                    <f:entry title="Header" field="name">
-                        <f:textbox/>
-                    </f:entry>
-                    <f:entry title="Value" field="value">
-                        <f:textbox/>
-                    </f:entry>
-                    <f:entry>
-                        <div align="right">
-                            <f:repeatableDeleteButton/>
-                        </div>
-                    </f:entry>
-                </table>
-            </f:repeatable>
+            <f:repeatableProperty field="customHeaders" />
         </f:entry>
     </f:advanced>
 </j:jelly>
