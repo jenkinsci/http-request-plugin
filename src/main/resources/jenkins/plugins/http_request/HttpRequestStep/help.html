@@ -1,0 +1,23 @@
+<div>
+    <p>
+        Performs an HTTP request, and returns a response object.
+        <p>Usage example:</p>
+        <pre>
+        def response = httpRequest url:'http://localhost:8080/jenkins/api/json?pretty=true'
+        println("Status: "+response.getStatus())
+        println("Content: "+response.getContent())
+        </pre>
+        <p>If Jenkins restarts after the HTTP request is made, but before the HTTP response is received, the build will fail.</p>
+    </p>
+    <p>
+        The methods of the response object are:
+        <ul>
+            <li>
+                <tt>String getContent()</tt>: The HTTP Response entity. This means the text of the response without the headers. If the response does not contain an entity, <tt>getContent()</tt> returns null.
+            </li>
+            <li>
+                <tt>int getStatus()</tt>: The HTTP status code.
+            </li>
+        <ul>
+    </p>
+</div>

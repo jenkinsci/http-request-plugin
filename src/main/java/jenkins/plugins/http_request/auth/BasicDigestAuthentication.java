@@ -64,6 +64,10 @@ public class BasicDigestAuthentication extends AbstractDescribableImpl<BasicDige
     @Extension
     public static class BasicDigestAuthenticationDescriptor extends Descriptor<BasicDigestAuthentication> {
 
+        public String getHttpRequestHelpPath() {
+            return "/descriptor/"+HttpRequest.class.getName()+"/help";
+        }
+
         public FormValidation doCheckKeyName(@QueryParameter String value) {
             HttpRequest.DescriptorImpl descriptor = (HttpRequest.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(HttpRequest.class);
             return descriptor.doValidateKeyName(value);

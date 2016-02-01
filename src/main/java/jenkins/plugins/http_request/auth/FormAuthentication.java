@@ -71,5 +71,10 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
         public String getDisplayName() {
             return "Form Authentication";
         }
+
+        public String getHttpRequestHelpPath() {
+            return "/descriptor/"+HttpRequest.class.getName()+"/help";
+        }
+
     }
 }

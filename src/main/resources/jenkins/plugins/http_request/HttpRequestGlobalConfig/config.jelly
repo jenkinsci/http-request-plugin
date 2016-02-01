@@ -4,18 +4,15 @@
         <f:entry title="Basic/Digest Authentication">
             <f:repeatable field="basicDigestAuthentications">
                 <table width="100%">
-                    <f:entry title="Key Name" field="keyName"
-                        help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-keyName.html">
+                    <f:entry title="Key Name" field="keyName" help="${descriptor.httpRequestHelpPath}/keyName">
                         <f:textbox name="basicDigestAuthentication.keyName"/>
-                    </f:entry>  
-                    <f:entry title="Username" field="userName"
-                        help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-userName.html">
+                    </f:entry>
+                    <f:entry title="Username" field="userName" help="${descriptor.httpRequestHelpPath}/userName">
                         <f:textbox name="basicDigestAuthentication.userName" />
-                    </f:entry>  
-                    <f:entry title="Password" field="password"
-                        help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-password.html">
+                    </f:entry>
+                    <f:entry title="Password" field="password" help="${descriptor.httpRequestHelpPath}/password">
                         <f:password name="basicDigestAuthentication.password" />
-                    </f:entry>  
+                    </f:entry>
                     <f:entry>
                         <div align="right">
                             <f:repeatableDeleteButton />
@@ -24,37 +21,30 @@
                 </table>
             </f:repeatable>
         </f:entry>
-        
+
         <f:entry title="Form Authentication">
             <f:repeatable field="formAuthentications">
                 <table width="100%">
-                    <f:entry title="Key Name" field="keyName"
-                        help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-keyName.html">
+                    <f:entry title="Key Name" field="keyName" help="${descriptor.httpRequestHelpPath}/keyName">
                         <f:textbox name="formAuthentication.keyName" />
                     </f:entry>
-                
-                    <f:entry title="Actions"
-                        help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-authentication-actions.html">
-                        <f:repeatable field="actions">
+
+                    <f:entry title="Actions">
+                        <f:repeatable field="actions" help="${descriptor.httpRequestHelpPath}/authentication-actions">
                             <table width="100%">
-                                <f:entry title="URL" field="url"
-                                    help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-url.html">
+                                <f:entry title="URL" field="url" help="${descriptor.httpRequestHelpPath}/url">
                                     <f:textbox name="actionFormAuthentication.url" />
                                 </f:entry>
-                                <f:entry field="mode" title="HTTP Mode"
-                                         help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-httpMode.html">
+                                <f:entry field="mode" title="HTTP Mode" help="${descriptor.httpRequestHelpPath}/httpMode">
                                     <f:select name="actionFormAuthentication.mode" />
                                 </f:entry>
-                                <f:entry title="Parameters"
-                                    help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-authentication-parameters.html">
+                                <f:entry title="Parameters" help="${descriptor.httpRequestHelpPath}/authentication-parameters">
                                     <f:repeatable field="params">
                                         <table width="100%">
-                                            <f:entry title="Name" field="name"
-                                                help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-authentication-parameter-name.html">
+                                            <f:entry title="Name" field="name" help="${descriptor.httpRequestHelpPath}/authentication-parameter-name">
                                                 <f:textbox name="nameValuePair.name" />
                                             </f:entry>
-                                            <f:entry title="Value" field="value"
-                                                help="/plugin/http_request/WEB-INF/classes/jenkins/plugins/http_request/HttpRequest/help-authentication-parameter-value.html">
+                                            <f:entry title="Value" field="value" help="${descriptor.httpRequestHelpPath}/authentication-parameter-value">
                                                 <f:textbox name="nameValuePair.value" />
                                             </f:entry>
                                             <f:entry>
@@ -73,7 +63,7 @@
                             </table>
                         </f:repeatable>
                     </f:entry>
-                
+
                     <f:entry>
                         <div align="right">
                             <f:repeatableDeleteButton />

@@ -3,10 +3,9 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-
-        <version>1.580.1</version>
+        <version>2.3</version>
     </parent>
-    
+
     <artifactId>http_request</artifactId>
     <version>1.8.9-SNAPSHOT</version>
     <packaging>hpi</packaging>
@@ -15,8 +14,13 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <surefire.rerunFailingTestsCount>0</surefire.rerunFailingTestsCount>
+        <commons.version>1.10</commons.version>
+        <httpcomponents.version>4.5.1</httpcomponents.version>
+        <script-security.version>1.17</script-security.version>
+        <workflow.version>1.13</workflow.version>
     </properties>
-   
+
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>
@@ -31,41 +35,65 @@
         </pluginRepository>
     </pluginRepositories>
     <dependencies>
+
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5.1</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.1</version>
-            <classifier>tests</classifier>
-            <scope>test</scope>
+            <version>${httpcomponents.version}</version>
         </dependency>
 
         <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>script-security</artifactId>
+            <version>${script-security.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-step-api</artifactId>
+            <version>${workflow.version}</version>
+        </dependency>
+
+        <!-- Test framework -->
+        <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>1.10</version>
+            <version>${commons.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>fluent-hc</artifactId>
-            <version>4.5.1</version>
+            <version>${httpcomponents.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.5</version>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${httpcomponents.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-aggregator</artifactId>
+            <version>${workflow.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-step-api</artifactId>
+            <version>${workflow.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
-  
+
     <scm>
         <connection>scm:git:ssh://github.com/jenkinsci/http-request-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/http-request-plugin.git</developerConnection>
@@ -76,6 +104,11 @@
             <id>janario</id>
             <name>Janario Oliveira</name>
             <email>janarioliver@gmail.com</email>
+        </developer>
+        <developer>
+            <id>martinda</id>
+            <name>Martin d'Anjou</name>
+            <email>martin.danjou14@gmail.com</email>
         </developer>
     </developers>
 

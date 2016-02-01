@@ -1,0 +1,47 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:entry field="url" title="URL"
+        help="${descriptor.httpRequestHelpPath}/url">
+        <f:textbox />
+    </f:entry>
+    <f:entry field="httpMode" title="HTTP mode"
+        help="${descriptor.httpRequestHelpPath}/httpMode">
+        <f:select />
+    </f:entry>
+
+    <f:advanced>
+        <f:entry field="validResponseCodes" title="Response codes expected"
+            help="${descriptor.httpRequestHelpPath}/validResponseCodes">
+            <f:textbox default="${descriptor.validResponseCodes}"/>
+        </f:entry>
+        <f:entry field="validResponseContent" title="Response content expected"
+            help="${descriptor.httpRequestHelpPath}/validResponseContent">
+            <f:textbox />
+        </f:entry>
+        <f:entry field="acceptType" title="Accept"
+            help="${descriptor.httpRequestHelpPath}/acceptType">
+            <f:select />
+        </f:entry>
+        <f:entry field="contentType" title="Content-type"
+            help="${descriptor.httpRequestHelpPath}/contentType">
+            <f:select />
+        </f:entry>
+        <f:entry field="timeout" title="Connection timeout"
+            help="${descriptor.httpRequestHelpPath}/timeout">
+            <f:number default="${descriptor.timeout}"/>
+        </f:entry>
+
+        <f:entry field="consoleLogResponseBody" title="Response body in console?"
+            help="${descriptor.httpRequestHelpPath}/consoleLogResponseBody">
+            <f:booleanRadio />
+        </f:entry>
+
+        <f:entry field="authentication" title="Authenticate"
+            help="${descriptor.httpRequestHelpPath}/authentication">
+            <f:select />
+        </f:entry>
+        <f:entry title="Custom headers">
+            <f:repeatableProperty field="customHeaders" />
+        </f:entry>
+    </f:advanced>
+</j:jelly>

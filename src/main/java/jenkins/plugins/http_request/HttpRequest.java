@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.base.Strings;
-import com.google.common.base.Supplier;
 import com.google.common.collect.Range;
 import com.google.common.collect.Ranges;
 import com.google.common.primitives.Ints;
@@ -43,7 +42,6 @@ import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.NameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
-import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -61,20 +59,20 @@ import org.kohsuke.stapler.StaplerRequest;
 /**
  * @author Janario Oliveira
  */
-public class HttpRequest extends Builder implements SimpleBuildStep {
+public class HttpRequest extends Builder {
 
     private @Nonnull String url;
-    private HttpMode httpMode                 = DescriptorImpl.defaultHttpMode;
-    private Boolean passBuildParameters       = DescriptorImpl.defaultPassBuildParameters;
-    private String validResponseCodes         = DescriptorImpl.defaultValidResponseCodes;
-    private String validResponseContent       = DescriptorImpl.defaultValidResponseContent;
-    private MimeType acceptType               = DescriptorImpl.defaultAcceptType;
-    private MimeType contentType              = DescriptorImpl.defaultContentType;
-    private String outputFile                 = DescriptorImpl.defaultOutputFile;
-    private Integer timeout                   = DescriptorImpl.defaultTimeout;
-    private Boolean consoleLogResponseBody    = DescriptorImpl.defaultConsoleLogResponseBody;
-    private String authentication             = DescriptorImpl.defaultAuthentication;
-    private List<NameValuePair> customHeaders = DescriptorImpl.defaultCustomHeaders;
+    private HttpMode httpMode                 = DescriptorImpl.httpMode;
+    private Boolean passBuildParameters       = DescriptorImpl.passBuildParameters;
+    private String validResponseCodes         = DescriptorImpl.validResponseCodes;
+    private String validResponseContent       = DescriptorImpl.validResponseContent;
+    private MimeType acceptType               = DescriptorImpl.acceptType;
+    private MimeType contentType              = DescriptorImpl.contentType;
+    private String outputFile                 = DescriptorImpl.outputFile;
+    private Integer timeout                   = DescriptorImpl.timeout;
+    private Boolean consoleLogResponseBody    = DescriptorImpl.consoleLogResponseBody;
+    private String authentication             = DescriptorImpl.authentication;
+    private List<NameValuePair> customHeaders = DescriptorImpl.customHeaders;
 
     private TaskListener listener;
 
@@ -198,7 +196,17 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
     }
 
     @Override
-    public void perform(Run<?,?> run, FilePath workspace, Launcher launcher, TaskListener listener)
+    public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener)
+    throws InterruptedException, IOException
+    {
+        ResponseContentSupplier responseContentSupplier = performHttpRequest(build, listener);
+
+        final PrintStream logger = listener.getLogger();
+        logResponseToFile(build.getWorkspace(), logger, responseContentSupplier);
+        return true;
+    }
+
+    public ResponseContentSupplier performHttpRequest(Run<?,?> run, TaskListener listener)
     throws InterruptedException, IOException
     {
         final PrintStream logger = listener.getLogger();
@@ -225,7 +233,7 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
         HttpContext context = new BasicHttpContext();
 
         if (authentication != null && !authentication.isEmpty()) {
-            final Authenticator auth = getDescriptor().getAuthentication(authentication);
+            final Authenticator auth = HttpRequestGlobalConfig.get().getAuthentication(authentication);
             if (auth == null) {
                 throw new IllegalStateException("Authentication '" + authentication + "' doesn't exist anymore");
             }
@@ -235,15 +243,16 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
         }
         final HttpResponse response = clientUtil.execute(httpclient, context, httpRequestBase, logger, timeout);
 
-        try {
-            ResponseContentSupplier responseContentSupplier = new ResponseContentSupplier(response);
-            logResponse(workspace, logger, responseContentSupplier);
-
-            responseCodeIsValid(response, logger);
-            contentIsValid(responseContentSupplier, logger);
-        } finally {
-            EntityUtils.consume(response.getEntity());
+        // The HttpEntity is consumed by the ResponseContentSupplier
+        ResponseContentSupplier responseContentSupplier = new ResponseContentSupplier(response);
+        if (consoleLogResponseBody) {
+            logger.println("Response: \n" + responseContentSupplier.getContent());
         }
+
+        responseCodeIsValid(responseContentSupplier, logger);
+        contentIsValid(responseContentSupplier, logger);
+
+        return responseContentSupplier;
     }
 
     private void contentIsValid(ResponseContentSupplier responseContentSupplier, PrintStream logger)
@@ -253,39 +262,36 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
             return;
         }
 
-        String response = responseContentSupplier.get();
+        String response = responseContentSupplier.getContent();
         if (!response.contains(validResponseContent)) {
             throw new AbortException("Fail: Response with length " + response.length() + " doesn't contain '" + validResponseContent + "'");
         }
         return;
     }
 
-    private void responseCodeIsValid(HttpResponse response, PrintStream logger)
+    private void responseCodeIsValid(ResponseContentSupplier response, PrintStream logger)
     throws AbortException
     {
         List<Range<Integer>> ranges = getDescriptor().parseToRange(validResponseCodes);
         for (Range<Integer> range : ranges) {
-            if (range.contains(response.getStatusLine().getStatusCode())) {
+            if (range.contains(response.getStatus())) {
                 logger.println("Success code from " + range);
                 return;
             }
         }
-        throw new AbortException("Fail: the returned code " + response.getStatusLine().getStatusCode()+" is not in the accepted range: "+ranges);
+        throw new AbortException("Fail: the returned code " + response.getStatus()+" is not in the accepted range: "+ranges);
     }
 
-    private void logResponse(FilePath workspace, PrintStream logger, ResponseContentSupplier responseContentSupplier) throws IOException, InterruptedException {
+    private void logResponseToFile(FilePath workspace, PrintStream logger, ResponseContentSupplier responseContentSupplier) throws IOException, InterruptedException {
 
         FilePath outputFilePath = getOutputFilePath(workspace, logger);
 
-        if (consoleLogResponseBody || outputFilePath != null) {
-            if (consoleLogResponseBody) {
-                logger.println("Response: \n" + responseContentSupplier.get());
-            }
-            if (outputFilePath != null && responseContentSupplier.get() != null) {
+        if (outputFilePath != null) {
+            if (outputFilePath != null && responseContentSupplier.getContent() != null) {
                 OutputStream write = null;
                 try {
                     write = outputFilePath.write();
-                    write.write(responseContentSupplier.get().getBytes());
+                    write.write(responseContentSupplier.getContent().getBytes());
                 } finally {
                     if (write != null) {
                         write.close();
@@ -364,57 +370,20 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
 
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
-        public static final HttpMode defaultHttpMode                  = HttpMode.POST;
-        public static final Boolean  defaultPassBuildParameters       = false;
-        public static final String   defaultValidResponseCodes        = "100:399";
-        public static final String   defaultValidResponseContent      = "";
-        public static final MimeType defaultAcceptType                = MimeType.NOT_SET;
-        public static final MimeType defaultContentType               = MimeType.NOT_SET;
-        public static final String   defaultOutputFile                = "";
-        public static final int      defaultTimeout                   = 0;
-        public static final Boolean  defaultConsoleLogResponseBody    = false;
-        public static final String   defaultAuthentication            = "";
-        public static final List <NameValuePair> defaultCustomHeaders = Collections.<NameValuePair>emptyList();
-
-        private List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<BasicDigestAuthentication>();
-        private List<FormAuthentication> formAuthentications = new ArrayList<FormAuthentication>();
+        public static final HttpMode httpMode                  = HttpMode.POST;
+        public static final Boolean  passBuildParameters       = false;
+        public static final String   validResponseCodes        = "100:399";
+        public static final String   validResponseContent      = "";
+        public static final MimeType acceptType                = MimeType.NOT_SET;
+        public static final MimeType contentType               = MimeType.NOT_SET;
+        public static final String   outputFile                = "";
+        public static final int      timeout                   = 0;
+        public static final Boolean  consoleLogResponseBody    = false;
+        public static final String   authentication            = "";
+        public static final List <NameValuePair> customHeaders = Collections.<NameValuePair>emptyList();
 
         public DescriptorImpl() {
             load();
-        }
-
-        public List<BasicDigestAuthentication> getBasicDigestAuthentications() {
-            return basicDigestAuthentications;
-        }
-
-        public void setBasicDigestAuthentications(
-                List<BasicDigestAuthentication> basicDigestAuthentications) {
-            this.basicDigestAuthentications = basicDigestAuthentications;
-        }
-
-        public List<FormAuthentication> getFormAuthentications() {
-            return formAuthentications;
-        }
-
-        public void setFormAuthentications(
-                List<FormAuthentication> formAuthentications) {
-            this.formAuthentications = formAuthentications;
-        }
-
-        public List<Authenticator> getAuthentications() {
-            List<Authenticator> list = new ArrayList<Authenticator>();
-            list.addAll(basicDigestAuthentications);
-            list.addAll(formAuthentications);
-            return list;
-        }
-
-        public Authenticator getAuthentication(String keyName) {
-            for (Authenticator authenticator : getAuthentications()) {
-                if (authenticator.getKeyName().equals(keyName)) {
-                    return authenticator;
-                }
-            }
-            return null;
         }
 
         @Override
@@ -427,47 +396,25 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
             return "HTTP Request";
         }
 
-        @Override
-        public boolean configure(StaplerRequest req, JSONObject formData) throws
-                FormException {
-            req.bindJSON(this, formData);
-            save();
-            return true;
-        }
-
-        public ListBoxModel doFillDefaultHttpModeItems() {
-            return HttpMode.getFillItems();
-        }
-
         public ListBoxModel doFillHttpModeItems() {
             return HttpMode.getFillItems();
         }
 
-        public ListBoxModel doFillDefaultContentTypeItems() {
+        public ListBoxModel doFillAcceptTypeItems() {
             return MimeType.getContentTypeFillItems();
         }
 
         public ListBoxModel doFillContentTypeItems() {
-            ListBoxModel items = MimeType.getContentTypeFillItems();
-            return items;
-        }
-
-        public ListBoxModel doFillDefaultAcceptTypeItems() {
             return MimeType.getContentTypeFillItems();
-        }
-
-        public ListBoxModel doFillAcceptTypeItems() {
-            ListBoxModel items = MimeType.getContentTypeFillItems();
-            return items;
         }
 
         public ListBoxModel doFillAuthenticationItems() {
             ListBoxModel items = new ListBoxModel();
             items.add("");
-            for (BasicDigestAuthentication basicDigestAuthentication : basicDigestAuthentications) {
+            for (BasicDigestAuthentication basicDigestAuthentication : HttpRequestGlobalConfig.get().getBasicDigestAuthentications()) {
                 items.add(basicDigestAuthentication.getKeyName());
             }
-            for (FormAuthentication formAuthentication : formAuthentications) {
+            for (FormAuthentication formAuthentication : HttpRequestGlobalConfig.get().getFormAuthentications()) {
                 items.add(formAuthentication.getKeyName());
             }
 
@@ -477,11 +424,10 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
         public FormValidation doCheckUrl(@QueryParameter String value)
                 throws IOException, ServletException {
             return FormValidation.ok();
-            // return HttpRequestValidation.checkUrl(value);
         }
 
         public FormValidation doValidateKeyName(@QueryParameter String value) {
-            List<Authenticator> list = getAuthentications();
+            List<Authenticator> list = HttpRequestGlobalConfig.get().getAuthentications();
 
             int count = 0;
             for (Authenticator basicAuthentication : list) {
@@ -534,28 +480,4 @@ public class HttpRequest extends Builder implements SimpleBuildStep {
         }
     }
 
-    private class ResponseContentSupplier implements Supplier<String> {
-
-        private String content;
-        private final HttpResponse response;
-
-        private ResponseContentSupplier(HttpResponse response) {
-            this.response = response;
-        }
-
-        public String get() {
-            try {
-                if (content == null) {
-                    HttpEntity entity = response.getEntity();
-                    if (entity == null) {
-                        return null;
-                    }
-                    content = EntityUtils.toString(entity);
-                }
-                return content;
-            } catch (IOException e) {
-                return null;
-            }
-        }
-    }
 }

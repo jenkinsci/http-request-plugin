@@ -4,6 +4,7 @@ import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
+import jenkins.plugins.http_request.HttpRequest;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -36,6 +37,10 @@ public class NameValuePair extends AbstractDescribableImpl<NameValuePair>
         @Override
         public String getDisplayName() {
             return "Name Value Param";
+        }
+
+        public String getHttpRequestHelpPath() {
+            return "/descriptor/"+HttpRequest.class.getName()+"/help";
         }
 
         public FormValidation doCheckName(@QueryParameter String value) {

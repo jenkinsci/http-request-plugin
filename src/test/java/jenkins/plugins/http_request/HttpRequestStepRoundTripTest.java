@@ -1,11 +1,5 @@
 package jenkins.plugins.http_request;
 
-import org.junit.Rule;
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-
-import org.jvnet.hudson.test.JenkinsRule;
-
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,33 +9,28 @@ import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.NameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
 
-public class HttpRequestRoundTripTest {
+import org.jenkinsci.plugins.workflow.steps.StepConfigTester;
+import org.junit.Rule;
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+
+import org.jvnet.hudson.test.JenkinsRule;
+
+public class HttpRequestStepRoundTripTest {
 
     @Rule
     public JenkinsRule j = new JenkinsRule();
 
-    public static HttpRequest before = new HttpRequest("http://domain/");
+    public static HttpRequestStep before = new HttpRequestStep("http://domain/");
 
     @Test
-    public void configRoundtripUrl() throws Exception {
+    public void configRoundTripUrl() throws Exception {
         configRoundTrip(before);
     }
 
     @Test
     public void configRoundtripHttpMode() throws Exception {
         before.setHttpMode(HttpMode.GET);
-        configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripPassBuildParametersTrue() throws Exception {
-        before.setPassBuildParameters(true);
-        configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripPassBuildParamtersFalse() throws Exception {
-        before.setPassBuildParameters(false);
         configRoundTrip(before);
     }
 
@@ -58,25 +47,19 @@ public class HttpRequestRoundTripTest {
     }
 
     @Test
-    public void configRoundtripAcceptMimeType() throws Exception {
+    public void configRoundtripAcceptType() throws Exception {
         before.setAcceptType(MimeType.TEXT_HTML);
         configRoundTrip(before);
     }
 
     @Test
-    public void configRoundtripContentMimeType() throws Exception {
+    public void configRoundtripContentType() throws Exception {
         before.setContentType(MimeType.TEXT_HTML);
         configRoundTrip(before);
     }
 
     @Test
-    public void configRoundtripOutputFile() throws Exception {
-        before.setOutputFile("myfile.txt");
-        configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripTimeout() throws Exception {
+    public void configRoundtripTiemout() throws Exception {
         before.setTimeout(12);
         configRoundTrip(before);
     }
@@ -88,7 +71,7 @@ public class HttpRequestRoundTripTest {
     }
 
     @Test
-    public void configRoundtripConsoleLogResponseBodyFalse() throws Exception {
+    public void configRoundtripConsoleLogReponseBodyFalse() throws Exception {
         before.setConsoleLogResponseBody(false);
         configRoundTrip(before);
     }
@@ -128,13 +111,15 @@ public class HttpRequestRoundTripTest {
         configRoundTrip(before);
     }
 
-    private void configRoundTrip(HttpRequest before) throws Exception {
-        HttpRequest after = j.configRoundtrip(before);
-        j.assertEqualBeans(before, after, "httpMode,passBuildParameters");
+    private void configRoundTrip(HttpRequestStep before) throws Exception {
+        HttpRequestStep after  = new StepConfigTester(j).configRoundTrip(before);
+        j.assertEqualBeans(before, after, "httpMode");
         j.assertEqualBeans(before, after, "url");
-        j.assertEqualBeans(before, after, "validResponseCodes,validResponseContent");
-        j.assertEqualBeans(before, after, "acceptType,contentType");
-        j.assertEqualBeans(before, after, "outputFile,timeout");
+        j.assertEqualBeans(before, after, "validResponseCodes");
+        j.assertEqualBeans(before, after, "validResponseContent");
+        j.assertEqualBeans(before, after, "acceptType");
+        j.assertEqualBeans(before, after, "contentType");
+        j.assertEqualBeans(before, after, "timeout");
         j.assertEqualBeans(before, after, "consoleLogResponseBody");
         j.assertEqualBeans(before, after, "authentication");
 

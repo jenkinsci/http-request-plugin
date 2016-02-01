@@ -11,6 +11,7 @@ import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.plugins.http_request.HttpMode;
+import jenkins.plugins.http_request.HttpRequest;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -48,6 +49,10 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> {
         @Override
         public String getDisplayName() {
             return "Action Form Authentication";
+        }
+
+        public String getHttpRequestHelpPath() {
+            return "/descriptor/"+HttpRequest.class.getName()+"/help";
         }
 
         public FormValidation doCheckUrl(@QueryParameter String value) {
