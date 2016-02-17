@@ -288,7 +288,6 @@ public final class HttpRequestStep extends AbstractStepImpl {
             httpRequest.setAuthentication(step.authentication);
             httpRequest.setCustomHeaders(step.customHeaders);
             ResponseContentSupplier response = httpRequest.performHttpRequest(run, listener);
-            System.out.println("End of run()");
             return response;
         }
 
