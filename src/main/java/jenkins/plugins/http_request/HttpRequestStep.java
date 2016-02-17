@@ -203,11 +203,6 @@ public final class HttpRequestStep extends AbstractStepImpl {
             return items;
         }
 
-        public FormValidation doCheckUrl(@QueryParameter String value)
-                throws IOException, ServletException {
-            return FormValidation.ok();
-        }
-
         public FormValidation doValidateKeyName(@QueryParameter String value) {
             List<Authenticator> list = HttpRequestGlobalConfig.get().getAuthentications();
 
