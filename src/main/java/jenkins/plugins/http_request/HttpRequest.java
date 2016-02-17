@@ -321,7 +321,6 @@ public class HttpRequest extends Builder {
     }
 
     private FilePath getOutputFilePath(FilePath workspace, PrintStream logger) {
-        // No need to check for a null workspace, the workflow node step prevents workspace from being null.
         if (outputFile != null && !outputFile.isEmpty()) {
             return workspace.child(outputFile);
         }
