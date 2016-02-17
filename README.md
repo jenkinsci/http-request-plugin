@@ -4,8 +4,8 @@ This plugin sends a HTTP/HTTPS request to a user speficied URL.
 
 ## Features
 
-The following features are available in both the non-Pipeline and in
-the Pipeline version of the plugin.
+The following features are available in both Pipeline and traditional
+project types:
 
 * Programmable HTTP method: GET, POST, PUT, DELETE, or HEAD
 * Programmable range of expected response codes (a response code outside the range fails the build)
