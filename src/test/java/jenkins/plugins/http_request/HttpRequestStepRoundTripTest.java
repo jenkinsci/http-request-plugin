@@ -26,67 +26,33 @@ public class HttpRequestStepRoundTripTest {
     @Test
     public void configRoundTripUrl() throws Exception {
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripHttpMode() throws Exception {
         before.setHttpMode(HttpMode.GET);
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripValidResponseCodes() throws Exception {
         before.setValidResponseCodes("100:599");
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripValidResponseContent() throws Exception {
         before.setValidResponseContent("some content we want to see");
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripAcceptType() throws Exception {
         before.setAcceptType(MimeType.TEXT_HTML);
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripContentType() throws Exception {
         before.setContentType(MimeType.TEXT_HTML);
         configRoundTrip(before);
     }
 
     @Test
-    public void configRoundtripTiemout() throws Exception {
+    public void configRoundtripTimeout() throws Exception {
         before.setTimeout(12);
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripConsoleLogResponseBodyTrue() throws Exception {
         before.setConsoleLogResponseBody(true);
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripConsoleLogReponseBodyFalse() throws Exception {
         before.setConsoleLogResponseBody(false);
         configRoundTrip(before);
-    }
 
-    @Test
-    public void basicAuthentication() throws Exception {
         List<BasicDigestAuthentication> bda = new ArrayList<BasicDigestAuthentication>();
         bda.add(new BasicDigestAuthentication("keyname1","username1","password1"));
         bda.add(new BasicDigestAuthentication("keyname2","username2","password2"));
         HttpRequestGlobalConfig.get().setBasicDigestAuthentications(bda);
         configRoundTrip(before);
-    }
 
-    @Test
-    public void formAuthentication() throws Exception {
         List<NameValuePair> params = new ArrayList<NameValuePair>();
         params.add(new NameValuePair("param1","value1"));
         params.add(new NameValuePair("param2","value2"));
@@ -101,10 +67,7 @@ public class HttpRequestStepRoundTripTest {
 
         HttpRequestGlobalConfig.get().setFormAuthentications(formAuthList);
         configRoundTrip(before);
-    }
 
-    @Test
-    public void customHeaders() throws Exception {
         List<NameValuePair> customHeaders = new ArrayList<NameValuePair>();
         customHeaders.add(new NameValuePair("param1","value1"));
         before.setCustomHeaders(customHeaders);

@@ -25,46 +25,18 @@ public class HttpRequestRoundTripTest {
     @Test
     public void configRoundtripUrl() throws Exception {
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripHttpMode() throws Exception {
         before.setHttpMode(HttpMode.GET);
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripPassBuildParametersTrue() throws Exception {
         before.setPassBuildParameters(true);
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripPassBuildParamtersFalse() throws Exception {
         before.setPassBuildParameters(false);
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripValidResponseCodes() throws Exception {
         before.setValidResponseCodes("100:599");
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripValidResponseContent() throws Exception {
         before.setValidResponseContent("some content we want to see");
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripAcceptMimeType() throws Exception {
         before.setAcceptType(MimeType.TEXT_HTML);
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripContentMimeType() throws Exception {
         before.setContentType(MimeType.TEXT_HTML);
         configRoundTrip(before);
     }
@@ -73,22 +45,10 @@ public class HttpRequestRoundTripTest {
     public void configRoundtripOutputFile() throws Exception {
         before.setOutputFile("myfile.txt");
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripTimeout() throws Exception {
         before.setTimeout(12);
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripConsoleLogResponseBodyTrue() throws Exception {
         before.setConsoleLogResponseBody(true);
         configRoundTrip(before);
-    }
-
-    @Test
-    public void configRoundtripConsoleLogResponseBodyFalse() throws Exception {
         before.setConsoleLogResponseBody(false);
         configRoundTrip(before);
     }
@@ -100,10 +60,7 @@ public class HttpRequestRoundTripTest {
         bda.add(new BasicDigestAuthentication("keyname2","username2","password2"));
         HttpRequestGlobalConfig.get().setBasicDigestAuthentications(bda);
         configRoundTrip(before);
-    }
 
-    @Test
-    public void formAuthentication() throws Exception {
         List<NameValuePair> params = new ArrayList<NameValuePair>();
         params.add(new NameValuePair("param1","value1"));
         params.add(new NameValuePair("param2","value2"));
@@ -118,10 +75,7 @@ public class HttpRequestRoundTripTest {
 
         HttpRequestGlobalConfig.get().setFormAuthentications(formAuthList);
         configRoundTrip(before);
-    }
 
-    @Test
-    public void customHeaders() throws Exception {
         List<NameValuePair> customHeaders = new ArrayList<NameValuePair>();
         customHeaders.add(new NameValuePair("param1","value1"));
         before.setCustomHeaders(customHeaders);
