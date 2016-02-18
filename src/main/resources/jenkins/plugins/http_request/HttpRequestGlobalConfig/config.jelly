@@ -5,13 +5,13 @@
             <f:repeatable field="basicDigestAuthentications">
                 <table width="100%">
                     <f:entry title="Key Name" field="keyName" help="/plugin/http_request/help-keyName.html">
-                        <f:textbox name="basicDigestAuthentication.keyName"/>
+                        <f:textbox />
                     </f:entry>
                     <f:entry title="Username" field="userName" help="/plugin/http_request/help-userName.html">
-                        <f:textbox name="basicDigestAuthentication.userName" />
+                        <f:textbox />
                     </f:entry>
                     <f:entry title="Password" field="password" help="/plugin/http_request/help-password.html">
-                        <f:password name="basicDigestAuthentication.password" />
+                        <f:password />
                     </f:entry>
                     <f:entry title="">
                         <div align="right">
