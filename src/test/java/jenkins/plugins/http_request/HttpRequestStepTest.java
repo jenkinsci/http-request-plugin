@@ -35,8 +35,8 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
             "def response = httpRequest '"+baseURL+"/doGET'\n" +
-            "println('Status: '+response.getStatus())\n" +
-            "println('Response: '+response.getContent())\n",
+            "println('Status: '+response.status)\n" +
+            "println('Response: '+response.content)\n",
             true));
 
         // Execute the build
