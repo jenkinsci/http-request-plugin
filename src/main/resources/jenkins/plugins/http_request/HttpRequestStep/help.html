@@ -3,11 +3,11 @@
         Performs an HTTP request, and returns a response object.
         <p>Usage example:</p>
         <pre>
-        def response = httpRequest url:'http://localhost:8080/jenkins/api/json?pretty=true'
-        println("Status: "+response.getStatus())
-        println("Content: "+response.getContent())
+        def response = httpRequest 'http://localhost:8080/jenkins/api/json?pretty=true'
+        println("Status: "+response.status)
+        println("Content: "+response.content)
         </pre>
-        <p>If Jenkins restarts after the HTTP request is made, but before the HTTP response is received, the build will fail.</p>
+        <p>If Jenkins restarts after the HTTP request is made, but before the HTTP response is received, the HTTP request fail.</p>
     </p>
     <p>
         The methods of the response object are:
