@@ -31,27 +31,27 @@ In a Pipeline job, you have total control over how the url is
 formed. Suppose you have a build parameter called "param1",
 you can pass it to the HTTP request programmatically like so:
 
-```
-httpRequest url:"http://httpbin.org/response-headers?param1=${param1}"
+```groovy
+httpRequest "http://httpbin.org/response-headers?param1=${param1}"
 ```
 
 If you wish to save the response to a file, you need to grab a
-workspace. You can do this with a `node` or a `ws` Pipeline step. For
+workspace. You can do this with a `node` Pipeline step. For
 example:
 
-```
-def response = httpRequest url:"http://httpbin.org/response-headers?param1=${param1}"
+```groovy
+def response = httpRequest "http://httpbin.org/response-headers?param1=${param1}"
 node() {
-    writeFile file: 'response.txt', text: response.getContent()
+    writeFile file: 'response.txt', text: response.content
 }
 ```
 
 You can access the response status code and content programmatically:
 
-```
-def response = httpRequest url:"http://httpbin.org/response-headers?param1=${param1}"
-println('Status: '+response.getStatus())
-println('Response: '+response.getContent())
+```groovy
+def response = httpRequest "http://httpbin.org/response-headers?param1=${param1}"
+println('Status: '+response.status)
+println('Response: '+response.content)
 ```
 
 For details on the Pipeline features, use the Pipeline snippet generator
