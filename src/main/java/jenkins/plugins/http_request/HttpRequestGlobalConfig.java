@@ -42,10 +42,6 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
         return GlobalConfiguration.all().get(HttpRequestGlobalConfig.class);
     }
 
-    public String getHttpRequestHelpPath() {
-        return "/descriptor/"+HttpRequest.class.getName()+"/help";
-    }
-
     public List<BasicDigestAuthentication> getBasicDigestAuthentications() {
         return basicDigestAuthentications;
     }

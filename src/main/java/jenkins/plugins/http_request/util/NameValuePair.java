@@ -39,10 +39,6 @@ public class NameValuePair extends AbstractDescribableImpl<NameValuePair>
             return "Name Value Param";
         }
 
-        public String getHttpRequestHelpPath() {
-            return "/descriptor/"+HttpRequest.class.getName()+"/help";
-        }
-
         public FormValidation doCheckName(@QueryParameter String value) {
             return FormValidation.validateRequired(value);
         }

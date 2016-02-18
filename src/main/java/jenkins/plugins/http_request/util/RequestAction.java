@@ -51,10 +51,6 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> {
             return "Action Form Authentication";
         }
 
-        public String getHttpRequestHelpPath() {
-            return "/descriptor/"+HttpRequest.class.getName()+"/help";
-        }
-
         public FormValidation doCheckUrl(@QueryParameter String value) {
             return HttpRequestValidation.checkUrl(value);
         }

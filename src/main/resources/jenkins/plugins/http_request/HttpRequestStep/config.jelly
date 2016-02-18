@@ -1,43 +1,32 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-    <f:entry field="url" title="URL"
-        help="${descriptor.httpRequestHelpPath}/url">
+    <f:entry field="url" title="URL" help="/plugin/http_request/help-url.html">
         <f:textbox />
     </f:entry>
-    <f:entry field="httpMode" title="HTTP mode"
-        help="${descriptor.httpRequestHelpPath}/httpMode">
+    <f:entry field="httpMode" title="HTTP mode" help="/plugin/http_request/help-httpMode.html">
         <f:select />
     </f:entry>
 
     <f:advanced>
-        <f:entry field="validResponseCodes" title="Response codes expected"
-            help="${descriptor.httpRequestHelpPath}/validResponseCodes">
+        <f:entry field="validResponseCodes" title="Response codes expected" help="/plugin/http_request/help-validResponseCodes.html">
             <f:textbox default="${descriptor.validResponseCodes}"/>
         </f:entry>
-        <f:entry field="validResponseContent" title="Response content expected"
-            help="${descriptor.httpRequestHelpPath}/validResponseContent">
+        <f:entry field="validResponseContent" title="Response content expected" help="/plugin/http_request/help-validResponseContent.html">
             <f:textbox />
         </f:entry>
-        <f:entry field="acceptType" title="Accept"
-            help="${descriptor.httpRequestHelpPath}/acceptType">
+        <f:entry field="acceptType" title="Accept" help="/plugin/http_request/help-acceptType.html">
             <f:select />
         </f:entry>
-        <f:entry field="contentType" title="Content-type"
-            help="${descriptor.httpRequestHelpPath}/contentType">
+        <f:entry field="contentType" title="Content-type" help="/plugin/http_request/help-contentType.html">
             <f:select />
         </f:entry>
-        <f:entry field="timeout" title="Connection timeout"
-            help="${descriptor.httpRequestHelpPath}/timeout">
+        <f:entry field="timeout" title="Connection timeout" help="/plugin/http_request/help-timeout.html">
             <f:number default="${descriptor.timeout}"/>
         </f:entry>
-
-        <f:entry field="consoleLogResponseBody" title="Response body in console?"
-            help="${descriptor.httpRequestHelpPath}/consoleLogResponseBody">
+        <f:entry field="consoleLogResponseBody" title="Response body in console?" help="/plugin/http_request/help-consoleLogResponseBody.html">
             <f:booleanRadio />
         </f:entry>
-
-        <f:entry field="authentication" title="Authenticate"
-            help="${descriptor.httpRequestHelpPath}/authentication">
+        <f:entry field="authentication" title="Authenticate" help="/plugin/http_request/help-authentication.html">
             <f:select />
         </f:entry>
         <f:entry title="Custom headers">

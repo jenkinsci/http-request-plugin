@@ -164,10 +164,6 @@ public final class HttpRequestStep extends AbstractStepImpl {
             super(Execution.class);
         }
 
-        public String getHttpRequestHelpPath() {
-            return "/descriptor/"+HttpRequest.class.getName()+"/help";
-        }
-
         @Override
         public String getFunctionName() {
             return "httpRequest";
