@@ -27,12 +27,6 @@ import static org.junit.Assert.assertTrue;
 public class HttpRequestTest extends HttpRequestTestBase {
 
     @Test
-    public void canBeSerialized() throws Exception {
-        HttpRequest httpRequest = new HttpRequest("http://localhost");
-        httpRequest.readResolve();
-    }
-
-    @Test
     public void simpleGetTest() throws Exception {
         // Prepare the server
         final HttpHost target = start();

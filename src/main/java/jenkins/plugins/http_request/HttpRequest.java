@@ -143,10 +143,6 @@ public class HttpRequest extends Builder {
         Items.XSTREAM2.alias("pair", NameValuePair.class);
     }
 
-    public Object readResolve() {
-        return this;
-    }
-
     public @Nonnull String getUrl() {
         return url;
     }
