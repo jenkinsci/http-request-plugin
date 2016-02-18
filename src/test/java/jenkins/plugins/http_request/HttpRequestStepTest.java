@@ -57,11 +57,6 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         final HttpHost target = start();
         final String baseURL = "http://localhost:" + target.getPort();
 
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
-        httpRequest.setConsoleLogResponseBody(true);
-        httpRequest.setValidResponseContent(findMe);
-
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
