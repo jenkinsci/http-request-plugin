@@ -365,7 +365,7 @@ public class HttpRequest extends Builder {
 
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
-        public static final HttpMode httpMode                  = HttpMode.POST;
+        public static final HttpMode httpMode                  = HttpMode.GET;
         public static final Boolean  passBuildParameters       = false;
         public static final String   validResponseCodes        = "100:399";
         public static final String   validResponseContent      = "";
