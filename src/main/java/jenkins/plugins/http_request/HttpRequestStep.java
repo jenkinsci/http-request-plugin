@@ -149,15 +149,14 @@ public final class HttpRequestStep extends AbstractStepImpl {
     }
     @Extension
     public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
-        public static final HttpMode httpMode                  = HttpMode.GET;
-        public static final Boolean  passBuildParameters       = false;
-        public static final String   validResponseCodes        = "100:399";
-        public static final String   validResponseContent      = "";
-        public static final MimeType acceptType                = MimeType.NOT_SET;
-        public static final MimeType contentType               = MimeType.NOT_SET;
-        public static final int      timeout                   = 0;
-        public static final Boolean  consoleLogResponseBody    = false;
-        public static final String   authentication            = "";
+        public static final HttpMode httpMode                  = HttpRequest.DescriptorImpl.httpMode;
+        public static final String   validResponseCodes        = HttpRequest.DescriptorImpl.validResponseCodes;
+        public static final String   validResponseContent      = HttpRequest.DescriptorImpl.validResponseContent;
+        public static final MimeType acceptType                = HttpRequest.DescriptorImpl.acceptType;
+        public static final MimeType contentType               = HttpRequest.DescriptorImpl.contentType;
+        public static final int      timeout                   = HttpRequest.DescriptorImpl.timeout;
+        public static final Boolean  consoleLogResponseBody    = HttpRequest.DescriptorImpl.consoleLogResponseBody;
+        public static final String   authentication            = HttpRequest.DescriptorImpl.authentication;
         public static final List <NameValuePair> customHeaders = Collections.<NameValuePair>emptyList();
 
         public DescriptorImpl() {
