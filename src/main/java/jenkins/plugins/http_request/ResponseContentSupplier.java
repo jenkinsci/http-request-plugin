@@ -18,14 +18,12 @@ class ResponseContentSupplier implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private transient HttpResponse response;
     private String content;
     private int status;
 
     public ResponseContentSupplier(HttpResponse response) {
-        this.response = response;
         this.status = response.getStatusLine().getStatusCode();
-        this.content = getContent();
+        setContent(response);
     }
 
     @Whitelisted
@@ -35,19 +33,19 @@ class ResponseContentSupplier implements Serializable {
 
     @Whitelisted
     public String getContent() {
-        if (content != null) {
-            return content;
-        }
+        return content;
+    }
+
+    private void setContent(HttpResponse response) {
         try {
             HttpEntity entity = response.getEntity();
             if (entity == null) {
-                return null;
+                return;
             }
             content = EntityUtils.toString(entity);
             EntityUtils.consume(response.getEntity());
-            return content;
         } catch (IOException e) {
-            return null;
+            content = "IOException while reading HttpResponse: "+e.getMessage();
         }
     }
 
