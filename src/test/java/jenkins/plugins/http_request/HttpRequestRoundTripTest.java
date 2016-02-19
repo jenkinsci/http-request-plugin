@@ -12,7 +12,7 @@ import java.util.List;
 
 import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
-import jenkins.plugins.http_request.util.NameValuePair;
+import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
 
 public class HttpRequestRoundTripTest {
@@ -61,9 +61,9 @@ public class HttpRequestRoundTripTest {
         HttpRequestGlobalConfig.get().setBasicDigestAuthentications(bda);
         configRoundTrip(before);
 
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new NameValuePair("param1","value1"));
-        params.add(new NameValuePair("param2","value2"));
+        List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
+        params.add(new HttpRequestNameValuePair("param1","value1"));
+        params.add(new HttpRequestNameValuePair("param2","value2"));
 
         RequestAction action = new RequestAction(new URL("http://www.domain.com/"),HttpMode.GET,params);
         List<RequestAction> actions = new ArrayList<RequestAction>();
@@ -76,8 +76,8 @@ public class HttpRequestRoundTripTest {
         HttpRequestGlobalConfig.get().setFormAuthentications(formAuthList);
         configRoundTrip(before);
 
-        List<NameValuePair> customHeaders = new ArrayList<NameValuePair>();
-        customHeaders.add(new NameValuePair("param1","value1"));
+        List<HttpRequestNameValuePair> customHeaders = new ArrayList<HttpRequestNameValuePair>();
+        customHeaders.add(new HttpRequestNameValuePair("param1","value1"));
         before.setCustomHeaders(customHeaders);
         configRoundTrip(before);
     }
@@ -95,8 +95,8 @@ public class HttpRequestRoundTripTest {
         // Custom header check
         assertEquals(before.getCustomHeaders().size(),after.getCustomHeaders().size());
         for (int idx = 0; idx < before.getCustomHeaders().size(); idx++) {
-          NameValuePair bnvp = before.getCustomHeaders().get(idx);
-          NameValuePair anvp = after.getCustomHeaders().get(idx);
+          HttpRequestNameValuePair bnvp = before.getCustomHeaders().get(idx);
+          HttpRequestNameValuePair anvp = after.getCustomHeaders().get(idx);
           assertEquals(bnvp.getName(),anvp.getName());
           assertEquals(bnvp.getValue(),anvp.getValue());
         }
@@ -129,12 +129,12 @@ public class HttpRequestRoundTripTest {
                 RequestAction afterAction  = afterActions.get(jdx);
                 assertEquals(beforeAction.getUrl(), afterAction.getUrl());
                 assertEquals(beforeAction.getMode(), afterAction.getMode());
-                List<NameValuePair> beforeParams = beforeAction.getParams();
-                List<NameValuePair> afterParams  = afterAction.getParams();
+                List<HttpRequestNameValuePair> beforeParams = beforeAction.getParams();
+                List<HttpRequestNameValuePair> afterParams  = afterAction.getParams();
                 assertEquals(beforeParams.size(), afterParams.size());
                 for (int kdx = 0; kdx < beforeParams.size(); kdx++) {
-                    NameValuePair beforeNvp = beforeParams.get(kdx);
-                    NameValuePair afterNvp  = afterParams.get(kdx);
+                    HttpRequestNameValuePair beforeNvp = beforeParams.get(kdx);
+                    HttpRequestNameValuePair afterNvp  = afterParams.get(kdx);
                     assertEquals(beforeNvp.getName(), afterNvp.getName());
                     assertEquals(beforeNvp.getValue(), afterNvp.getValue());
                 }

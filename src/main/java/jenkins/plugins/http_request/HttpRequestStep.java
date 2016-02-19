@@ -29,7 +29,7 @@ import jenkins.plugins.http_request.HttpRequest;
 import jenkins.plugins.http_request.auth.Authenticator;
 import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
-import jenkins.plugins.http_request.util.NameValuePair;
+import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,7 +51,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
     private Integer timeout                   = DescriptorImpl.timeout;
     private Boolean consoleLogResponseBody    = DescriptorImpl.consoleLogResponseBody;
     private String authentication             = DescriptorImpl.authentication;
-    private List<NameValuePair> customHeaders = DescriptorImpl.customHeaders;
+    private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 
     @DataBoundConstructor
     public HttpRequestStep(String url) {
@@ -135,11 +135,11 @@ public final class HttpRequestStep extends AbstractStepImpl {
     }
 
     @DataBoundSetter
-    public void setCustomHeaders(List<NameValuePair> customHeaders) {
+    public void setCustomHeaders(List<HttpRequestNameValuePair> customHeaders) {
         this.customHeaders = customHeaders;
     }
 
-    public List<NameValuePair> getCustomHeaders() {
+    public List<HttpRequestNameValuePair> getCustomHeaders() {
         return customHeaders;
     }
 
@@ -157,7 +157,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
         public static final int      timeout                   = HttpRequest.DescriptorImpl.timeout;
         public static final Boolean  consoleLogResponseBody    = HttpRequest.DescriptorImpl.consoleLogResponseBody;
         public static final String   authentication            = HttpRequest.DescriptorImpl.authentication;
-        public static final List <NameValuePair> customHeaders = Collections.<NameValuePair>emptyList();
+        public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
 
         public DescriptorImpl() {
             super(Execution.class);

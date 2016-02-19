@@ -42,10 +42,10 @@
                                     <f:repeatable field="params">
                                         <table width="100%">
                                             <f:entry title="Name" field="name" help="/plugin/http_request/help-authentication-parameter-name.html">
-                                                <f:textbox name="nameValuePair.name" />
+                                                <f:textbox name="httpRequestNameValuePair.name" />
                                             </f:entry>
                                             <f:entry title="Value" field="value" help="/plugin/http_request/help-authentication-parameter-value.html">
-                                                <f:textbox name="nameValuePair.value" />
+                                                <f:textbox name="httpRequestNameValuePair.value" />
                                             </f:entry>
                                             <f:entry>
                                                 <div align="right">

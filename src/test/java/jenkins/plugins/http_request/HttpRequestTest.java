@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 
 import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
-import jenkins.plugins.http_request.util.NameValuePair;
+import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
 
 import org.apache.commons.io.FileUtils;
@@ -503,9 +503,9 @@ public class HttpRequestTest extends HttpRequestTestBase {
         final HttpHost target = start();
         final String baseURL = "http://localhost:" + target.getPort();
 
-        List<NameValuePair> customHeaders = new ArrayList<NameValuePair>();
-        customHeaders.add(new NameValuePair("customHeader","value1"));
-        customHeaders.add(new NameValuePair("customHeader","value2"));
+        List<HttpRequestNameValuePair> customHeaders = new ArrayList<HttpRequestNameValuePair>();
+        customHeaders.add(new HttpRequestNameValuePair("customHeader","value1"));
+        customHeaders.add(new HttpRequestNameValuePair("customHeader","value2"));
         HttpRequest httpRequest = new HttpRequest(baseURL+"/customHeaders");
         httpRequest.setCustomHeaders(customHeaders);
 
@@ -569,9 +569,9 @@ public class HttpRequestTest extends HttpRequestTestBase {
         final String baseURL = "http://localhost:" + target.getPort();
 
         // Prepare the authentication
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new NameValuePair("param1","value1"));
-        params.add(new NameValuePair("param2","value2"));
+        List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
+        params.add(new HttpRequestNameValuePair("param1","value1"));
+        params.add(new HttpRequestNameValuePair("param2","value2"));
 
         RequestAction action = new RequestAction(new URL(baseURL+"/reqAction"),HttpMode.GET,params);
         List<RequestAction> actions = new ArrayList<RequestAction>();
@@ -602,9 +602,9 @@ public class HttpRequestTest extends HttpRequestTestBase {
         final String baseURL = "http://localhost:" + target.getPort();
 
         // Prepare the authentication
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new NameValuePair("param1","value1"));
-        params.add(new NameValuePair("param2","value2"));
+        List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
+        params.add(new HttpRequestNameValuePair("param1","value1"));
+        params.add(new HttpRequestNameValuePair("param2","value2"));
 
         RequestAction action = new RequestAction(new URL(baseURL+"/formAuthBad"),HttpMode.GET,params);
         List<RequestAction> actions = new ArrayList<RequestAction>();
@@ -637,9 +637,9 @@ public class HttpRequestTest extends HttpRequestTestBase {
         final String baseURL = "http://localhost:" + target.getPort();
 
         // Prepare the authentication
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new NameValuePair("param1","value1"));
-        params.add(new NameValuePair("param2","value2"));
+        List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
+        params.add(new HttpRequestNameValuePair("param1","value1"));
+        params.add(new HttpRequestNameValuePair("param2","value2"));
 
         // The request action won't be sent but we need to prepare it
         RequestAction action = new RequestAction(new URL(baseURL+"/non-existent"),HttpMode.GET,params);

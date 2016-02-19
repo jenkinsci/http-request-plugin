@@ -45,7 +45,7 @@ public class HttpClientUtil {
         return makePost(requestAction);
     }
 
-    private HttpEntity makeEntity(List<NameValuePair> params) throws
+    private HttpEntity makeEntity(List<HttpRequestNameValuePair> params) throws
             UnsupportedEncodingException {
         return new UrlEncodedFormEntity(params);
     }

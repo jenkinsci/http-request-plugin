@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 
 import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
-import jenkins.plugins.http_request.util.NameValuePair;
+import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
 
 import org.junit.After;
@@ -40,6 +40,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.ContentType;
@@ -63,7 +64,7 @@ public class HttpRequestTestBase extends LocalServerTestBase {
                 final HttpResponse response,
                 final HttpContext context
             ) throws HttpException, IOException {
-                List<org.apache.http.NameValuePair> parameters;
+                List<NameValuePair> parameters;
                 assertEquals(httpMode.toString(), request.getRequestLine().getMethod());
                 String uriStr = request.getRequestLine().getUri();
                 String query;
@@ -161,7 +162,7 @@ public class HttpRequestTestBase extends LocalServerTestBase {
                 final HttpContext context
             ) throws HttpException, IOException {
                 assertEquals("GET", request.getRequestLine().getMethod());
-                List<org.apache.http.NameValuePair> parameters;
+                List<NameValuePair> parameters;
                 try {
                     parameters = URLEncodedUtils.parse(new URI(request.getRequestLine().getUri()).getQuery(), StandardCharsets.UTF_8);
                 } catch (URISyntaxException ex) {
@@ -243,7 +244,7 @@ public class HttpRequestTestBase extends LocalServerTestBase {
                 final HttpContext context
             ) throws HttpException, IOException {
                 assertEquals("GET", request.getRequestLine().getMethod());
-                List<org.apache.http.NameValuePair> parameters;
+                List<NameValuePair> parameters;
                 try {
                     parameters = URLEncodedUtils.parse(new URI(request.getRequestLine().getUri()).getQuery(), StandardCharsets.UTF_8);
                 } catch (URISyntaxException ex) {

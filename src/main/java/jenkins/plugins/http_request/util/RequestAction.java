@@ -22,13 +22,13 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> {
 
     private final URL url;
     private final HttpMode mode;
-    private final List<NameValuePair> params;
+    private final List<HttpRequestNameValuePair> params;
 
     @DataBoundConstructor
-    public RequestAction(URL url, HttpMode mode, List<NameValuePair> params) {
+    public RequestAction(URL url, HttpMode mode, List<HttpRequestNameValuePair> params) {
         this.url = url;
         this.mode = mode;
-        this.params = params == null ? new ArrayList<NameValuePair>() : params;
+        this.params = params == null ? new ArrayList<HttpRequestNameValuePair>() : params;
     }
 
     public URL getUrl() {
@@ -39,7 +39,7 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> {
         return mode;
     }
 
-    public List<NameValuePair> getParams() {
+    public List<HttpRequestNameValuePair> getParams() {
         return Collections.unmodifiableList(params);
     }
 

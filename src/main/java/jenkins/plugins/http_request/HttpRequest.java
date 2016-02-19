@@ -42,7 +42,7 @@ import jenkins.plugins.http_request.auth.Authenticator;
 import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
-import jenkins.plugins.http_request.util.NameValuePair;
+import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
 import net.sf.json.JSONObject;
 import org.apache.http.HttpEntity;
@@ -74,7 +74,7 @@ public class HttpRequest extends Builder {
     private Integer timeout                   = DescriptorImpl.timeout;
     private Boolean consoleLogResponseBody    = DescriptorImpl.consoleLogResponseBody;
     private String authentication             = DescriptorImpl.authentication;
-    private List<NameValuePair> customHeaders = DescriptorImpl.customHeaders;
+    private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 
     private TaskListener listener;
 
@@ -134,7 +134,7 @@ public class HttpRequest extends Builder {
     }
 
     @DataBoundSetter
-    public void setCustomHeaders(List<NameValuePair> customHeaders) {
+    public void setCustomHeaders(List<HttpRequestNameValuePair> customHeaders) {
         this.customHeaders = customHeaders;
     }
 
@@ -142,7 +142,7 @@ public class HttpRequest extends Builder {
     public static void xStreamCompatibility() {
         Items.XSTREAM2.aliasField("logResponseBody", HttpRequest.class, "consoleLogResponseBody");
         Items.XSTREAM2.aliasField("consoleLogResponseBody", HttpRequest.class, "consoleLogResponseBody");
-        Items.XSTREAM2.alias("pair", NameValuePair.class);
+        Items.XSTREAM2.alias("pair", HttpRequestNameValuePair.class);
     }
 
     public @Nonnull String getUrl() {
@@ -177,7 +177,7 @@ public class HttpRequest extends Builder {
         return passBuildParameters;
     }
 
-    public List<NameValuePair> getCustomHeaders() {
+    public List<HttpRequestNameValuePair> getCustomHeaders() {
         return customHeaders;
     }
 
@@ -201,7 +201,7 @@ public class HttpRequest extends Builder {
         final EnvVars envVars = build.getEnvironment(listener);
         String evaluatedUrl;
         evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
-        final List<NameValuePair> params = createParameters(build, logger, envVars);
+        final List<HttpRequestNameValuePair> params = createParameters(build, logger, envVars);
         ResponseContentSupplier responseContentSupplier = performHttpRequest(build, listener, evaluatedUrl, params);
 
         logResponseToFile(build.getWorkspace(), logger, responseContentSupplier);
@@ -211,11 +211,11 @@ public class HttpRequest extends Builder {
     public ResponseContentSupplier performHttpRequest(Run<?,?> run, TaskListener listener)
     throws InterruptedException, IOException
     {
-        List<NameValuePair> params = Collections.emptyList();
+        List<HttpRequestNameValuePair> params = Collections.emptyList();
         return performHttpRequest(run, listener, this.url, params);
     }
 
-    public ResponseContentSupplier performHttpRequest(Run<?,?> run, TaskListener listener, String evaluatedUrl, List<NameValuePair> params)
+    public ResponseContentSupplier performHttpRequest(Run<?,?> run, TaskListener listener, String evaluatedUrl, List<HttpRequestNameValuePair> params)
     throws InterruptedException, IOException
     {
         final PrintStream logger = listener.getLogger();
@@ -310,7 +310,7 @@ public class HttpRequest extends Builder {
             logger.println("Accept: " + acceptType);
         }
 
-        for (NameValuePair header : customHeaders) {
+        for (HttpRequestNameValuePair header : customHeaders) {
             httpRequestBase.addHeader(header.getName(), header.getValue());
         }
         return httpRequestBase;
@@ -323,7 +323,7 @@ public class HttpRequest extends Builder {
         return null;
     }
 
-    private List<NameValuePair> createParameters(
+    private List<HttpRequestNameValuePair> createParameters(
             AbstractBuild<?, ?> build, PrintStream logger,
             EnvVars envVars) {
         if (!passBuildParameters) {
@@ -336,12 +336,12 @@ public class HttpRequest extends Builder {
 
         final VariableResolver<String> vars = build.getBuildVariableResolver();
 
-        List<NameValuePair> l = new ArrayList<NameValuePair>();
+        List<HttpRequestNameValuePair> l = new ArrayList<HttpRequestNameValuePair>();
         for (Map.Entry<String, String> entry : build.getBuildVariables().entrySet()) {
             String value = evaluate(entry.getValue(), vars, envVars);
             logger.println("  " + entry.getKey() + " = " + value);
 
-            l.add(new NameValuePair(entry.getKey(), value));
+            l.add(new HttpRequestNameValuePair(entry.getKey(), value));
         }
 
         return l;
@@ -363,7 +363,7 @@ public class HttpRequest extends Builder {
         public static final int      timeout                   = 0;
         public static final Boolean  consoleLogResponseBody    = false;
         public static final String   authentication            = "";
-        public static final List <NameValuePair> customHeaders = Collections.<NameValuePair>emptyList();
+        public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
 
         public DescriptorImpl() {
             load();
