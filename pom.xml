@@ -111,14 +111,4 @@
             <email>martin.danjou14@gmail.com</email>
         </developer>
     </developers>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.jenkins-ci.tools</groupId>
-                <artifactId>maven-hpi-plugin</artifactId>
-                <version>1.115</version>
-            </plugin>
-        </plugins>
-    </build>
 </project>
