@@ -23,7 +23,7 @@ public class HttpRequestRoundTripTest {
     public static HttpRequest before = new HttpRequest("http://domain/");
 
     @Test
-    public void configRoundtripUrl() throws Exception {
+    public void configRoundtripGroup1() throws Exception {
         configRoundTrip(before);
         before.setHttpMode(HttpMode.GET);
         configRoundTrip(before);
@@ -42,7 +42,7 @@ public class HttpRequestRoundTripTest {
     }
 
     @Test
-    public void configRoundtripOutputFile() throws Exception {
+    public void configRoundtripGroup2() throws Exception {
         before.setOutputFile("myfile.txt");
         configRoundTrip(before);
         before.setTimeout(12);
@@ -54,7 +54,7 @@ public class HttpRequestRoundTripTest {
     }
 
     @Test
-    public void basicAuthentication() throws Exception {
+    public void configRoundtripGroup3() throws Exception {
         List<BasicDigestAuthentication> bda = new ArrayList<BasicDigestAuthentication>();
         bda.add(new BasicDigestAuthentication("keyname1","username1","password1"));
         bda.add(new BasicDigestAuthentication("keyname2","username2","password2"));

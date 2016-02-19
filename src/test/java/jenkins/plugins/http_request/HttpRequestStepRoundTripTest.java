@@ -24,7 +24,7 @@ public class HttpRequestStepRoundTripTest {
     public static HttpRequestStep before = new HttpRequestStep("http://domain/");
 
     @Test
-    public void configRoundTripUrl() throws Exception {
+    public void configRoundTripGroup1() throws Exception {
         configRoundTrip(before);
         before.setHttpMode(HttpMode.GET);
         configRoundTrip(before);
@@ -39,14 +39,17 @@ public class HttpRequestStepRoundTripTest {
     }
 
     @Test
-    public void configRoundtripTimeout() throws Exception {
+    public void configRoundtripGroup2() throws Exception {
         before.setTimeout(12);
         configRoundTrip(before);
         before.setConsoleLogResponseBody(true);
         configRoundTrip(before);
         before.setConsoleLogResponseBody(false);
         configRoundTrip(before);
+    }
 
+    @Test
+    public void configRoundtripGroup3() throws Exception {
         List<BasicDigestAuthentication> bda = new ArrayList<BasicDigestAuthentication>();
         bda.add(new BasicDigestAuthentication("keyname1","username1","password1"));
         bda.add(new BasicDigestAuthentication("keyname2","username2","password2"));
