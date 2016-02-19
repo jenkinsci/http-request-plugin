@@ -195,11 +195,13 @@ public class HttpRequest extends Builder {
     public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener)
     throws InterruptedException, IOException
     {
-        String evaluatedUrl;
-        evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), build.getEnvironment(listener));
-        ResponseContentSupplier responseContentSupplier = performHttpRequest(build, listener, evaluatedUrl);
-
         final PrintStream logger = listener.getLogger();
+        final EnvVars envVars = build.getEnvironment(listener);
+        String evaluatedUrl;
+        evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
+        final List<NameValuePair> params = createParameters(build, logger, envVars);
+        ResponseContentSupplier responseContentSupplier = performHttpRequest(build, listener, evaluatedUrl, params);
+
         logResponseToFile(build.getWorkspace(), logger, responseContentSupplier);
         return true;
     }
@@ -207,10 +209,11 @@ public class HttpRequest extends Builder {
     public ResponseContentSupplier performHttpRequest(Run<?,?> run, TaskListener listener)
     throws InterruptedException, IOException
     {
-        return performHttpRequest(run, listener, this.url);
+        List<NameValuePair> params = Collections.emptyList();
+        return performHttpRequest(run, listener, this.url, params);
     }
 
-    public ResponseContentSupplier performHttpRequest(Run<?,?> run, TaskListener listener, String evaluatedUrl)
+    public ResponseContentSupplier performHttpRequest(Run<?,?> run, TaskListener listener, String evaluatedUrl, List<NameValuePair> params)
     throws InterruptedException, IOException
     {
         final PrintStream logger = listener.getLogger();
@@ -220,7 +223,6 @@ public class HttpRequest extends Builder {
         logger.println(String.format("URL: %s", evaluatedUrl));
 
         DefaultHttpClient httpclient = new SystemDefaultHttpClient();
-        final List<NameValuePair> params = createParameters(run, logger, run.getEnvironment(listener));
         RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, params);
         HttpClientUtil clientUtil = new HttpClientUtil();
         HttpRequestBase httpRequestBase = getHttpRequestBase(logger, requestAction, clientUtil);
@@ -322,18 +324,11 @@ public class HttpRequest extends Builder {
     }
 
     private List<NameValuePair> createParameters(
-            Run<?, ?> run, PrintStream logger,
+            AbstractBuild<?, ?> build, PrintStream logger,
             EnvVars envVars) {
         if (!passBuildParameters) {
             return Collections.emptyList();
         }
-
-        // When executing as a workflow step, run is not an instance of AbstractBuild
-        if (!(run instanceof AbstractBuild<?, ?>)) {
-            // When executing as workflow, the user appends the parameters to the url as code, so just return an empty list
-            return Collections.emptyList();
-        }
-        final AbstractBuild<?, ?> build = (AbstractBuild<?, ?>) run;
 
         if (!envVars.isEmpty()) {
             logger.println("Parameters: ");
