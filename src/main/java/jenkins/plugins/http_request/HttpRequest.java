@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
+import java.lang.NumberFormatException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -437,13 +438,21 @@ public class HttpRequest extends Builder {
             for (String code : codes) {
                 String[] fromTo = code.trim().split(":");
                 checkArgument(fromTo.length <= 2, "Code %s should be an interval from:to or a single value", code);
-                Integer from = Ints.tryParse(fromTo[0]);
-                checkArgument(from != null, "Invalid number %s", fromTo[0]);
+
+                Integer from;
+                try {
+                    from = Integer.parseInt(fromTo[0]);
+                } catch (NumberFormatException nfe) {
+                    throw new IllegalArgumentException("Invalid number "+fromTo[0]);
+                }
 
                 Integer to = from;
                 if (fromTo.length != 1) {
-                    to = Ints.tryParse(fromTo[1]);
-                    checkArgument(to != null, "Invalid number %s", fromTo[1]);
+                    try {
+                        to = Integer.parseInt(fromTo[1]);
+                    } catch (NumberFormatException nfe) {
+                        throw new IllegalArgumentException("Invalid number "+fromTo[1]);
+                    }
                 }
 
                 checkArgument(from <= to, "Interval %s should be FROM less than TO", code);
