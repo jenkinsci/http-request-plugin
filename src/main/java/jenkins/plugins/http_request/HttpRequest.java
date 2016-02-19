@@ -195,7 +195,9 @@ public class HttpRequest extends Builder {
     public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener)
     throws InterruptedException, IOException
     {
-        ResponseContentSupplier responseContentSupplier = performHttpRequest(build, listener);
+        String evaluatedUrl;
+        evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), build.getEnvironment(listener));
+        ResponseContentSupplier responseContentSupplier = performHttpRequest(build, listener, evaluatedUrl);
 
         final PrintStream logger = listener.getLogger();
         logResponseToFile(build.getWorkspace(), logger, responseContentSupplier);
@@ -205,24 +207,20 @@ public class HttpRequest extends Builder {
     public ResponseContentSupplier performHttpRequest(Run<?,?> run, TaskListener listener)
     throws InterruptedException, IOException
     {
+        return performHttpRequest(run, listener, this.url);
+    }
+
+    public ResponseContentSupplier performHttpRequest(Run<?,?> run, TaskListener listener, String evaluatedUrl)
+    throws InterruptedException, IOException
+    {
         final PrintStream logger = listener.getLogger();
         this.listener = listener;
         logger.println("HttpMode: " + httpMode);
 
-
-        final EnvVars envVars = run.getEnvironment(listener);
-        final List<NameValuePair> params = createParameters(run, logger, envVars);
-        String evaluatedUrl;
-        if (run instanceof AbstractBuild<?, ?>) {
-            final AbstractBuild<?, ?> build = (AbstractBuild<?, ?>) run;
-            evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
-        } else {
-            evaluatedUrl = url;
-        }
         logger.println(String.format("URL: %s", evaluatedUrl));
 
-
         DefaultHttpClient httpclient = new SystemDefaultHttpClient();
+        final List<NameValuePair> params = createParameters(run, logger, run.getEnvironment(listener));
         RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, params);
         HttpClientUtil clientUtil = new HttpClientUtil();
         HttpRequestBase httpRequestBase = getHttpRequestBase(logger, requestAction, clientUtil);
