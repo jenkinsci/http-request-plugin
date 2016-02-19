@@ -2,16 +2,17 @@ package jenkins.plugins.http_request;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import javax.servlet.ServletException;
-import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.servlet.ServletException;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Range;
@@ -284,10 +285,10 @@ public class HttpRequest extends Builder {
 
         if (outputFilePath != null) {
             if (outputFilePath != null && responseContentSupplier.getContent() != null) {
-                OutputStream write = null;
+                OutputStreamWriter write = null;
                 try {
-                    write = outputFilePath.write();
-                    write.write(responseContentSupplier.getContent().getBytes());
+                    write = new OutputStreamWriter(outputFilePath.write(), Charset.forName("UTF-8"));
+                    write.write(responseContentSupplier.getContent());
                 } finally {
                     if (write != null) {
                         write.close();
