@@ -215,36 +215,13 @@ public final class HttpRequestStep extends AbstractStepImpl {
             return FormValidation.validateRequired(value);
         }
 
-        List<Range<Integer>> parseToRange(String value) {
-            List<Range<Integer>> validRanges = new ArrayList<Range<Integer>>();
-
-            String[] codes = value.split(",");
-            for (String code : codes) {
-                String[] fromTo = code.trim().split(":");
-                checkArgument(fromTo.length <= 2, "Code %s should be an interval from:to or a single value", code);
-                Integer from = Ints.tryParse(fromTo[0]);
-                checkArgument(from != null, "Invalid number %s", fromTo[0]);
-
-                Integer to = from;
-                if (fromTo.length != 1) {
-                    to = Ints.tryParse(fromTo[1]);
-                    checkArgument(to != null, "Invalid number %s", fromTo[1]);
-                }
-
-                checkArgument(from <= to, "Interval %s should be FROM less than TO", code);
-                validRanges.add(Ranges.closed(from, to));
-            }
-
-            return validRanges;
-        }
-
         public FormValidation doCheckValidResponseCodes(@QueryParameter String value) {
             if (value == null || value.trim().isEmpty()) {
                 return FormValidation.ok();
             }
 
             try {
-                parseToRange(value);
+                HttpRequest.DescriptorImpl.parseToRange(value);
             } catch (IllegalArgumentException iae) {
                 return FormValidation.error(iae.getMessage());
             }
