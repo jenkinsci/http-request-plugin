@@ -288,6 +288,86 @@ public class HttpRequestTest extends HttpRequestTestBase {
     }
 
     @Test
+    public void reverseRangeFailsTheBuild() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/doesNotMatter");
+        httpRequest.setValidResponseCodes("599:100");
+        httpRequest.setConsoleLogResponseBody(true);
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.FAILURE, build);
+    }
+
+    @Test
+    public void notANumberRangeValueFailsTheBuild() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/doesNotMatter");
+        httpRequest.setValidResponseCodes("text");
+        httpRequest.setConsoleLogResponseBody(true);
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.FAILURE, build);
+    }
+
+    @Test
+    public void rangeWithTextFailsTheBuild() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/doesNotMatter");
+        httpRequest.setValidResponseCodes("1:text");
+        httpRequest.setConsoleLogResponseBody(true);
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.FAILURE, build);
+    }
+
+    @Test
+    public void invalidRangeFailsTheBuild() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/doesNotMatter");
+        httpRequest.setValidResponseCodes("1:2:3");
+        httpRequest.setConsoleLogResponseBody(true);
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.FAILURE, build);
+    }
+
+    @Test
     public void sendAllContentTypes() throws Exception {
         for (MimeType mimeType : MimeType.values()) {
             sendContentType(mimeType);

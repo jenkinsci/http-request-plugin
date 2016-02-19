@@ -228,6 +228,98 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
+    public void reverseRangeFailsTheBuild() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Configure the build
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        proj.setDefinition(new CpsFlowDefinition(
+            "def response = httpRequest url:'"+baseURL+"/invalidStatusCode',\n" +
+            "    consoleLogResponseBody: true,\n" +
+            "    validResponseCodes: '599:100'\n" +
+            "println('Status: '+response.getStatus())\n" +
+            "println('Response: '+response.getContent())\n",
+            true));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.FAILURE, run);
+    }
+
+    @Test
+    public void notANumberRangeValueFailsTheBuild() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Configure the build
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        proj.setDefinition(new CpsFlowDefinition(
+            "def response = httpRequest url:'"+baseURL+"/invalidStatusCode',\n" +
+            "    consoleLogResponseBody: true,\n" +
+            "    validResponseCodes: 'text'\n" +
+            "println('Status: '+response.getStatus())\n" +
+            "println('Response: '+response.getContent())\n",
+            true));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.FAILURE, run);
+    }
+
+    @Test
+    public void rangeWithTextFailsTheBuild() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Configure the build
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        proj.setDefinition(new CpsFlowDefinition(
+            "def response = httpRequest url:'"+baseURL+"/invalidStatusCode',\n" +
+            "    consoleLogResponseBody: true,\n" +
+            "    validResponseCodes: '1:text'\n" +
+            "println('Status: '+response.getStatus())\n" +
+            "println('Response: '+response.getContent())\n",
+            true));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.FAILURE, run);
+    }
+
+    @Test
+    public void invalidRangeFailsTheBuild() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Configure the build
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        proj.setDefinition(new CpsFlowDefinition(
+            "def response = httpRequest url:'"+baseURL+"/invalidStatusCode',\n" +
+            "    consoleLogResponseBody: true,\n" +
+            "    validResponseCodes: '1:2:3'\n" +
+            "println('Status: '+response.getStatus())\n" +
+            "println('Response: '+response.getContent())\n",
+            true));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.FAILURE, run);
+    }
+
+    @Test
     public void sendAllContentTypes() throws Exception {
         for (MimeType mimeType : MimeType.values()) {
             sendContentType(mimeType);
