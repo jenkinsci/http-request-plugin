@@ -283,16 +283,14 @@ public class HttpRequest extends Builder {
 
         FilePath outputFilePath = getOutputFilePath(workspace, logger);
 
-        if (outputFilePath != null) {
-            if (outputFilePath != null && responseContentSupplier.getContent() != null) {
-                OutputStreamWriter write = null;
-                try {
-                    write = new OutputStreamWriter(outputFilePath.write(), Charset.forName("UTF-8"));
-                    write.write(responseContentSupplier.getContent());
-                } finally {
-                    if (write != null) {
-                        write.close();
-                    }
+        if (outputFilePath != null && responseContentSupplier.getContent() != null) {
+            OutputStreamWriter write = null;
+            try {
+                write = new OutputStreamWriter(outputFilePath.write(), Charset.forName("UTF-8"));
+                write.write(responseContentSupplier.getContent());
+            } finally {
+                if (write != null) {
+                    write.close();
                 }
             }
         }
