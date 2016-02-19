@@ -15,6 +15,7 @@ import org.apache.http.protocol.HttpContext;
 
 import java.io.*;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -57,7 +58,7 @@ public class HttpClientUtil {
             sb.append(url.contains("?") ? "&" : "?");
             final HttpEntity entity = makeEntity(requestAction.getParams());
 
-            final BufferedReader br = new BufferedReader(new InputStreamReader(entity.getContent()));
+            final BufferedReader br = new BufferedReader(new InputStreamReader(entity.getContent(), Charset.forName("UTF-8")));
             String s;
             while ((s = br.readLine()) != null) {
                 sb.append(s);
