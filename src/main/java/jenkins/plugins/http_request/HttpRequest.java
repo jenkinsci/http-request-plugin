@@ -76,8 +76,6 @@ public class HttpRequest extends Builder {
     private String authentication             = DescriptorImpl.authentication;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 
-    private TaskListener listener;
-
     @DataBoundConstructor
     public HttpRequest(@Nonnull String url) {
         this.url = url;
@@ -219,7 +217,6 @@ public class HttpRequest extends Builder {
     throws InterruptedException, IOException
     {
         final PrintStream logger = listener.getLogger();
-        this.listener = listener;
         logger.println("HttpMode: " + httpMode);
 
         logger.println(String.format("URL: %s", evaluatedUrl));
