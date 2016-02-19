@@ -270,7 +270,7 @@ public class HttpRequest extends Builder {
     private void responseCodeIsValid(ResponseContentSupplier response, PrintStream logger)
     throws AbortException
     {
-        List<Range<Integer>> ranges = getDescriptor().parseToRange(validResponseCodes);
+        List<Range<Integer>> ranges = DescriptorImpl.parseToRange(validResponseCodes);
         for (Range<Integer> range : ranges) {
             if (range.contains(response.getStatus())) {
                 logger.println("Success code from " + range);
@@ -351,11 +351,6 @@ public class HttpRequest extends Builder {
         return Util.replaceMacro(Util.replaceMacro(value, vars), env);
     }
 
-    @Override
-    public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl) super.getDescriptor();
-    }
-
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
         public static final HttpMode httpMode                  = HttpMode.GET;
@@ -431,7 +426,7 @@ public class HttpRequest extends Builder {
             return FormValidation.validateRequired(value);
         }
 
-        List<Range<Integer>> parseToRange(String value) {
+        public static List<Range<Integer>> parseToRange(String value) {
             List<Range<Integer>> validRanges = new ArrayList<Range<Integer>>();
 
             String[] codes = value.split(",");
