@@ -63,6 +63,7 @@ public class HttpClientUtil {
             while ((s = br.readLine()) != null) {
                 sb.append(s);
             }
+            br.close();
         }
         return new HttpGet(sb.toString());
     }
