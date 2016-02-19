@@ -24,12 +24,6 @@ import java.util.List;
  */
 public class HttpClientUtil {
 
-    private FilePath outputFilePath;
-
-    public void setOutputFile(FilePath filePath) {
-        this.outputFilePath = filePath;
-    }
-
     public HttpRequestBase createRequestBase(RequestAction requestAction) throws IOException {
         if (requestAction.getMode() == HttpMode.HEAD) {
             return makeHead(requestAction);
