@@ -409,7 +409,7 @@ public class HttpRequest extends Builder {
             return FormValidation.ok();
         }
 
-        public FormValidation doValidateKeyName(@QueryParameter String value) {
+        public static FormValidation doValidateKeyName(@QueryParameter String value) {
             List<Authenticator> list = HttpRequestGlobalConfig.get().getAuthentications();
 
             int count = 0;

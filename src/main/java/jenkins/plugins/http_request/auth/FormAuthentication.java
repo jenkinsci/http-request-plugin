@@ -63,8 +63,7 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
     public static class FormAuthenticationDescriptor extends Descriptor<FormAuthentication> {
 
         public FormValidation doCheckKeyName(@QueryParameter String value) {
-            HttpRequest.DescriptorImpl descriptor = (HttpRequest.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(HttpRequest.class);
-            return descriptor.doValidateKeyName(value);
+            return HttpRequest.DescriptorImpl.doValidateKeyName(value);
         }
 
         @Override
