@@ -389,6 +389,10 @@ public class HttpRequest extends Builder {
         }
 
         public ListBoxModel doFillAuthenticationItems() {
+            return fillAuthenticationItems();
+        }
+
+        public static ListBoxModel fillAuthenticationItems() {
             ListBoxModel items = new ListBoxModel();
             items.add("");
             for (BasicDigestAuthentication basicDigestAuthentication : HttpRequestGlobalConfig.get().getBasicDigestAuthentications()) {
@@ -406,7 +410,11 @@ public class HttpRequest extends Builder {
             return FormValidation.ok();
         }
 
-        public static FormValidation doValidateKeyName(@QueryParameter String value) {
+        public FormValidation doValidateKeyName(@QueryParameter String value) {
+            return validateKeyName(value);
+        }
+
+        public static FormValidation validateKeyName(String value) {
             List<Authenticator> list = HttpRequestGlobalConfig.get().getAuthentications();
 
             int count = 0;
@@ -421,6 +429,7 @@ public class HttpRequest extends Builder {
             }
 
             return FormValidation.validateRequired(value);
+
         }
 
         public static List<Range<Integer>> parseToRange(String value) {
@@ -455,6 +464,10 @@ public class HttpRequest extends Builder {
         }
 
         public FormValidation doCheckValidResponseCodes(@QueryParameter String value) {
+            return checkValidResponseCodes(value);
+        }
+
+        public static FormValidation checkValidResponseCodes(String value) {
             if (value == null || value.trim().isEmpty()) {
                 return FormValidation.ok();
             }
@@ -462,9 +475,10 @@ public class HttpRequest extends Builder {
             try {
                 parseToRange(value);
             } catch (IllegalArgumentException iae) {
-                return FormValidation.error(iae.getMessage());
+                return FormValidation.error("Response codes expected is wrong. "+iae.getMessage());
             }
             return FormValidation.ok();
+
         }
     }
 

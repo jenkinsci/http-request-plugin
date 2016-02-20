@@ -65,7 +65,7 @@ public class BasicDigestAuthentication extends AbstractDescribableImpl<BasicDige
     public static class BasicDigestAuthenticationDescriptor extends Descriptor<BasicDigestAuthentication> {
 
         public FormValidation doCheckKeyName(@QueryParameter String value) {
-            return HttpRequest.DescriptorImpl.doValidateKeyName(value);
+            return HttpRequest.DescriptorImpl.validateKeyName(value);
         }
 
         public FormValidation doCheckUserName(@QueryParameter String value) {

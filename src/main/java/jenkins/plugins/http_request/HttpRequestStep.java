@@ -186,46 +186,15 @@ public final class HttpRequestStep extends AbstractStepImpl {
         }
 
         public ListBoxModel doFillAuthenticationItems() {
-            ListBoxModel items = new ListBoxModel();
-            items.add("");
-            for (BasicDigestAuthentication basicDigestAuthentication : HttpRequestGlobalConfig.get().getBasicDigestAuthentications()) {
-                items.add(basicDigestAuthentication.getKeyName());
-            }
-            for (FormAuthentication formAuthentication : HttpRequestGlobalConfig.get().getFormAuthentications()) {
-                items.add(formAuthentication.getKeyName());
-            }
-
-            return items;
+            return HttpRequest.DescriptorImpl.fillAuthenticationItems();
         }
 
         public FormValidation doValidateKeyName(@QueryParameter String value) {
-            List<Authenticator> list = HttpRequestGlobalConfig.get().getAuthentications();
-
-            int count = 0;
-            for (Authenticator basicAuthentication : list) {
-                if (basicAuthentication.getKeyName().equals(value)) {
-                    count++;
-                }
-            }
-
-            if (count > 1) {
-                return FormValidation.error("The Key Name must be unique");
-            }
-
-            return FormValidation.validateRequired(value);
+            return HttpRequest.DescriptorImpl.validateKeyName(value);
         }
 
         public FormValidation doCheckValidResponseCodes(@QueryParameter String value) {
-            if (value == null || value.trim().isEmpty()) {
-                return FormValidation.ok();
-            }
-
-            try {
-                HttpRequest.DescriptorImpl.parseToRange(value);
-            } catch (IllegalArgumentException iae) {
-                return FormValidation.error(iae.getMessage());
-            }
-            return FormValidation.ok();
+            return HttpRequest.DescriptorImpl.checkValidResponseCodes(value);
         }
 
     }

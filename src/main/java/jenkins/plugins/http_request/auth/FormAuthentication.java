@@ -63,7 +63,7 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
     public static class FormAuthenticationDescriptor extends Descriptor<FormAuthentication> {
 
         public FormValidation doCheckKeyName(@QueryParameter String value) {
-            return HttpRequest.DescriptorImpl.doValidateKeyName(value);
+            return HttpRequest.DescriptorImpl.validateKeyName(value);
         }
 
         @Override
