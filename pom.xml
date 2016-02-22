@@ -18,7 +18,7 @@
         <commons.version>1.10</commons.version>
         <httpcomponents.version>4.5.1</httpcomponents.version>
         <script-security.version>1.17</script-security.version>
-        <jenkins.version>1.609.1</jenkins.version>
+        <jenkins.version>1.609.3</jenkins.version>
         <workflow.version>1.10</workflow.version>
     </properties>
 
