@@ -119,10 +119,11 @@
             <name>Janario Oliveira</name>
             <email>janarioliver@gmail.com</email>
         </developer>
-        <developer>
-            <id>martinda</id>
+    </developers>
+    <contributors>
+        <contributor>
             <name>Martin d'Anjou</name>
             <email>martin.danjou14@gmail.com</email>
-        </developer>
-    </developers>
+        </contributor>
+    </contributors>
 </project>
