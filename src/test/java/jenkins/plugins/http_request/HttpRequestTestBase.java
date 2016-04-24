@@ -49,6 +49,9 @@ import org.apache.http.localserver.LocalServerTestBase;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 
+/**
+ * @author Martin d'Anjou
+ */
 public class HttpRequestTestBase extends LocalServerTestBase {
 
     @Rule

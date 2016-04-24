@@ -19,6 +19,9 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
 
+/**
+ * @author Martin d'Anjou
+ */
 @Extension
 public class HttpRequestGlobalConfig extends GlobalConfiguration {
 

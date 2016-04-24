@@ -10,6 +10,8 @@ import org.apache.http.util.EntityUtils;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.Whitelisted;
 
 /**
+ * @author Martin d'Anjou
+ *
  * A container for the Http Response.
  * The container is returned as is to the Pipeline. For the normal
  * plugin, the container is consumed internally (since it cannot be returned).

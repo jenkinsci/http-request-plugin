@@ -40,6 +40,9 @@ import javax.servlet.ServletException;
 
 import net.sf.json.JSONObject;
 
+/**
+ * @author Martin d'Anjou
+ */
 public final class HttpRequestStep extends AbstractStepImpl {
 
     private @Nonnull String url;

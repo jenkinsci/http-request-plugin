@@ -23,6 +23,9 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Test;
 import static org.junit.Assert.assertTrue;
 
+/**
+ * @author Martin d'Anjou
+ */
 public class HttpRequestStepTest extends HttpRequestTestBase {
 
     @Test

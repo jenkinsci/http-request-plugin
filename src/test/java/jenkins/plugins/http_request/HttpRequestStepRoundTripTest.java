@@ -16,6 +16,9 @@ import static org.junit.Assert.assertEquals;
 
 import org.jvnet.hudson.test.JenkinsRule;
 
+/**
+ * @author Martin d'Anjou
+ */
 public class HttpRequestStepRoundTripTest {
 
     @Rule

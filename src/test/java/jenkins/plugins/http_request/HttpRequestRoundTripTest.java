@@ -15,6 +15,9 @@ import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
 
+/**
+ * @author Martin d'Anjou
+ */
 public class HttpRequestRoundTripTest {
 
     @Rule

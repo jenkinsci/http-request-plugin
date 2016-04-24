@@ -24,6 +24,9 @@ import org.apache.http.HttpHost;
 import org.junit.Test;
 import static org.junit.Assert.assertTrue;
 
+/**
+ * @author Martin d'Anjou
+ */
 public class HttpRequestTest extends HttpRequestTestBase {
 
     @Test
