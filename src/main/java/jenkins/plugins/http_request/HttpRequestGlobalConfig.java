@@ -2,6 +2,9 @@ package jenkins.plugins.http_request;
 
 import hudson.Extension;
 import hudson.XmlFile;
+import hudson.init.InitMilestone;
+import hudson.init.Initializer;
+import hudson.util.XStream2;
 
 import java.io.File;
 import java.util.List;
@@ -13,6 +16,7 @@ import jenkins.model.Jenkins;
 import jenkins.plugins.http_request.auth.Authenticator;
 import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
+import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 
 import net.sf.json.JSONObject;
 
@@ -28,8 +32,21 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
     private List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<BasicDigestAuthentication>();
     private List<FormAuthentication> formAuthentications = new ArrayList<FormAuthentication>();
 
+    private static final XStream2 XSTREAM2 = new XStream2();
+
     public HttpRequestGlobalConfig() {
         load();
+    }
+
+    @Initializer(before = InitMilestone.PLUGINS_STARTED)
+    public static void xStreamCompatibility() {
+        XSTREAM2.addCompatibilityAlias("jenkins.plugins.http_request.HttpRequest$DescriptorImpl", HttpRequestGlobalConfig.class);
+        XSTREAM2.addCompatibilityAlias("jenkins.plugins.http_request.util.NameValuePair", HttpRequestNameValuePair.class);
+    }
+
+    @Override
+    protected XmlFile getConfigFile() {
+        return new XmlFile(XSTREAM2, new File(Jenkins.getInstance().getRootDir(), "jenkins.plugins.http_request.HttpRequest.xml"));
     }
 
     @Override

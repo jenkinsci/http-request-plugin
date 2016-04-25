@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<jenkins.plugins.http__request.HttpRequest_-DescriptorImpl plugin="http_request@1.8.8">
+  <defaultHttpMode>POST</defaultHttpMode>
+  <basicDigestAuthentications>
+    <jenkins.plugins.http__request.auth.BasicDigestAuthentication>
+      <keyName>k1</keyName>
+      <userName>u1</userName>
+      <password>p1</password>
+    </jenkins.plugins.http__request.auth.BasicDigestAuthentication>
+    <jenkins.plugins.http__request.auth.BasicDigestAuthentication>
+      <keyName>k2</keyName>
+      <userName>u2</userName>
+      <password>p2</password>
+    </jenkins.plugins.http__request.auth.BasicDigestAuthentication>
+  </basicDigestAuthentications>
+  <formAuthentications>
+    <jenkins.plugins.http__request.auth.FormAuthentication>
+      <keyName>k3</keyName>
+      <actions>
+        <jenkins.plugins.http__request.util.RequestAction>
+          <url>http://localhost1</url>
+          <mode>GET</mode>
+          <params>
+            <jenkins.plugins.http__request.util.NameValuePair>
+              <name>name1</name>
+              <value>value1</value>
+            </jenkins.plugins.http__request.util.NameValuePair>
+          </params>
+        </jenkins.plugins.http__request.util.RequestAction>
+      </actions>
+    </jenkins.plugins.http__request.auth.FormAuthentication>
+  </formAuthentications>
+  <defaultReturnCodeBuildRelevant>true</defaultReturnCodeBuildRelevant>
+  <defaultLogResponseBody>true</defaultLogResponseBody>
+</jenkins.plugins.http__request.HttpRequest_-DescriptorImpl>
