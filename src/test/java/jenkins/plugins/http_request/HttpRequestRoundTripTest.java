@@ -34,6 +34,10 @@ public class HttpRequestRoundTripTest {
         configRoundTrip(before);
         before.setPassBuildParameters(false);
         configRoundTrip(before);
+    }
+
+    @Test
+    public void configRoundTripGroup1b() throws Exception {
         before.setValidResponseCodes("100:599");
         configRoundTrip(before);
         before.setValidResponseContent("some content we want to see");
