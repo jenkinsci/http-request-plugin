@@ -1,5 +1,7 @@
 package jenkins.plugins.http_request;
 
+import hudson.model.AbstractProject;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -27,7 +29,7 @@ public class HttpRequestBackwardCompatibilityTest {
 
     @LocalData
     @Test
-    public void defaultConfig() {
+    public void defaultGlobalConfig() {
         HttpRequestGlobalConfig cfg = HttpRequestGlobalConfig.get();
         assertEquals(Collections.emptyList(), cfg.getBasicDigestAuthentications());
         assertEquals(Collections.emptyList(), cfg.getFormAuthentications());
@@ -35,7 +37,7 @@ public class HttpRequestBackwardCompatibilityTest {
 
     @LocalData
     @Test
-    public void populatedConfig() {
+    public void populatedGlobalConfig() {
         HttpRequestGlobalConfig cfg = HttpRequestGlobalConfig.get();
 
         List<BasicDigestAuthentication> bdas = cfg.getBasicDigestAuthentications();
@@ -67,5 +69,11 @@ public class HttpRequestBackwardCompatibilityTest {
         HttpRequestNameValuePair nvp = (HttpRequestNameValuePair)itr.next();
         assertEquals("name1",nvp.getName());
         assertEquals("value1",nvp.getValue());
+    }
+
+    @LocalData
+    @Test
+    public void oldConfigWithoutCustomHeadersShouldLoad() {
+        AbstractProject p = (AbstractProject) j.getInstance().getItem("old");
     }
 }
