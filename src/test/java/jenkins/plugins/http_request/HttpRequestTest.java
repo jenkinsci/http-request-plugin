@@ -220,6 +220,53 @@ public class HttpRequestTest extends HttpRequestTestBase {
     }
 
     @Test
+    public void passRequestBodyWhenRequestIsPostAndBodyIsPresent() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/checkRequestBody");
+        httpRequest.setConsoleLogResponseBody(true);
+
+        // Activate requsetBody
+        httpRequest.setHttpMode(HttpMode.POST);
+        httpRequest.setRequestBody("TestRequestBody");
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatusSuccess(build);
+        j.assertLogContains(allIsWellMessage,build);
+    }
+
+    @Test
+    public void doNotPassRequestBodyWhenMethodIsGet() throws Exception {
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
+        httpRequest.setConsoleLogResponseBody(true);
+
+        // Activate passBuildParameters
+        httpRequest.setRequestBody("TestRequestBody");
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatusSuccess(build);
+        j.assertLogContains(allIsWellMessage,build);
+    }
+
+    @Test
     public void doAllRequestTypes() throws Exception {
         for (HttpMode mode: HttpMode.values()) {
             doRequest(mode);
@@ -576,7 +623,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
         params.add(new HttpRequestNameValuePair("param1","value1"));
         params.add(new HttpRequestNameValuePair("param2","value2"));
 
-        RequestAction action = new RequestAction(new URL(baseURL+"/reqAction"),HttpMode.GET,params);
+        RequestAction action = new RequestAction(new URL(baseURL+"/reqAction"),HttpMode.GET,null,params);
         List<RequestAction> actions = new ArrayList<RequestAction>();
         actions.add(action);
 
@@ -609,7 +656,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
         params.add(new HttpRequestNameValuePair("param1","value1"));
         params.add(new HttpRequestNameValuePair("param2","value2"));
 
-        RequestAction action = new RequestAction(new URL(baseURL+"/formAuthBad"),HttpMode.GET,params);
+        RequestAction action = new RequestAction(new URL(baseURL+"/formAuthBad"),HttpMode.GET,null,params);
         List<RequestAction> actions = new ArrayList<RequestAction>();
         actions.add(action);
 
@@ -645,7 +692,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
         params.add(new HttpRequestNameValuePair("param2","value2"));
 
         // The request action won't be sent but we need to prepare it
-        RequestAction action = new RequestAction(new URL(baseURL+"/non-existent"),HttpMode.GET,params);
+        RequestAction action = new RequestAction(new URL(baseURL+"/non-existent"),HttpMode.GET,null,params);
         List<RequestAction> actions = new ArrayList<RequestAction>();
         actions.add(action);
 

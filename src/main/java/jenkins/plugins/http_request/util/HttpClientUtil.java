@@ -1,7 +1,13 @@
 package jenkins.plugins.http_request.util;
 
+import com.google.common.base.Strings;
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
+import com.thoughtworks.xstream.io.json.JsonWriter;
 import hudson.FilePath;
 import jenkins.plugins.http_request.HttpMode;
+import net.sf.json.JSONArray;
+import net.sf.json.util.JSONBuilder;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -10,6 +16,8 @@ import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.HttpContext;
 
@@ -18,6 +26,7 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -45,9 +54,12 @@ public class HttpClientUtil {
         return makePost(requestAction);
     }
 
-    private HttpEntity makeEntity(List<HttpRequestNameValuePair> params) throws
+    private HttpEntity makeEntity(RequestAction requestAction) throws
             UnsupportedEncodingException {
-        return new UrlEncodedFormEntity(params);
+        if (!Strings.isNullOrEmpty(requestAction.getRequestBody())) {
+            return new StringEntity(requestAction.getRequestBody());
+        }
+        return new UrlEncodedFormEntity(requestAction.getParams());
     }
 
     public HttpGet makeGet(RequestAction requestAction) throws IOException {
@@ -56,7 +68,7 @@ public class HttpClientUtil {
 
         if (!requestAction.getParams().isEmpty()) {
             sb.append(url.contains("?") ? "&" : "?");
-            final HttpEntity entity = makeEntity(requestAction.getParams());
+            final HttpEntity entity = makeEntity(requestAction);
 
             final BufferedReader br = new BufferedReader(new InputStreamReader(entity.getContent(), Charset.forName("UTF-8")));
             String s;
@@ -75,7 +87,7 @@ public class HttpClientUtil {
     }
 
     public HttpPost makePost(RequestAction requestAction) throws UnsupportedEncodingException {
-        final HttpEntity httpEntity = makeEntity(requestAction.getParams());
+        final HttpEntity httpEntity = makeEntity(requestAction);
         final HttpPost httpPost = new HttpPost(requestAction.getUrl().toString());
         httpPost.setEntity(httpEntity);
 
@@ -83,7 +95,7 @@ public class HttpClientUtil {
     }
 
     public HttpPut makePut(RequestAction requestAction) throws UnsupportedEncodingException {
-        final HttpEntity entity = makeEntity(requestAction.getParams());
+        final HttpEntity entity = makeEntity(requestAction);
         final HttpPut httpPut = new HttpPut(requestAction.getUrl().toString());
         httpPut.setEntity(entity);
 

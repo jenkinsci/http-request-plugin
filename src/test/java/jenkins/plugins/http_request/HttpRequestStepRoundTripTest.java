@@ -63,7 +63,7 @@ public class HttpRequestStepRoundTripTest {
         params.add(new HttpRequestNameValuePair("param1","value1"));
         params.add(new HttpRequestNameValuePair("param2","value2"));
 
-        RequestAction action = new RequestAction(new URL("http://www.domain.com/"),HttpMode.GET,params);
+        RequestAction action = new RequestAction(new URL("http://www.domain.com/"),HttpMode.GET,null,params);
         List<RequestAction> actions = new ArrayList<RequestAction>();
         actions.add(action);
 

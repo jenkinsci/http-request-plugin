@@ -54,6 +54,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
     private Integer timeout                   = DescriptorImpl.timeout;
     private Boolean consoleLogResponseBody    = DescriptorImpl.consoleLogResponseBody;
     private String authentication             = DescriptorImpl.authentication;
+    private String requestBody                = DescriptorImpl.requestBody;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 
     @DataBoundConstructor
@@ -160,6 +161,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
         public static final int      timeout                   = HttpRequest.DescriptorImpl.timeout;
         public static final Boolean  consoleLogResponseBody    = HttpRequest.DescriptorImpl.consoleLogResponseBody;
         public static final String   authentication            = HttpRequest.DescriptorImpl.authentication;
+        public static final String   requestBody               = HttpRequest.DescriptorImpl.requestBody;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
 
         public DescriptorImpl() {
@@ -225,6 +227,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
             httpRequest.setTimeout(step.timeout);
             httpRequest.setConsoleLogResponseBody(step.consoleLogResponseBody);
             httpRequest.setAuthentication(step.authentication);
+            httpRequest.setRequestBody(step.requestBody);
             httpRequest.setCustomHeaders(step.customHeaders);
             ResponseContentSupplier response = httpRequest.performHttpRequest(run, listener);
             return response;

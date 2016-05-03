@@ -487,7 +487,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         params.add(new HttpRequestNameValuePair("param1","value1"));
         params.add(new HttpRequestNameValuePair("param2","value2"));
 
-        RequestAction action = new RequestAction(new URL(baseURL+"/reqAction"),HttpMode.GET,params);
+        RequestAction action = new RequestAction(new URL(baseURL+"/reqAction"),HttpMode.GET,null,params);
         List<RequestAction> actions = new ArrayList<RequestAction>();
         actions.add(action);
 
@@ -523,7 +523,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         params.add(new HttpRequestNameValuePair("param1","value1"));
         params.add(new HttpRequestNameValuePair("param2","value2"));
 
-        RequestAction action = new RequestAction(new URL(baseURL+"/formAuthBad"),HttpMode.GET,params);
+        RequestAction action = new RequestAction(new URL(baseURL+"/formAuthBad"),HttpMode.GET,null,params);
         List<RequestAction> actions = new ArrayList<RequestAction>();
         actions.add(action);
 
@@ -561,7 +561,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         params.add(new HttpRequestNameValuePair("param2","value2"));
 
         // The request action won't be sent but we need to prepare it
-        RequestAction action = new RequestAction(new URL(baseURL+"/non-existent"),HttpMode.GET,params);
+        RequestAction action = new RequestAction(new URL(baseURL+"/non-existent"),HttpMode.GET,null,params);
         List<RequestAction> actions = new ArrayList<RequestAction>();
         actions.add(action);
 

@@ -25,8 +25,11 @@
             </f:entry>
         </f:section>
         <f:section title="Body">
-            <f:entry field="passBuildParameters" title="Pass build params to URL?">
+            <f:entry field="passBuildParameters" title="Pass build params to URL?" help="/plugin/http_request/help-passBuildParameters.html">
                 <f:booleanRadio />
+            </f:entry>
+            <f:entry field="requestBody" title="Request body" help="/plugin/http_request/help-requestBody.html">
+                <f:textarea />
             </f:entry>
         </f:section>
         <f:section title="Response">
@@ -39,7 +42,7 @@
             <f:entry field="validResponseContent" title="Response content expected" help="/plugin/http_request/help-validResponseContent.html">
                 <f:textbox />
             </f:entry>
-            <f:entry field="outputFile" title="Output response to file">
+            <f:entry field="outputFile" title="Output response to file" help="/plugin/http_request/help-outputFile.html">
                 <f:textbox />
             </f:entry>
             <f:entry field="consoleLogResponseBody" title="Response body in console?" help="/plugin/http_request/help-consoleLogResponseBody.html">
