@@ -142,6 +142,7 @@ public class HttpRequest extends Builder {
         Items.XSTREAM2.aliasField("consoleLogResponseBody", HttpRequest.class, "consoleLogResponseBody");
         Items.XSTREAM2.alias("pair", HttpRequestNameValuePair.class);
     }
+
     protected Object readResolve() {
         if (customHeaders == null) {
             customHeaders = DescriptorImpl.customHeaders;

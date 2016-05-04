@@ -1,6 +1,8 @@
 package jenkins.plugins.http_request;
 
 import hudson.model.AbstractProject;
+import hudson.model.FreeStyleProject;
+import hudson.tasks.Builder;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -15,6 +17,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
 
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
@@ -30,14 +33,19 @@ public class HttpRequestBackwardCompatibilityTest {
     @LocalData
     @Test
     public void defaultGlobalConfig() {
+        // Test that config from 1.8.6 can be loaded
         HttpRequestGlobalConfig cfg = HttpRequestGlobalConfig.get();
         assertEquals(Collections.emptyList(), cfg.getBasicDigestAuthentications());
         assertEquals(Collections.emptyList(), cfg.getFormAuthentications());
+        assertEquals("jenkins.plugins.http_request.HttpRequest.xml", cfg.getConfigFile().getFile().getName());
     }
 
     @LocalData
     @Test
     public void populatedGlobalConfig() {
+        // Test that global config from 1.8.6 can be loaded
+        // Specifically tests the HttpRequestGlobalConfig.xStreamCompatibility() method
+        // and the HttpRequestGlobalConfig.getConfigFile() method
         HttpRequestGlobalConfig cfg = HttpRequestGlobalConfig.get();
 
         List<BasicDigestAuthentication> bdas = cfg.getBasicDigestAuthentications();
@@ -74,6 +82,40 @@ public class HttpRequestBackwardCompatibilityTest {
     @LocalData
     @Test
     public void oldConfigWithoutCustomHeadersShouldLoad() {
+        // Test that a job config from 1.8.6 can be loaded
+        // Specifically tests the HttpRequest.readResolve() method
         AbstractProject p = (AbstractProject) j.getInstance().getItem("old");
+
+        List<Builder> builders = ((FreeStyleProject) p).getBuilders();
+
+        HttpRequest httpRequest = (HttpRequest) builders.get(0);
+        assertEquals("url", httpRequest.getUrl());
+        assertNotNull(httpRequest.getCustomHeaders());
+        assertNotNull(httpRequest.getValidResponseCodes());
+        assertEquals("100:399", httpRequest.getValidResponseCodes());
+    }
+
+    @LocalData
+    @Test
+    public void oldConfigWithCustomHeadersShouldLoad() {
+        // Test that a job config from 1.8.8 can be loaded
+        // Specifically tests the HttpRequest.xStreamCompatibility() method
+        AbstractProject p = (AbstractProject) j.getInstance().getItem("old");
+
+        List<Builder> builders = ((FreeStyleProject) p).getBuilders();
+
+        HttpRequest httpRequest = (HttpRequest) builders.get(0);
+        assertEquals("url", httpRequest.getUrl());
+
+        assertNotNull(httpRequest.getCustomHeaders());
+        List<HttpRequestNameValuePair> customHeaders = httpRequest.getCustomHeaders();
+        assertEquals(1,customHeaders.size());
+        Iterator itr = customHeaders.iterator();
+        HttpRequestNameValuePair nvp = (HttpRequestNameValuePair)itr.next();
+        assertEquals("h1",nvp.getName());
+        assertEquals("v1",nvp.getValue());
+
+        assertNotNull(httpRequest.getValidResponseCodes());
+        assertEquals("100:399", httpRequest.getValidResponseCodes());
     }
 }

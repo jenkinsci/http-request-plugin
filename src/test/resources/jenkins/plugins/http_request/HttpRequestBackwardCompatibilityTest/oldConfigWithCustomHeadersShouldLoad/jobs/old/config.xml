@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <jenkins.plugins.http__request.HttpRequest plugin="http_request@1.8.8">
+      <url>url</url>
+      <httpMode>POST</httpMode>
+      <contentType>NOT_SET</contentType>
+      <acceptType>NOT_SET</acceptType>
+      <outputFile></outputFile>
+      <consoleLogResponseBody>true</consoleLogResponseBody>
+      <passBuildParameters>true</passBuildParameters>
+      <customHeaders>
+        <pair>
+          <name>h1</name>
+          <value>v1</value>
+        </pair>
+      </customHeaders>
+      <validResponseCodes>100:399</validResponseCodes>
+      <validResponseContent></validResponseContent>
+    </jenkins.plugins.http__request.HttpRequest>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>
