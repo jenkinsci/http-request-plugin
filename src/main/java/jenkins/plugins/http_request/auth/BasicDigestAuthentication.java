@@ -65,8 +65,7 @@ public class BasicDigestAuthentication extends AbstractDescribableImpl<BasicDige
     public static class BasicDigestAuthenticationDescriptor extends Descriptor<BasicDigestAuthentication> {
 
         public FormValidation doCheckKeyName(@QueryParameter String value) {
-            HttpRequest.DescriptorImpl descriptor = (HttpRequest.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(HttpRequest.class);
-            return descriptor.doValidateKeyName(value);
+            return HttpRequest.DescriptorImpl.validateKeyName(value);
         }
 
         public FormValidation doCheckUserName(@QueryParameter String value) {

@@ -6,9 +6,6 @@
     <f:entry field="httpMode" title="HTTP mode" help="/plugin/http_request/help-httpMode.html">
         <f:select />
     </f:entry>
-    <f:entry field="passBuildParameters" title="Pass build params to URL?">
-        <f:booleanRadio />
-    </f:entry>
 
     <f:advanced>
         <f:entry field="validResponseCodes" title="Response codes expected" help="/plugin/http_request/help-validResponseCodes.html">
@@ -23,13 +20,9 @@
         <f:entry field="contentType" title="Content-type" help="/plugin/http_request/help-contentType.html">
             <f:select />
         </f:entry>
-        <f:entry field="outputFile" title="Output response to file">
-            <f:textbox />
-        </f:entry>
         <f:entry field="timeout" title="Connection timeout" help="/plugin/http_request/help-timeout.html">
             <f:number default="${descriptor.timeout}"/>
         </f:entry>
-
         <f:entry field="consoleLogResponseBody" title="Response body in console?" help="/plugin/http_request/help-consoleLogResponseBody.html">
             <f:booleanRadio />
         </f:entry>

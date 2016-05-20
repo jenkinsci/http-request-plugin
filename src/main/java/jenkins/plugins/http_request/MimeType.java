@@ -9,6 +9,7 @@ public enum MimeType {
 
     NOT_SET(""),
     TEXT_HTML("text/html"),
+    TEXT_PLAIN("text/plain"),
     APPLICATION_JSON("application/json"),
     APPLICATION_TAR("application/x-tar"),
     APPLICATION_ZIP("application/zip"),

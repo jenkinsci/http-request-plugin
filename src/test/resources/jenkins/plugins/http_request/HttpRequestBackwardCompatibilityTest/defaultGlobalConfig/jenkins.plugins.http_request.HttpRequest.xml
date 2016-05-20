@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<jenkins.plugins.http__request.HttpRequest_-DescriptorImpl plugin="http_request@1.8.8">
+  <defaultHttpMode>POST</defaultHttpMode>
+  <basicDigestAuthentications/>
+  <formAuthentications/>
+  <defaultReturnCodeBuildRelevant>true</defaultReturnCodeBuildRelevant>
+  <defaultLogResponseBody>true</defaultLogResponseBody>
+</jenkins.plugins.http__request.HttpRequest_-DescriptorImpl>

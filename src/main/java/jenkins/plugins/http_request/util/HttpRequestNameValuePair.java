@@ -4,20 +4,22 @@ import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
+import jenkins.plugins.http_request.HttpRequest;
+import org.apache.http.NameValuePair;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 /**
  * @author Janario Oliveira
  */
-public class NameValuePair extends AbstractDescribableImpl<NameValuePair>
-        implements org.apache.http.NameValuePair {
+public class HttpRequestNameValuePair extends AbstractDescribableImpl<HttpRequestNameValuePair>
+        implements NameValuePair {
 
     private final String name;
     private final String value;
 
     @DataBoundConstructor
-    public NameValuePair(String name, String value) {
+    public HttpRequestNameValuePair(String name, String value) {
         this.name = name;
         this.value = value;
     }
@@ -31,7 +33,7 @@ public class NameValuePair extends AbstractDescribableImpl<NameValuePair>
     }
 
     @Extension
-    public static class NameValueParamDescriptor extends Descriptor<NameValuePair> {
+    public static class NameValueParamDescriptor extends Descriptor<HttpRequestNameValuePair> {
 
         @Override
         public String getDisplayName() {
