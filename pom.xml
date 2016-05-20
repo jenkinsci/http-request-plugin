@@ -82,6 +82,7 @@ THE SOFTWARE.
                 <artifactId>maven-hpi-plugin</artifactId>
                 <configuration>
                     <pluginFirstClassLoader>true</pluginFirstClassLoader>
+                    <compatibleSinceVersion>1.8.8</compatibleSinceVersion>
                 </configuration>
             </plugin>
         </plugins>
