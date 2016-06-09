@@ -22,6 +22,8 @@ import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
 
+import org.apache.http.*;
+import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -36,11 +38,6 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpException;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.ContentType;
@@ -174,6 +171,28 @@ public class HttpRequestTestBase extends LocalServerTestBase {
                 assertEquals(1,parameters.size());
                 assertEquals("foo",parameters.get(0).getName());
                 assertEquals("value",parameters.get(0).getValue());
+                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
+            }
+        });
+
+        // Check that request body is present and equals to TestRequestBody
+        this.serverBootstrap.registerHandler("/checkRequestBody", new HttpRequestHandler() {
+            @Override
+            public void handle(
+                    final org.apache.http.HttpRequest request,
+                    final HttpResponse response,
+                    final HttpContext context
+            ) throws HttpException, IOException {
+                assertEquals("POST", request.getRequestLine().getMethod());
+                String requestBody = null;
+                if (request instanceof HttpEntityEnclosingRequest) {
+                    HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+                    if (entity != null) {
+                        requestBody = EntityUtils.toString(entity, "UTF-8");
+                        entity.consumeContent();
+                    }
+                }
+                assertEquals("TestRequestBody",requestBody);
                 response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
             }
         });

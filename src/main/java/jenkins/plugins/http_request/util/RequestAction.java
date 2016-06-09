@@ -22,12 +22,14 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> {
 
     private final URL url;
     private final HttpMode mode;
+    private final String requestBody;
     private final List<HttpRequestNameValuePair> params;
 
     @DataBoundConstructor
-    public RequestAction(URL url, HttpMode mode, List<HttpRequestNameValuePair> params) {
+    public RequestAction(URL url, HttpMode mode, String requestBody, List<HttpRequestNameValuePair> params) {
         this.url = url;
         this.mode = mode;
+        this.requestBody = requestBody;
         this.params = params == null ? new ArrayList<HttpRequestNameValuePair>() : params;
     }
 
@@ -41,6 +43,10 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> {
 
     public List<HttpRequestNameValuePair> getParams() {
         return Collections.unmodifiableList(params);
+    }
+
+    public String getRequestBody() {
+        return requestBody;
     }
 
     @Extension

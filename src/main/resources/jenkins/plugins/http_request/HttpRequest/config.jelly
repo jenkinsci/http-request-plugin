@@ -6,38 +6,48 @@
     <f:entry field="httpMode" title="HTTP mode" help="/plugin/http_request/help-httpMode.html">
         <f:select />
     </f:entry>
-    <f:entry field="passBuildParameters" title="Pass build params to URL?">
-        <f:booleanRadio />
-    </f:entry>
 
     <f:advanced>
-        <f:entry field="validResponseCodes" title="Response codes expected" help="/plugin/http_request/help-validResponseCodes.html">
-            <f:textbox default="${descriptor.validResponseCodes}"/>
-        </f:entry>
-        <f:entry field="validResponseContent" title="Response content expected" help="/plugin/http_request/help-validResponseContent.html">
-            <f:textbox />
-        </f:entry>
-        <f:entry field="acceptType" title="Accept" help="/plugin/http_request/help-acceptType.html">
-            <f:select />
-        </f:entry>
-        <f:entry field="contentType" title="Content-type" help="/plugin/http_request/help-contentType.html">
-            <f:select />
-        </f:entry>
-        <f:entry field="outputFile" title="Output response to file">
-            <f:textbox />
-        </f:entry>
-        <f:entry field="timeout" title="Connection timeout" help="/plugin/http_request/help-timeout.html">
-            <f:number default="${descriptor.timeout}"/>
-        </f:entry>
-
-        <f:entry field="consoleLogResponseBody" title="Response body in console?" help="/plugin/http_request/help-consoleLogResponseBody.html">
-            <f:booleanRadio />
-        </f:entry>
-        <f:entry field="authentication" title="Authenticate" help="/plugin/http_request/help-authentication.html">
-            <f:select />
-        </f:entry>
-        <f:entry title="Custom headers">
-            <f:repeatableProperty field="customHeaders" />
-        </f:entry>
+        <f:section title="Authorization">
+            <f:entry field="authentication" title="Authenticate" help="/plugin/http_request/help-authentication.html">
+                <f:select />
+            </f:entry>
+        </f:section>
+        <f:section title="Headers">
+            <f:entry field="acceptType" title="Accept" help="/plugin/http_request/help-acceptType.html">
+                <f:select />
+            </f:entry>
+            <f:entry field="contentType" title="Content-type" help="/plugin/http_request/help-contentType.html">
+                <f:select />
+            </f:entry>
+            <f:entry title="Custom headers">
+                <f:repeatableProperty field="customHeaders" />
+            </f:entry>
+        </f:section>
+        <f:section title="Body">
+            <f:entry field="passBuildParameters" title="Pass build params to URL?" help="/plugin/http_request/help-passBuildParameters.html">
+                <f:booleanRadio />
+            </f:entry>
+            <f:entry field="requestBody" title="Request body" help="/plugin/http_request/help-requestBody.html">
+                <f:textarea />
+            </f:entry>
+        </f:section>
+        <f:section title="Response">
+            <f:entry field="timeout" title="Connection timeout" help="/plugin/http_request/help-timeout.html">
+                <f:number default="${descriptor.timeout}"/>
+            </f:entry>
+            <f:entry field="validResponseCodes" title="Response codes expected" help="/plugin/http_request/help-validResponseCodes.html">
+                <f:textbox default="${descriptor.validResponseCodes}"/>
+            </f:entry>
+            <f:entry field="validResponseContent" title="Response content expected" help="/plugin/http_request/help-validResponseContent.html">
+                <f:textbox />
+            </f:entry>
+            <f:entry field="outputFile" title="Output response to file" help="/plugin/http_request/help-outputFile.html">
+                <f:textbox />
+            </f:entry>
+            <f:entry field="consoleLogResponseBody" title="Response body in console?" help="/plugin/http_request/help-consoleLogResponseBody.html">
+                <f:booleanRadio />
+            </f:entry>
+        </f:section>
     </f:advanced>
 </j:jelly>

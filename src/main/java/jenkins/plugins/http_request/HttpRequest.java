@@ -74,6 +74,7 @@ public class HttpRequest extends Builder {
     private Integer timeout                   = DescriptorImpl.timeout;
     private Boolean consoleLogResponseBody    = DescriptorImpl.consoleLogResponseBody;
     private String authentication             = DescriptorImpl.authentication;
+    private String requestBody                = DescriptorImpl.requestBody;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 
     @DataBoundConstructor
@@ -129,6 +130,11 @@ public class HttpRequest extends Builder {
     @DataBoundSetter
     public void setAuthentication(String authentication) {
         this.authentication = authentication;
+    }
+
+    @DataBoundSetter
+    public void setRequestBody(String requestBody) {
+        this.requestBody = requestBody;
     }
 
     @DataBoundSetter
@@ -201,6 +207,10 @@ public class HttpRequest extends Builder {
         return validResponseContent;
     }
 
+    public String getRequestBody() {
+        return requestBody;
+    }
+
     @Override
     public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener)
     throws InterruptedException, IOException
@@ -232,7 +242,7 @@ public class HttpRequest extends Builder {
         logger.println(String.format("URL: %s", evaluatedUrl));
 
         DefaultHttpClient httpclient = new SystemDefaultHttpClient();
-        RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, params);
+        RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, requestBody, params);
         HttpClientUtil clientUtil = new HttpClientUtil();
         HttpRequestBase httpRequestBase = getHttpRequestBase(logger, requestAction, clientUtil);
         HttpContext context = new BasicHttpContext();
@@ -370,6 +380,7 @@ public class HttpRequest extends Builder {
         public static final int      timeout                   = 0;
         public static final Boolean  consoleLogResponseBody    = false;
         public static final String   authentication            = "";
+        public static final String   requestBody               = "";
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
 
         public DescriptorImpl() {
