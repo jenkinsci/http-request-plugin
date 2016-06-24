@@ -139,6 +139,15 @@ public final class HttpRequestStep extends AbstractStepImpl {
     }
 
     @DataBoundSetter
+    public void setRequestBody(String requestBody) {
+        this.requestBody = requestBody;
+    }
+
+    public String getRequestBody() {
+        return requestBody;
+    }
+
+    @DataBoundSetter
     public void setCustomHeaders(List<HttpRequestNameValuePair> customHeaders) {
         this.customHeaders = customHeaders;
     }
