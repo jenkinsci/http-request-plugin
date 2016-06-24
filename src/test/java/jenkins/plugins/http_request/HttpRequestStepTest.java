@@ -1,26 +1,35 @@
 package jenkins.plugins.http_request;
 
 import hudson.model.Result;
+import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
+import jenkins.plugins.http_request.auth.FormAuthentication;
+import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
+import jenkins.plugins.http_request.util.RequestAction;
+import org.apache.commons.io.FileUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpException;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.message.BasicHttpEntityEnclosingRequest;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.protocol.HttpRequestHandler;
+import org.apache.http.util.EntityUtils;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.junit.Test;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
-import jenkins.plugins.http_request.auth.FormAuthentication;
-import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
-import jenkins.plugins.http_request.util.RequestAction;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.http.HttpHost;
-
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-
-import org.junit.Test;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -585,5 +594,49 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
         j.assertLogContains("Authentication 'non-existent' doesn't exist anymore", run);
+    }
+
+    @Test
+    public void testPostBody() throws Exception {
+        //configure server
+        this.serverBootstrap.registerHandler("/doPostBody", new HttpRequestHandler() {
+            @Override
+            public void handle(
+                    final org.apache.http.HttpRequest request,
+                    final HttpResponse response,
+                    final HttpContext context
+            ) throws HttpException, IOException {
+                String method = request.getRequestLine().getMethod();
+                if (method.equals("POST")) {
+                    HttpEntityEnclosingRequest post = (HttpEntityEnclosingRequest) request;
+                    String body = EntityUtils.toString(post.getEntity());
+                    response.setEntity(new StringEntity(body, ContentType.TEXT_PLAIN));
+                    response.setStatusCode(200);
+                }
+            }
+        });
+
+        // Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        String body = "send-body-workflow";
+
+        // Configure the build
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "postBody");
+        proj.setDefinition(new CpsFlowDefinition(
+                "def response = httpRequest" +
+                        " httpMode: 'POST'," +
+                        " requestBody: '" + body + "'," +
+                        " url: '" + baseURL + "/doPostBody'\n" +
+                        "println('Response: ' + response.content)\n",
+                true));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatusSuccess(run);
+        j.assertLogContains("Response: " + body, run);
     }
 }
