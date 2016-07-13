@@ -343,7 +343,7 @@ public class HttpRequest extends Builder {
     private List<HttpRequestNameValuePair> createParameters(
             AbstractBuild<?, ?> build, PrintStream logger,
             EnvVars envVars) {
-        if (!passBuildParameters) {
+        if (passBuildParameters == null || !passBuildParameters) {
             return Collections.emptyList();
         }
 
