@@ -36,6 +36,9 @@
             <f:entry field="timeout" title="Connection timeout" help="/plugin/http_request/help-timeout.html">
                 <f:number default="${descriptor.timeout}"/>
             </f:entry>
+            <f:entry field="ignoreConnectException" title="Ignore refused connection" help="/plugin/http_request/help-connection-refused.html">
+            	<f:booleanRadio />
+        	</f:entry>
             <f:entry field="validResponseCodes" title="Response codes expected" help="/plugin/http_request/help-validResponseCodes.html">
                 <f:textbox default="${descriptor.validResponseCodes}"/>
             </f:entry>
