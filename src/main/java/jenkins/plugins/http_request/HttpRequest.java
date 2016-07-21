@@ -328,7 +328,8 @@ public class HttpRequest extends Builder {
         }
 
         for (HttpRequestNameValuePair header : customHeaders) {
-            httpRequestBase.addHeader(header.getName(), header.getValue());
+            String value = HttpClientUtil.resolveParameters(header.getValue(), requestAction.getParams());
+            httpRequestBase.addHeader(header.getName(), value);
         }
         return httpRequestBase;
     }
