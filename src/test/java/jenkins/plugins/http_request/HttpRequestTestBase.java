@@ -197,6 +197,28 @@ public class HttpRequestTestBase extends LocalServerTestBase {
             }
         });
 
+        // Check that request body is present and that the containing parameter ${Tag} has been resolved to "trunk"
+        this.serverBootstrap.registerHandler("/checkRequestBodyWithTag", new HttpRequestHandler() {
+            @Override
+            public void handle(
+                    final org.apache.http.HttpRequest request,
+                    final HttpResponse response,
+                    final HttpContext context
+            ) throws HttpException, IOException {
+                assertEquals("POST", request.getRequestLine().getMethod());
+                String requestBody = null;
+                if (request instanceof HttpEntityEnclosingRequest) {
+                    HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+                    if (entity != null) {
+                        requestBody = EntityUtils.toString(entity, "UTF-8");
+                        entity.consumeContent();
+                    }
+                }
+                assertEquals("cleanupDir=D:/continuousIntegration/deployments/Daimler/trunk/standalone",requestBody);
+                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
+            }
+        });
+        
         // Return an invalid status code
         this.serverBootstrap.registerHandler("/invalidStatusCode", new HttpRequestHandler() {
             @Override

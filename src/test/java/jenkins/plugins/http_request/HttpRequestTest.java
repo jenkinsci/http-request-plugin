@@ -171,6 +171,40 @@ public class HttpRequestTest extends HttpRequestTestBase {
     }
 
     @Test
+    public void replaceParametersInRequestBody() throws Exception {
+
+    	// Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/checkRequestBodyWithTag");
+        httpRequest.setConsoleLogResponseBody(true);
+
+        // Activate requsetBody
+        httpRequest.setHttpMode(HttpMode.POST);
+        
+        // Use some random body content that contains a parameter
+        httpRequest.setRequestBody("cleanupDir=D:/continuousIntegration/deployments/Daimler/${Tag}/standalone");
+        
+        // Build parameters have to be passed
+        httpRequest.setPassBuildParameters(true);
+
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        
+        FreeStyleBuild build = project.scheduleBuild2(0,
+                new UserIdCause(),
+                new ParametersAction(new StringParameterValue("Tag","trunk"))
+            ).get();
+        
+        // Check expectations
+        j.assertBuildStatusSuccess(build);
+        j.assertLogContains(allIsWellMessage,build);
+    }
+    
+    @Test
     public void silentlyIgnoreNonExistentBuildParameters() throws Exception {
         // Prepare the server
         final HttpHost target = start();
