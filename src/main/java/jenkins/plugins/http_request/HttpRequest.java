@@ -217,10 +217,10 @@ public class HttpRequest extends Builder {
     {
         final PrintStream logger = listener.getLogger();
         final EnvVars envVars = build.getEnvironment(listener);
-        String evaluatedUrl;
-        evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
+        String evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
+        String evaluatedBody = evaluate(requestBody, build.getBuildVariableResolver(), envVars);
         final List<HttpRequestNameValuePair> params = createParameters(build, logger, envVars);
-        ResponseContentSupplier responseContentSupplier = performHttpRequest(build, listener, evaluatedUrl, params);
+        ResponseContentSupplier responseContentSupplier = performHttpRequest(build, listener, evaluatedUrl, evaluatedBody, params);
 
         logResponseToFile(build.getWorkspace(), logger, responseContentSupplier);
         return true;
@@ -230,10 +230,10 @@ public class HttpRequest extends Builder {
     throws InterruptedException, IOException
     {
         List<HttpRequestNameValuePair> params = Collections.emptyList();
-        return performHttpRequest(run, listener, this.url, params);
+        return performHttpRequest(run, listener, this.url, this.requestBody, params);
     }
 
-    public ResponseContentSupplier performHttpRequest(Run<?,?> run, TaskListener listener, String evaluatedUrl, List<HttpRequestNameValuePair> params)
+    public ResponseContentSupplier performHttpRequest(Run<?,?> run, TaskListener listener, String evaluatedUrl, String evaluatedBody, List<HttpRequestNameValuePair> params)
     throws InterruptedException, IOException
     {
         final PrintStream logger = listener.getLogger();
@@ -242,7 +242,7 @@ public class HttpRequest extends Builder {
         logger.println(String.format("URL: %s", evaluatedUrl));
 
         DefaultHttpClient httpclient = new SystemDefaultHttpClient();
-        RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, requestBody, params);
+        RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, evaluatedBody, params);
         HttpClientUtil clientUtil = new HttpClientUtil();
         HttpRequestBase httpRequestBase = getHttpRequestBase(logger, requestAction, clientUtil);
         HttpContext context = new BasicHttpContext();
@@ -328,9 +328,9 @@ public class HttpRequest extends Builder {
         }
 
         for (HttpRequestNameValuePair header : customHeaders) {
-            String value = HttpClientUtil.resolveParameters(header.getValue(), requestAction.getParams());
-            httpRequestBase.addHeader(header.getName(), value);
+            httpRequestBase.addHeader(header.getName(), header.getValue());
         }
+        
         return httpRequestBase;
     }
 

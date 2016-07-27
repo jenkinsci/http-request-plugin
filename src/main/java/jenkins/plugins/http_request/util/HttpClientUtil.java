@@ -57,17 +57,9 @@ public class HttpClientUtil {
     private HttpEntity makeEntity(RequestAction requestAction) throws
             UnsupportedEncodingException {
         if (!Strings.isNullOrEmpty(requestAction.getRequestBody())) {
-            String requestBody = resolveParameters(requestAction.getRequestBody(), requestAction.getParams());
-            return new StringEntity(requestBody);
+        	return new StringEntity(requestAction.getRequestBody());
         }
         return new UrlEncodedFormEntity(requestAction.getParams());
-    }
-
-    public static String resolveParameters(String inStr, List<HttpRequestNameValuePair> params) {
-        for (HttpRequestNameValuePair param : params)
-            inStr = inStr.replaceAll("\\$\\{" + param.getName() + "\\}", param.getValue());
-
-        return inStr;
     }
 
     public HttpGet makeGet(RequestAction requestAction) throws IOException {
