@@ -328,7 +328,7 @@ public class HttpRequestTestBase extends LocalServerTestBase {
             }
         });
 
-        // Check the basic authentication header
+        // Check the custom headers
         this.serverBootstrap.registerHandler("/customHeaders", new HttpRequestHandler() {
             @Override
             public void handle(
@@ -341,6 +341,28 @@ public class HttpRequestTestBase extends LocalServerTestBase {
                 assertEquals(2, headers.length);
                 assertEquals("value1", headers[0].getValue());
                 assertEquals("value2", headers[1].getValue());
+                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
+            }
+        });
+        
+        // Check if the parameters in custom headers have been resolved
+        this.serverBootstrap.registerHandler("/customHeadersResolved", new HttpRequestHandler() {
+            @Override
+            public void handle(
+                final org.apache.http.HttpRequest request,
+                final HttpResponse response,
+                final HttpContext context
+            ) throws HttpException, IOException {
+                Header[] headers = request.getAllHeaders();
+
+                headers = request.getHeaders("resolveCustomParam");
+                assertEquals(1, headers.length);
+                assertEquals("trunk", headers[0].getValue());
+                
+                headers = request.getHeaders("resolveEnvParam");
+                assertEquals(1, headers.length);
+                assertEquals("C:/path/to/my/workspace", headers[0].getValue());
+                
                 response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
             }
         });

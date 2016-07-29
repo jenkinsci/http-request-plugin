@@ -601,6 +601,44 @@ public class HttpRequestTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatus(Result.SUCCESS, build);
     }
+    
+    @Test
+    public void replaceParametesInCustomHeaders() throws Exception {
+
+    	// Prepare the server
+        final HttpHost target = start();
+        final String baseURL = "http://localhost:" + target.getPort();
+
+        // Prepare HttpRequest
+        HttpRequest httpRequest = new HttpRequest(baseURL+"/customHeadersResolved");
+        httpRequest.setConsoleLogResponseBody(true);
+
+        // Activate requsetBody
+        httpRequest.setHttpMode(HttpMode.POST);
+        
+        // Add some custom headers
+        List<HttpRequestNameValuePair> customHeaders = new ArrayList<HttpRequestNameValuePair>();
+        customHeaders.add(new HttpRequestNameValuePair("resolveCustomParam","${Tag}"));
+        customHeaders.add(new HttpRequestNameValuePair("resolveEnvParam","${WORKSPACE}"));
+        httpRequest.setCustomHeaders(customHeaders);
+
+        // Activate passBuildParameters
+        httpRequest.setPassBuildParameters(true);
+        
+        // Run build
+        FreeStyleProject project = j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        
+        FreeStyleBuild build = project.scheduleBuild2(0,
+                new UserIdCause(),
+                new ParametersAction(new StringParameterValue("Tag","trunk"),
+                					 new StringParameterValue("WORKSPACE", "C:/path/to/my/workspace"))
+            ).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.SUCCESS, build);
+        j.assertLogContains(allIsWellMessage,build);
+    }
 
     @Test
     public void nonExistentBasicAuthFailsTheBuild() throws Exception {

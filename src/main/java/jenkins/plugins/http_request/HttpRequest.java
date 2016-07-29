@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 
@@ -19,6 +20,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Range;
 import com.google.common.collect.Ranges;
 import com.google.common.primitives.Ints;
+
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -45,6 +47,8 @@ import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
 import net.sf.json.JSONObject;
+
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -233,18 +237,18 @@ public class HttpRequest extends Builder {
         return performHttpRequest(run, listener, this.url, this.requestBody, params);
     }
 
-    public ResponseContentSupplier performHttpRequest(Run<?,?> run, TaskListener listener, String evaluatedUrl, String evaluatedBody, List<HttpRequestNameValuePair> params)
+    public ResponseContentSupplier performHttpRequest(Run<?,?> build, TaskListener listener, String evaluatedUrl, String evaluatedBody, List<HttpRequestNameValuePair> params)
     throws InterruptedException, IOException
     {
         final PrintStream logger = listener.getLogger();
         logger.println("HttpMode: " + httpMode);
-
         logger.println(String.format("URL: %s", evaluatedUrl));
 
         DefaultHttpClient httpclient = new SystemDefaultHttpClient();
         RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, evaluatedBody, params);
         HttpClientUtil clientUtil = new HttpClientUtil();
-        HttpRequestBase httpRequestBase = getHttpRequestBase(logger, requestAction, clientUtil);
+        HttpRequestBase httpRequestBase = getHttpRequestBase(build, listener, logger, requestAction, clientUtil);
+        
         HttpContext context = new BasicHttpContext();
 
         if (authentication != null && !authentication.isEmpty()) {
@@ -314,7 +318,8 @@ public class HttpRequest extends Builder {
         }
     }
 
-    private HttpRequestBase getHttpRequestBase(PrintStream logger, RequestAction requestAction, HttpClientUtil clientUtil) throws IOException {
+    private HttpRequestBase getHttpRequestBase(Run<?, ?> build, TaskListener listener, PrintStream logger, RequestAction requestAction, 
+    		HttpClientUtil clientUtil) throws IOException, InterruptedException {
         HttpRequestBase httpRequestBase = clientUtil.createRequestBase(requestAction);
 
         if (contentType != MimeType.NOT_SET) {
@@ -327,8 +332,21 @@ public class HttpRequest extends Builder {
             logger.println("Accept: " + acceptType);
         }
 
+        // Resolve parameters in header values if the Run is an instance of AbstractBuild
+        // (not sure if that's always the case)
+        EnvVars envVars = null;
+        VariableResolver variableResolver = null;
+        boolean isAbstractBuild = build instanceof AbstractBuild;
+        if (isAbstractBuild) {
+        	envVars = build.getEnvironment(listener);
+        	variableResolver = ((AbstractBuild) build).getBuildVariableResolver();
+        }
+        
         for (HttpRequestNameValuePair header : customHeaders) {
-            httpRequestBase.addHeader(header.getName(), header.getValue());
+        	if (isAbstractBuild)
+            	httpRequestBase.addHeader(header.getName(), evaluate(header.getValue(), variableResolver, envVars));
+            else
+            	httpRequestBase.addHeader(header.getName(), header.getValue());
         }
         
         return httpRequestBase;
