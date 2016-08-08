@@ -7,7 +7,7 @@ This plugin sends a HTTP/HTTPS request to a user speficied URL.
 The following features are available in both Pipeline and traditional
 project types:
 
-* Programmable HTTP method: GET, POST, PUT, DELETE, or HEAD
+* Programmable HTTP method: GET, POST, PUT, PATCH, DELETE, or HEAD
 * Programmable range of expected response codes (a response code outside the range fails the build)
 * Supports Basic Authentication (see global configuration)
 * Supports From Authentication (see global configuration)
@@ -52,6 +52,15 @@ You can access the response status code and content programmatically:
 def response = httpRequest "http://httpbin.org/response-headers?param1=${param1}"
 println('Status: '+response.status)
 println('Response: '+response.content)
+```
+
+You may also send content in the body of the request, such as for a PATCH request:
+
+```groovy
+def patchOrg = """
+    {"description": "$description"}
+"""
+def response = httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', httpMode: 'PATCH', requestBody: patchOrg, url: "https://api.github.com/orgs/${orgName}"
 ```
 
 For details on the Pipeline features, use the Pipeline snippet generator

@@ -47,6 +47,9 @@ public class HttpClientUtil {
         } else if (requestAction.getMode() == HttpMode.PUT) {
             return makePut(requestAction);
 
+        }  else if (requestAction.getMode() == HttpMode.PATCH) {
+            return makePatch(requestAction);
+
         } else if (requestAction.getMode() == HttpMode.DELETE) {
             return makeDelete(requestAction);
         }
@@ -100,6 +103,14 @@ public class HttpClientUtil {
         httpPut.setEntity(entity);
 
         return httpPut;
+    }
+
+    public HttpPatch makePatch(RequestAction requestAction) throws UnsupportedEncodingException {
+        final HttpEntity entity = makeEntity(requestAction);
+        final HttpPatch httpPatch = new HttpPatch(requestAction.getUrl().toString());
+        httpPatch.setEntity(entity);
+
+        return httpPatch;
     }
 
     public HttpDelete makeDelete(RequestAction requestAction) throws UnsupportedEncodingException {
