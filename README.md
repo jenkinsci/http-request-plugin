@@ -57,6 +57,7 @@ println('Response: '+response.content)
 You may also send content in the body of the request, such as for a PATCH request:
 
 ```groovy
+// create payload
 def patchOrg = """
     {"description": "$description"}
 """
