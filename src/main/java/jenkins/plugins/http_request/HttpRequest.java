@@ -1,24 +1,8 @@
 package jenkins.plugins.http_request;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
-import java.lang.NumberFormatException;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import javax.annotation.Nonnull;
-import javax.servlet.ServletException;
-
 import com.google.common.base.Strings;
 import com.google.common.collect.Range;
 import com.google.common.collect.Ranges;
-import com.google.common.primitives.Ints;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -44,19 +28,32 @@ import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
-import net.sf.json.JSONObject;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.SystemDefaultHttpClient;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
+
+import javax.annotation.Nonnull;
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * @author Janario Oliveira
@@ -256,10 +253,20 @@ public class HttpRequest extends Builder {
             logger.println("Using authentication: " + auth.getKeyName());
             auth.authenticate(httpclient, context, httpRequestBase, logger, timeout);
         }
-        final HttpResponse response = clientUtil.execute(httpclient, context, httpRequestBase, logger, timeout);
 
-        // The HttpEntity is consumed by the ResponseContentSupplier
-        ResponseContentSupplier responseContentSupplier = new ResponseContentSupplier(response);
+        ResponseContentSupplier responseContentSupplier;
+        try {
+            final HttpResponse response = clientUtil.execute(httpclient, context, httpRequestBase, logger, timeout);
+            // The HttpEntity is consumed by the ResponseContentSupplier
+            responseContentSupplier = new ResponseContentSupplier(response);
+        } catch (UnknownHostException uhe) {
+            logger.println("Treating UnknownHostException(" + uhe.getMessage() + ") as 404 Not Found");
+            responseContentSupplier = new ResponseContentSupplier("UnknownHostException as 404 Not Found", 404);
+        } catch (SocketTimeoutException | ConnectException ce) {
+            logger.println("Treating " + ce.getClass() + "(" + ce.getMessage() + ") as 408 Request Timeout");
+            responseContentSupplier = new ResponseContentSupplier(ce.getClass() + "(" + ce.getMessage() + ") as 408 Request Timeout", 408);
+        }
+
         if (consoleLogResponseBody) {
             logger.println("Response: \n" + responseContentSupplier.getContent());
         }

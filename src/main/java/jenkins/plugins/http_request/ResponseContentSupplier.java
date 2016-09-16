@@ -23,6 +23,11 @@ class ResponseContentSupplier implements Serializable {
     private String content;
     private int status;
 
+    public ResponseContentSupplier(String content, int status) {
+        this.content = content;
+        this.status = status;
+    }
+
     public ResponseContentSupplier(HttpResponse response) {
         this.status = response.getStatusLine().getStatusCode();
         setContent(response);
