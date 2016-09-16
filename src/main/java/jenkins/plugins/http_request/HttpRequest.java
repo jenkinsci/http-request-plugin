@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.lang.NumberFormatException;
+import java.net.ConnectException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -76,6 +77,7 @@ public class HttpRequest extends Builder {
     private String authentication             = DescriptorImpl.authentication;
     private String requestBody                = DescriptorImpl.requestBody;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
+	private boolean ignoreConnectException    = DescriptorImpl.ignoreConnectException;
 
     @DataBoundConstructor
     public HttpRequest(@Nonnull String url) {
@@ -140,6 +142,11 @@ public class HttpRequest extends Builder {
     @DataBoundSetter
     public void setCustomHeaders(List<HttpRequestNameValuePair> customHeaders) {
         this.customHeaders = customHeaders;
+    }
+    
+    @DataBoundSetter
+    public void setIgnoreConnectException(boolean value) {
+        this.ignoreConnectException = value;
     }
 
     @Initializer(before = InitMilestone.PLUGINS_STARTED)
@@ -210,6 +217,10 @@ public class HttpRequest extends Builder {
     public String getRequestBody() {
         return requestBody;
     }
+    
+    public boolean isIgnoreConnectException() {
+    	return ignoreConnectException;
+    }
 
     @Override
     public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener)
@@ -220,9 +231,15 @@ public class HttpRequest extends Builder {
         String evaluatedUrl;
         evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
         final List<HttpRequestNameValuePair> params = createParameters(build, logger, envVars);
-        ResponseContentSupplier responseContentSupplier = performHttpRequest(build, listener, evaluatedUrl, params);
-
-        logResponseToFile(build.getWorkspace(), logger, responseContentSupplier);
+        try {
+        	ResponseContentSupplier responseContentSupplier = performHttpRequest(build, listener, evaluatedUrl, params);
+        	logResponseToFile(build.getWorkspace(), logger, responseContentSupplier);
+        } catch (ConnectException e) {
+        	if (!ignoreConnectException) {
+        		throw e;
+        	}
+        	logger.println("Connection was refused by remote host. Continue with build.");
+        }
         return true;
     }
 
@@ -382,6 +399,7 @@ public class HttpRequest extends Builder {
         public static final String   authentication            = "";
         public static final String   requestBody               = "";
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
+        public static final boolean  ignoreConnectException    = false;
 
         public DescriptorImpl() {
             load();
