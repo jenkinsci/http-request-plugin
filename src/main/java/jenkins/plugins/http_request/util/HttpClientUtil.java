@@ -57,7 +57,7 @@ public class HttpClientUtil {
     private HttpEntity makeEntity(RequestAction requestAction) throws
             UnsupportedEncodingException {
         if (!Strings.isNullOrEmpty(requestAction.getRequestBody())) {
-            return new StringEntity(requestAction.getRequestBody());
+        	return new StringEntity(requestAction.getRequestBody());
         }
         return new UrlEncodedFormEntity(requestAction.getParams());
     }
