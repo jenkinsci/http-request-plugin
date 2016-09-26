@@ -214,10 +214,10 @@ public class HttpRequest extends Builder {
     {
         final PrintStream logger = listener.getLogger();
         final EnvVars envVars = build.getEnvironment(listener);
-        String evaluatedUrl;
-        evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
+        String evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
+        String evaluatedBody = evaluate(requestBody, build.getBuildVariableResolver(), envVars);
         final List<HttpRequestNameValuePair> params = createParameters(build, logger, envVars);
-        ResponseContentSupplier responseContentSupplier = performHttpRequest(build, listener, evaluatedUrl, params);
+        ResponseContentSupplier responseContentSupplier = performHttpRequest(build, listener, evaluatedUrl, evaluatedBody, params);
 
         logResponseToFile(build.getWorkspace(), logger, responseContentSupplier);
         return true;
@@ -227,21 +227,21 @@ public class HttpRequest extends Builder {
     throws InterruptedException, IOException
     {
         List<HttpRequestNameValuePair> params = Collections.emptyList();
-        return performHttpRequest(run, listener, this.url, params);
+        return performHttpRequest(run, listener, this.url, this.requestBody, params);
     }
 
-    public ResponseContentSupplier performHttpRequest(Run<?,?> run, TaskListener listener, String evaluatedUrl, List<HttpRequestNameValuePair> params)
+    public ResponseContentSupplier performHttpRequest(Run<?,?> build, TaskListener listener, String evaluatedUrl, String evaluatedBody, List<HttpRequestNameValuePair> params)
     throws InterruptedException, IOException
     {
         final PrintStream logger = listener.getLogger();
         logger.println("HttpMode: " + httpMode);
-
         logger.println(String.format("URL: %s", evaluatedUrl));
 
         DefaultHttpClient httpclient = new SystemDefaultHttpClient();
-        RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, requestBody, params);
+        RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, evaluatedBody, params);
         HttpClientUtil clientUtil = new HttpClientUtil();
-        HttpRequestBase httpRequestBase = getHttpRequestBase(logger, requestAction, clientUtil);
+        HttpRequestBase httpRequestBase = getHttpRequestBase(build, listener, logger, requestAction, clientUtil);
+
         HttpContext context = new BasicHttpContext();
 
         if (authentication != null && !authentication.isEmpty()) {
@@ -321,7 +321,8 @@ public class HttpRequest extends Builder {
         }
     }
 
-    private HttpRequestBase getHttpRequestBase(PrintStream logger, RequestAction requestAction, HttpClientUtil clientUtil) throws IOException {
+    private HttpRequestBase getHttpRequestBase(Run<?, ?> build, TaskListener listener, PrintStream logger, RequestAction requestAction,
+    		HttpClientUtil clientUtil) throws IOException, InterruptedException {
         HttpRequestBase httpRequestBase = clientUtil.createRequestBase(requestAction);
 
         if (contentType != MimeType.NOT_SET) {
@@ -334,9 +335,23 @@ public class HttpRequest extends Builder {
             logger.println("Accept: " + acceptType);
         }
 
-        for (HttpRequestNameValuePair header : customHeaders) {
-            httpRequestBase.addHeader(header.getName(), header.getValue());
+        // Resolve parameters in header values if the Run is an instance of AbstractBuild
+        // (not sure if that's always the case)
+        EnvVars envVars = null;
+        VariableResolver variableResolver = null;
+        boolean isAbstractBuild = build instanceof AbstractBuild;
+        if (isAbstractBuild) {
+        	envVars = build.getEnvironment(listener);
+        	variableResolver = ((AbstractBuild) build).getBuildVariableResolver();
         }
+
+        for (HttpRequestNameValuePair header : customHeaders) {
+        	if (isAbstractBuild)
+            	httpRequestBase.addHeader(header.getName(), evaluate(header.getValue(), variableResolver, envVars));
+            else
+            	httpRequestBase.addHeader(header.getName(), header.getValue());
+        }
+
         return httpRequestBase;
     }
 
