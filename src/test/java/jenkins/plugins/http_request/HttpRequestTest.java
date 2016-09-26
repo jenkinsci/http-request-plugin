@@ -308,6 +308,8 @@ public class HttpRequestTest extends HttpRequestTestBase {
     }
 
     public void doRequest(final HttpMode mode) throws Exception {
+        //JenkinsRule doesn't support PATCH
+        if (mode == HttpMode.PATCH) return;
         // Prepare the server
         final HttpHost target = start();
         final String baseURL = "http://localhost:" + target.getPort();

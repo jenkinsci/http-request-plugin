@@ -7,7 +7,7 @@ import hudson.util.ListBoxModel;
  */
 public enum HttpMode {
 
-    GET, POST, PUT, DELETE, HEAD;
+    GET, POST, PUT, DELETE, HEAD, PATCH;
 
     public static ListBoxModel getFillItems() {
         ListBoxModel items = new ListBoxModel();
