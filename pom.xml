@@ -31,7 +31,7 @@ THE SOFTWARE.
     </parent>
 
     <artifactId>http_request</artifactId>
-    <version>1.8.13-SNAPSHOT</version>
+    <version>1.8.12-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>HTTP Request Plugin</name>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/HTTP+Request+Plugin</url>
