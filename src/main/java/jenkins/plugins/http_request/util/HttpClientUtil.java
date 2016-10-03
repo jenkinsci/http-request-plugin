@@ -1,33 +1,34 @@
 package jenkins.plugins.http_request.util;
 
 import com.google.common.base.Strings;
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
-import com.thoughtworks.xstream.io.json.JsonWriter;
-import hudson.FilePath;
 import jenkins.plugins.http_request.HttpMode;
-import net.sf.json.JSONArray;
-import net.sf.json.util.JSONBuilder;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.*;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
-import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.HttpContext;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Janario Oliveira
@@ -35,6 +36,15 @@ import java.util.List;
 public class HttpClientUtil {
 
     public HttpRequestBase createRequestBase(RequestAction requestAction) throws IOException {
+        HttpRequestBase httpRequestBase = doCreateRequestBase(requestAction);
+        for (HttpRequestNameValuePair header : requestAction.getHeaders()) {
+            httpRequestBase.addHeader(header.getName(), header.getValue());
+        }
+
+        return httpRequestBase;
+    }
+
+    private HttpRequestBase doCreateRequestBase(RequestAction requestAction) throws IOException {
         if (requestAction.getMode() == HttpMode.HEAD) {
             return makeHead(requestAction);
 

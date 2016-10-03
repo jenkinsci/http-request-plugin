@@ -15,7 +15,6 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Items;
-import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
@@ -214,33 +213,69 @@ public class HttpRequest extends Builder {
     {
         final PrintStream logger = listener.getLogger();
         final EnvVars envVars = build.getEnvironment(listener);
-        String evaluatedUrl = evaluate(url, build.getBuildVariableResolver(), envVars);
-        String evaluatedBody = evaluate(requestBody, build.getBuildVariableResolver(), envVars);
+        final VariableResolver<String> buildVariableResolver = build.getBuildVariableResolver();
+
+        String evaluatedUrl = evaluate(url, buildVariableResolver, envVars);
+        String evaluatedBody = evaluate(requestBody, buildVariableResolver, envVars);
+
         final List<HttpRequestNameValuePair> params = createParameters(build, logger, envVars);
-        ResponseContentSupplier responseContentSupplier = performHttpRequest(build, listener, evaluatedUrl, evaluatedBody, params);
+        final List<HttpRequestNameValuePair> headers = new ArrayList<>();
+
+        if (contentType != MimeType.NOT_SET) {
+            headers.add(new HttpRequestNameValuePair("Content-type", contentType.getValue()));
+        }
+        if (acceptType != MimeType.NOT_SET) {
+            headers.add(new HttpRequestNameValuePair("Accept", acceptType.getValue()));
+        }
+        for (HttpRequestNameValuePair header : customHeaders) {
+            String headerName = evaluate(header.getName(), buildVariableResolver, envVars);
+            String headerValue = evaluate(header.getValue(), buildVariableResolver, envVars);
+
+            headers.add(new HttpRequestNameValuePair(headerName, headerValue));
+        }
+
+        RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, evaluatedBody, params, headers);
+
+        ResponseContentSupplier responseContentSupplier = performHttpRequest(listener, requestAction);
 
         logResponseToFile(build.getWorkspace(), logger, responseContentSupplier);
         return true;
     }
 
-    public ResponseContentSupplier performHttpRequest(Run<?,?> run, TaskListener listener)
+    public ResponseContentSupplier performHttpRequest(TaskListener listener)
     throws InterruptedException, IOException
     {
         List<HttpRequestNameValuePair> params = Collections.emptyList();
-        return performHttpRequest(run, listener, this.url, this.requestBody, params);
+        List<HttpRequestNameValuePair> headers = new ArrayList<>();
+        if (contentType != MimeType.NOT_SET) {
+            headers.add(new HttpRequestNameValuePair("Content-type", contentType.getValue()));
+        }
+        if (acceptType != MimeType.NOT_SET) {
+            headers.add(new HttpRequestNameValuePair("Accept", acceptType.getValue()));
+        }
+        for (HttpRequestNameValuePair header : customHeaders) {
+            headers.add(new HttpRequestNameValuePair(header.getName(), header.getValue()));
+        }
+
+        RequestAction requestAction = new RequestAction(new URL(url), httpMode, requestBody, params, headers);
+
+        return performHttpRequest(listener, requestAction);
     }
 
-    public ResponseContentSupplier performHttpRequest(Run<?,?> build, TaskListener listener, String evaluatedUrl, String evaluatedBody, List<HttpRequestNameValuePair> params)
+    public ResponseContentSupplier performHttpRequest(TaskListener listener, RequestAction requestAction)
     throws InterruptedException, IOException
     {
         final PrintStream logger = listener.getLogger();
-        logger.println("HttpMode: " + httpMode);
-        logger.println(String.format("URL: %s", evaluatedUrl));
+        logger.println("HttpMode: " + requestAction.getMode());
+        logger.println(String.format("URL: %s", requestAction.getUrl()));
+        for (HttpRequestNameValuePair header : requestAction.getHeaders()) {
+            logger.println(header.getName() + ": " + header.getValue());
+        }
 
         DefaultHttpClient httpclient = new SystemDefaultHttpClient();
-        RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, evaluatedBody, params);
+
         HttpClientUtil clientUtil = new HttpClientUtil();
-        HttpRequestBase httpRequestBase = getHttpRequestBase(build, listener, logger, requestAction, clientUtil);
+        HttpRequestBase httpRequestBase = clientUtil.createRequestBase(requestAction);
 
         HttpContext context = new BasicHttpContext();
 
@@ -319,40 +354,6 @@ public class HttpRequest extends Builder {
                 }
             }
         }
-    }
-
-    private HttpRequestBase getHttpRequestBase(Run<?, ?> build, TaskListener listener, PrintStream logger, RequestAction requestAction,
-    		HttpClientUtil clientUtil) throws IOException, InterruptedException {
-        HttpRequestBase httpRequestBase = clientUtil.createRequestBase(requestAction);
-
-        if (contentType != MimeType.NOT_SET) {
-            httpRequestBase.setHeader("Content-type", contentType.getValue());
-            logger.println("Content-type: " + contentType);
-        }
-
-        if (acceptType != MimeType.NOT_SET) {
-            httpRequestBase.setHeader("Accept", acceptType.getValue());
-            logger.println("Accept: " + acceptType);
-        }
-
-        // Resolve parameters in header values if the Run is an instance of AbstractBuild
-        // (not sure if that's always the case)
-        EnvVars envVars = null;
-        VariableResolver variableResolver = null;
-        boolean isAbstractBuild = build instanceof AbstractBuild;
-        if (isAbstractBuild) {
-        	envVars = build.getEnvironment(listener);
-        	variableResolver = ((AbstractBuild) build).getBuildVariableResolver();
-        }
-
-        for (HttpRequestNameValuePair header : customHeaders) {
-        	if (isAbstractBuild)
-            	httpRequestBase.addHeader(header.getName(), evaluate(header.getValue(), variableResolver, envVars));
-            else
-            	httpRequestBase.addHeader(header.getName(), header.getValue());
-        }
-
-        return httpRequestBase;
     }
 
     private FilePath getOutputFilePath(FilePath workspace, PrintStream logger) {

@@ -1,44 +1,23 @@
 package jenkins.plugins.http_request;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import com.google.common.collect.Range;
-import com.google.common.collect.Ranges;
-import com.google.common.primitives.Ints;
-
-import hudson.AbortException;
-import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-
-import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
+import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
-
-import javax.inject.Inject;
-
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
 
-import jenkins.plugins.http_request.HttpRequest;
-import jenkins.plugins.http_request.auth.Authenticator;
-import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
-import jenkins.plugins.http_request.auth.FormAuthentication;
-import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
-
-import java.io.IOException;
-import java.util.ArrayList;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
-import javax.annotation.Nonnull;
-import javax.servlet.ServletException;
-
-import net.sf.json.JSONObject;
 
 /**
  * @author Martin d'Anjou
@@ -238,7 +217,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
             httpRequest.setAuthentication(step.authentication);
             httpRequest.setRequestBody(step.requestBody);
             httpRequest.setCustomHeaders(step.customHeaders);
-            ResponseContentSupplier response = httpRequest.performHttpRequest(run, listener);
+            ResponseContentSupplier response = httpRequest.performHttpRequest(listener);
             return response;
         }
 
