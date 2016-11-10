@@ -6,6 +6,7 @@ import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.plugins.http_request.HttpMode;
+import org.apache.http.entity.ContentType;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -24,6 +25,7 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> {
     private final String requestBody;
     private final List<HttpRequestNameValuePair> params;
     private final List<HttpRequestNameValuePair> headers;
+    private ContentType contentType;
 
     @DataBoundConstructor
     public RequestAction(URL url, HttpMode mode, String requestBody, List<HttpRequestNameValuePair> params) {
@@ -31,11 +33,16 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> {
     }
 
     public RequestAction(URL url, HttpMode mode, String requestBody, List<HttpRequestNameValuePair> params, List<HttpRequestNameValuePair> headers) {
+        this(url, mode, requestBody, params, headers, ContentType.DEFAULT_TEXT);
+    }
+
+    public RequestAction(URL url, HttpMode mode, String requestBody, List<HttpRequestNameValuePair> params, List<HttpRequestNameValuePair> headers, ContentType contentType) {
         this.url = url;
         this.mode = mode;
         this.requestBody = requestBody;
         this.params = params == null ? new ArrayList<HttpRequestNameValuePair>() : params;
         this.headers = headers  == null ? new ArrayList<HttpRequestNameValuePair>() : headers;
+        this.contentType = contentType;
     }
 
     public URL getUrl() {
@@ -56,6 +63,10 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> {
 
     public String getRequestBody() {
         return requestBody;
+    }
+
+    public ContentType getContentType() {
+        return contentType;
     }
 
     @Extension

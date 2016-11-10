@@ -222,7 +222,7 @@ public class HttpRequest extends Builder {
         final List<HttpRequestNameValuePair> headers = new ArrayList<>();
 
         if (contentType != MimeType.NOT_SET) {
-            headers.add(new HttpRequestNameValuePair("Content-type", contentType.getValue()));
+            headers.add(new HttpRequestNameValuePair("Content-type", contentType.getContentType().toString()));
         }
         if (acceptType != MimeType.NOT_SET) {
             headers.add(new HttpRequestNameValuePair("Accept", acceptType.getValue()));
@@ -234,7 +234,7 @@ public class HttpRequest extends Builder {
             headers.add(new HttpRequestNameValuePair(headerName, headerValue));
         }
 
-        RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, evaluatedBody, params, headers);
+        RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, evaluatedBody, params, headers, contentType.getContentType());
 
         ResponseContentSupplier responseContentSupplier = performHttpRequest(listener, requestAction);
 
@@ -248,7 +248,7 @@ public class HttpRequest extends Builder {
         List<HttpRequestNameValuePair> params = Collections.emptyList();
         List<HttpRequestNameValuePair> headers = new ArrayList<>();
         if (contentType != MimeType.NOT_SET) {
-            headers.add(new HttpRequestNameValuePair("Content-type", contentType.getValue()));
+            headers.add(new HttpRequestNameValuePair("Content-type", contentType.getContentType().toString()));
         }
         if (acceptType != MimeType.NOT_SET) {
             headers.add(new HttpRequestNameValuePair("Accept", acceptType.getValue()));
@@ -257,7 +257,7 @@ public class HttpRequest extends Builder {
             headers.add(new HttpRequestNameValuePair(header.getName(), header.getValue()));
         }
 
-        RequestAction requestAction = new RequestAction(new URL(url), httpMode, requestBody, params, headers);
+        RequestAction requestAction = new RequestAction(new URL(url), httpMode, requestBody, params, headers, contentType.getContentType());
 
         return performHttpRequest(listener, requestAction);
     }

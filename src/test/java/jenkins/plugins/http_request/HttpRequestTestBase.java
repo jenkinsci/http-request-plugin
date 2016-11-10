@@ -8,6 +8,7 @@ import hudson.model.Result;
 import hudson.model.StringParameterValue;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -22,6 +23,7 @@ import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.*;
 import org.apache.http.util.EntityUtils;
 import org.junit.After;
@@ -80,6 +82,14 @@ public class HttpRequestTestBase extends LocalServerTestBase {
     }
 
     public void setupContentTypeRequestChecker(final MimeType mimeType) {
+        setupContentTypeRequestChecker(mimeType, HttpMode.GET, allIsWellMessage);
+    }
+
+    public void setupContentTypeRequestChecker(final MimeType mimeType, final String responseMessage) {
+        setupContentTypeRequestChecker(mimeType, HttpMode.GET, responseMessage);
+    }
+
+    public void setupContentTypeRequestChecker(final MimeType mimeType, final HttpMode httpMode, final String responseMessage) {
         this.serverBootstrap.registerHandler("/incoming_"+mimeType.toString(), new HttpRequestHandler() {
             @Override
             public void handle(
@@ -87,13 +97,13 @@ public class HttpRequestTestBase extends LocalServerTestBase {
                 final HttpResponse response,
                 final HttpContext context
             ) throws HttpException, IOException {
-                assertEquals("GET", request.getRequestLine().getMethod());
+                assertEquals(httpMode.name(), request.getRequestLine().getMethod());
                 Header[] headers = request.getHeaders("Content-type");
                 if (mimeType == MimeType.NOT_SET) {
                     assertEquals(0, headers.length);
                 } else {
                     assertEquals(1, headers.length);
-                    assertEquals(mimeType.getValue(), headers[0].getValue());
+                    assertEquals(mimeType.getContentType().toString(), headers[0].getValue());
                 }
                 String uriStr = request.getRequestLine().getUri();
                 String query;
@@ -103,7 +113,17 @@ public class HttpRequestTestBase extends LocalServerTestBase {
                     throw new IOException("A URISyntaxException occured: "+ex.getCause().getMessage());
                 }
                 assertNull(query);
-                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
+                response.setEntity(new StringEntity(responseMessage, mimeType.getContentType()));
+                if (request instanceof HttpEntityEnclosingRequest) {
+                    HttpEntity httpEntity = ((HttpEntityEnclosingRequest) request).getEntity();
+                    if (httpEntity != null) {
+                        String encoding = httpEntity.getContentEncoding() != null ?
+                            httpEntity.getContentEncoding().getValue() : mimeType.getContentType().getCharset() != null ? mimeType.getContentType().getCharset().name() :
+                            ContentType.DEFAULT_TEXT.getCharset().name();
+                        String requestBody = IOUtils.toString(httpEntity.getContent(), encoding);
+                        response.setEntity(new StringEntity(requestBody, encoding));
+                    }
+                }
             }
         });
     }

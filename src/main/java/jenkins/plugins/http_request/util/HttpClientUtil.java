@@ -16,6 +16,7 @@ import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.HttpContext;
@@ -70,7 +71,16 @@ public class HttpClientUtil {
     private HttpEntity makeEntity(RequestAction requestAction) throws
             UnsupportedEncodingException {
         if (!Strings.isNullOrEmpty(requestAction.getRequestBody())) {
-        	return new StringEntity(requestAction.getRequestBody());
+            ContentType contentType = requestAction.getContentType();
+            if (contentType == null) {
+                for (HttpRequestNameValuePair header : requestAction.getHeaders()) {
+                    if ("Content-type".equals(header.getName())) {
+                        contentType = ContentType.parse(header.getValue());
+                    }
+                }
+            }
+
+        	  return new StringEntity(requestAction.getRequestBody(), contentType);
         }
         return new UrlEncodedFormEntity(requestAction.getParams());
     }
