@@ -1,10 +1,11 @@
 package jenkins.plugins.http_request;
 
-import hudson.model.Cause.UserIdCause;
+import static org.junit.Assert.assertTrue;
 import hudson.model.FreeStyleBuild;
+import hudson.model.Result;
+import hudson.model.Cause.UserIdCause;
 import hudson.model.FreeStyleProject;
 import hudson.model.ParametersAction;
-import hudson.model.Result;
 import hudson.model.StringParameterValue;
 
 import java.net.URL;
@@ -23,474 +24,471 @@ import jenkins.plugins.http_request.util.RequestAction;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.Consts;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
+import org.apache.http.ProtocolVersion;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.message.BasicHttpResponse;
+import org.junit.Assert;
 
 import org.apache.http.entity.ContentType;
 import org.junit.Test;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Martin d'Anjou
  */
 public class HttpRequestTest extends HttpRequestTestBase {
 
-    @Test
-    public void simpleGetTest() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
-        httpRequest.setConsoleLogResponseBody(true);
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
-
-        // Check expectations
-        j.assertBuildStatusSuccess(build);
-        j.assertLogContains(allIsWellMessage,build);
-    }
-
-    @Test
-    public void canDetectActualContent() throws Exception {
-        // Setup the expected pattern
-        String findMe = allIsWellMessage;
-        String findMePattern = Pattern.quote(findMe);
-
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
-        httpRequest.setConsoleLogResponseBody(true);
-        httpRequest.setValidResponseContent(findMe);
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
-
-        // Check expectations
-        j.assertBuildStatusSuccess(build);
-        j.assertLogContains(findMe,build);
-    }
-
-    @Test
-    public void badContentFailsTheBuild() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
-        httpRequest.setConsoleLogResponseBody(true);
-        httpRequest.setValidResponseContent("bad content");
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
-
-        // Check expectations
-        j.assertBuildStatus(Result.FAILURE, build);
-        String s = FileUtils.readFileToString(build.getLogFile());
-        Pattern p = Pattern.compile("Fail: Response with length \\d+ doesn't contain 'bad content'");
-        Matcher m = p.matcher(s);
-        assertTrue(m.find());
-    }
-
-    @Test
-    public void responseMatchAcceptedMimeType() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
-        httpRequest.setConsoleLogResponseBody(true);
-
-        // Expect a mime type that matches the response
-        httpRequest.setAcceptType(MimeType.TEXT_PLAIN);
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
-
-        // Check expectations
-        j.assertBuildStatusSuccess(build);
-        j.assertLogContains(allIsWellMessage,build);
-    }
-
-    @Test
-    public void responseDoesNotMatchAcceptedMimeTypeDoesNotFailTheBuild() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
-        httpRequest.setConsoleLogResponseBody(true);
-
-        // Expect a mime type that does not match the response
-        httpRequest.setAcceptType(MimeType.TEXT_HTML);
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
-
-        // Check expectations
-        j.assertBuildStatusSuccess(build);
-        j.assertLogContains(allIsWellMessage,build);
-    }
-
-    @Test
-    public void passBuildParametersWhenAskedAndParamtersArePresent() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/checkBuildParameters");
-        httpRequest.setConsoleLogResponseBody(true);
-
-        // Activate passBuildParameters
-        httpRequest.setPassBuildParameters(true);
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0,
-            new UserIdCause(),
-            new ParametersAction(new StringParameterValue("foo","value"))
-        ).get();
-
-        // Check expectations
-        j.assertBuildStatusSuccess(build);
-        j.assertLogContains(allIsWellMessage,build);
-    }
-
-    @Test
-    public void replaceParametersInRequestBody() throws Exception {
-
-    	// Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/checkRequestBodyWithTag");
-        httpRequest.setConsoleLogResponseBody(true);
-
-        // Activate requsetBody
-        httpRequest.setHttpMode(HttpMode.POST);
-        
-        // Use some random body content that contains a parameter
-        httpRequest.setRequestBody("cleanupDir=D:/continuousIntegration/deployments/Daimler/${Tag}/standalone");
-        
-        // Build parameters have to be passed
-        httpRequest.setPassBuildParameters(true);
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        
-        FreeStyleBuild build = project.scheduleBuild2(0,
-                new UserIdCause(),
-                new ParametersAction(new StringParameterValue("Tag","trunk"))
-            ).get();
-        
-        // Check expectations
-        j.assertBuildStatusSuccess(build);
-        j.assertLogContains(allIsWellMessage,build);
-    }
-    
-    @Test
-    public void silentlyIgnoreNonExistentBuildParameters() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
-        httpRequest.setConsoleLogResponseBody(true);
-
-        // Activate passBuildParameters without parameters present
-        httpRequest.setPassBuildParameters(true);
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
-
-        // Check expectations
-        j.assertBuildStatusSuccess(build);
-        j.assertLogContains(allIsWellMessage,build);
-    }
-
-    @Test
-    public void doNotPassBuildParametersWithBuildParameters() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
-        httpRequest.setConsoleLogResponseBody(true);
-
-        // Activate passBuildParameters
-        httpRequest.setPassBuildParameters(false);
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0,
-            new UserIdCause(),
-            new ParametersAction(new StringParameterValue("foo","value"))
-            ).get();
-
-        // Check expectations
-        j.assertBuildStatusSuccess(build);
-        j.assertLogContains(allIsWellMessage,build);
-    }
-
-    @Test
-    public void passRequestBodyWhenRequestIsPostAndBodyIsPresent() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/checkRequestBody");
-        httpRequest.setConsoleLogResponseBody(true);
-
-        // Activate requsetBody
-        httpRequest.setHttpMode(HttpMode.POST);
-        httpRequest.setRequestBody("TestRequestBody");
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
-
-        // Check expectations
-        j.assertBuildStatusSuccess(build);
-        j.assertLogContains(allIsWellMessage,build);
-    }
-
-    @Test
-    public void doNotPassRequestBodyWhenMethodIsGet() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
-        httpRequest.setConsoleLogResponseBody(true);
-
-        // Activate passBuildParameters
-        httpRequest.setRequestBody("TestRequestBody");
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
-
-        // Check expectations
-        j.assertBuildStatusSuccess(build);
-        j.assertLogContains(allIsWellMessage,build);
-    }
-
-    @Test
-    public void doAllRequestTypes() throws Exception {
-        for (HttpMode mode: HttpMode.values()) {
-            doRequest(mode);
-        }
-    }
-
-    public void doRequest(final HttpMode mode) throws Exception {
-        //JenkinsRule doesn't support PATCH
-        if (mode == HttpMode.PATCH) return;
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/do"+mode.toString());
-        httpRequest.setHttpMode(mode);
-        httpRequest.setConsoleLogResponseBody(true);
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
-
-        // Check expectations
-        j.assertBuildStatusSuccess(build);
-
-        if (mode == HttpMode.HEAD) return;
-
-        j.assertLogContains(allIsWellMessage,build);
-    }
-
-    @Test
-    public void invalidResponseCodeFailsTheBuild() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/invalidStatusCode");
-        httpRequest.setConsoleLogResponseBody(true);
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
-
-        // Check expectations
-        j.assertBuildStatus(Result.FAILURE, build);
-        j.assertLogContains("Throwing status 400 for test",build);
-    }
-
-    @Test
-    public void invalidResponseCodeIsAccepted() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/invalidStatusCode");
-        httpRequest.setValidResponseCodes("100:599");
-        httpRequest.setConsoleLogResponseBody(true);
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
-
-        // Check expectations
-        j.assertBuildStatusSuccess(build);
-        j.assertLogContains("Throwing status 400 for test",build);
-    }
-
-    @Test
-    public void reverseRangeFailsTheBuild() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/doesNotMatter");
-        httpRequest.setValidResponseCodes("599:100");
-        httpRequest.setConsoleLogResponseBody(true);
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
-
-        // Check expectations
-        j.assertBuildStatus(Result.FAILURE, build);
-    }
-
-    @Test
-    public void notANumberRangeValueFailsTheBuild() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/doesNotMatter");
-        httpRequest.setValidResponseCodes("text");
-        httpRequest.setConsoleLogResponseBody(true);
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
-
-        // Check expectations
-        j.assertBuildStatus(Result.FAILURE, build);
-    }
-
-    @Test
-    public void rangeWithTextFailsTheBuild() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/doesNotMatter");
-        httpRequest.setValidResponseCodes("1:text");
-        httpRequest.setConsoleLogResponseBody(true);
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
-
-        // Check expectations
-        j.assertBuildStatus(Result.FAILURE, build);
-    }
-
-    @Test
-    public void invalidRangeFailsTheBuild() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/doesNotMatter");
-        httpRequest.setValidResponseCodes("1:2:3");
-        httpRequest.setConsoleLogResponseBody(true);
-
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
-
-        // Check expectations
-        j.assertBuildStatus(Result.FAILURE, build);
-    }
-
-    @Test
-    public void sendAllContentTypes() throws Exception {
-        for (MimeType mimeType : MimeType.values()) {
-            sendContentType(mimeType);
-        }
-    }
-
-    public void sendContentType(final MimeType mimeType) throws Exception {
+	@Test
+	public void simpleGetTest() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		httpRequest.setConsoleLogResponseBody(true);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains(this.allIsWellMessage, build);
+	}
+
+	@Test
+	public void canDetectActualContent() throws Exception {
+		// Setup the expected pattern
+		String findMe = this.allIsWellMessage;
+		String findMePattern = Pattern.quote(findMe);
+
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		httpRequest.setConsoleLogResponseBody(true);
+		httpRequest.setValidResponseContent(findMe);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains(findMe, build);
+	}
+
+	@Test
+	public void badContentFailsTheBuild() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		httpRequest.setConsoleLogResponseBody(true);
+		httpRequest.setValidResponseContent("bad content");
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatus(Result.FAILURE, build);
+		String s = FileUtils.readFileToString(build.getLogFile());
+		Pattern p = Pattern.compile("Fail: Response with length \\d+ doesn't contain 'bad content'");
+		Matcher m = p.matcher(s);
+		assertTrue(m.find());
+	}
+
+	@Test
+	public void responseMatchAcceptedMimeType() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		httpRequest.setConsoleLogResponseBody(true);
+
+		// Expect a mime type that matches the response
+		httpRequest.setAcceptType(MimeType.TEXT_PLAIN);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains(this.allIsWellMessage, build);
+	}
+
+	@Test
+	public void responseDoesNotMatchAcceptedMimeTypeDoesNotFailTheBuild() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		httpRequest.setConsoleLogResponseBody(true);
+
+		// Expect a mime type that does not match the response
+		httpRequest.setAcceptType(MimeType.TEXT_HTML);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains(this.allIsWellMessage, build);
+	}
+
+	@Test
+	public void passBuildParametersWhenAskedAndParamtersArePresent() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/checkBuildParameters");
+		httpRequest.setConsoleLogResponseBody(true);
+
+		// Activate passBuildParameters
+		httpRequest.setPassBuildParameters(true);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0, new UserIdCause(), new ParametersAction(new StringParameterValue("foo", "value"))).get();
+
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains(this.allIsWellMessage, build);
+	}
+
+	@Test
+	public void replaceParametersInRequestBody() throws Exception {
+
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/checkRequestBodyWithTag");
+		httpRequest.setConsoleLogResponseBody(true);
+
+		// Activate requsetBody
+		httpRequest.setHttpMode(HttpMode.POST);
+
+		// Use some random body content that contains a parameter
+		httpRequest.setRequestBody("cleanupDir=D:/continuousIntegration/deployments/Daimler/${Tag}/standalone");
+
+		// Build parameters have to be passed
+		httpRequest.setPassBuildParameters(true);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+
+		FreeStyleBuild build = project.scheduleBuild2(0, new UserIdCause(), new ParametersAction(new StringParameterValue("Tag", "trunk"))).get();
+
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains(this.allIsWellMessage, build);
+	}
+
+	@Test
+	public void silentlyIgnoreNonExistentBuildParameters() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		httpRequest.setConsoleLogResponseBody(true);
+
+		// Activate passBuildParameters without parameters present
+		httpRequest.setPassBuildParameters(true);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains(this.allIsWellMessage, build);
+	}
+
+	@Test
+	public void doNotPassBuildParametersWithBuildParameters() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		httpRequest.setConsoleLogResponseBody(true);
+
+		// Activate passBuildParameters
+		httpRequest.setPassBuildParameters(false);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0, new UserIdCause(), new ParametersAction(new StringParameterValue("foo", "value"))).get();
+
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains(this.allIsWellMessage, build);
+	}
+
+	@Test
+	public void passRequestBodyWhenRequestIsPostAndBodyIsPresent() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/checkRequestBody");
+		httpRequest.setConsoleLogResponseBody(true);
+
+		// Activate requsetBody
+		httpRequest.setHttpMode(HttpMode.POST);
+		httpRequest.setRequestBody("TestRequestBody");
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains(this.allIsWellMessage, build);
+	}
+
+	@Test
+	public void doNotPassRequestBodyWhenMethodIsGet() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		httpRequest.setConsoleLogResponseBody(true);
+
+		// Activate passBuildParameters
+		httpRequest.setRequestBody("TestRequestBody");
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains(this.allIsWellMessage, build);
+	}
+
+	@Test
+	public void doAllRequestTypes() throws Exception {
+		for (HttpMode mode : HttpMode.values()) {
+			doRequest(mode);
+		}
+	}
+
+	public void doRequest(final HttpMode mode) throws Exception {
+		// JenkinsRule doesn't support PATCH
+		if (mode == HttpMode.PATCH)
+			return;
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/do" + mode.toString());
+		httpRequest.setHttpMode(mode);
+		httpRequest.setConsoleLogResponseBody(true);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+
+		if (mode == HttpMode.HEAD)
+			return;
+
+		this.j.assertLogContains(this.allIsWellMessage, build);
+	}
+
+	@Test
+	public void invalidResponseCodeFailsTheBuild() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/invalidStatusCode");
+		httpRequest.setConsoleLogResponseBody(true);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatus(Result.FAILURE, build);
+		this.j.assertLogContains("Throwing status 400 for test", build);
+	}
+
+	@Test
+	public void invalidResponseCodeIsAccepted() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/invalidStatusCode");
+		httpRequest.setValidResponseCodes("100:599");
+		httpRequest.setConsoleLogResponseBody(true);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains("Throwing status 400 for test", build);
+	}
+
+	@Test
+	public void reverseRangeFailsTheBuild() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/doesNotMatter");
+		httpRequest.setValidResponseCodes("599:100");
+		httpRequest.setConsoleLogResponseBody(true);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatus(Result.FAILURE, build);
+	}
+
+	@Test
+	public void notANumberRangeValueFailsTheBuild() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/doesNotMatter");
+		httpRequest.setValidResponseCodes("text");
+		httpRequest.setConsoleLogResponseBody(true);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatus(Result.FAILURE, build);
+	}
+
+	@Test
+	public void rangeWithTextFailsTheBuild() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/doesNotMatter");
+		httpRequest.setValidResponseCodes("1:text");
+		httpRequest.setConsoleLogResponseBody(true);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatus(Result.FAILURE, build);
+	}
+
+	@Test
+	public void invalidRangeFailsTheBuild() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/doesNotMatter");
+		httpRequest.setValidResponseCodes("1:2:3");
+		httpRequest.setConsoleLogResponseBody(true);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatus(Result.FAILURE, build);
+	}
+
+	@Test
+	public void sendAllContentTypes() throws Exception {
+		for (MimeType mimeType : MimeType.values()) {
+			sendContentType(mimeType);
+		}
+	}
+
+	public void sendContentType(final MimeType mimeType) throws Exception {
         setupContentTypeRequestChecker(mimeType, allIsWellMessage);
-    }
+	}
 
-    public void sendContentType(final MimeType mimeType, String checkMessage, String body) throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+	public void sendContentType(final MimeType mimeType, String checkMessage, String body) throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
 
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/incoming_"+mimeType.toString());
-        httpRequest.setConsoleLogResponseBody(true);
-        httpRequest.setContentType(mimeType);
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/incoming_" + mimeType.toString());
+		httpRequest.setConsoleLogResponseBody(true);
+		httpRequest.setContentType(mimeType);
         if (body != null) {
             httpRequest.setHttpMode(HttpMode.POST);
             httpRequest.setRequestBody(body);
         }
 
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
 
-        // Check expectations
-        j.assertBuildStatusSuccess(build);
-        j.assertLogContains(checkMessage,build);
-    }
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains(checkMessage, build);
+	}
 
     @Test
     public void sendNonAsciiRequestBody() throws Exception {
@@ -505,315 +503,341 @@ public class HttpRequestTest extends HttpRequestTestBase {
         sendContentType(MimeType.APPLICATION_JSON_UTF8, notAsciiUTF8Message, notAsciiUTF8Message);
     }
 
-    @Test
-    public void sendAllAcceptTypes() throws Exception {
-        for (MimeType mimeType : MimeType.values()) {
-            sendAcceptType(mimeType);
-        }
-    }
+	@Test
+	public void sendAllAcceptTypes() throws Exception {
+		for (MimeType mimeType : MimeType.values()) {
+			sendAcceptType(mimeType);
+		}
+	}
 
-    public void sendAcceptType(final MimeType mimeType) throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+	public void sendAcceptType(final MimeType mimeType) throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
 
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/accept_"+mimeType.toString());
-        httpRequest.setConsoleLogResponseBody(true);
-        httpRequest.setAcceptType(mimeType);
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/accept_" + mimeType.toString());
+		httpRequest.setConsoleLogResponseBody(true);
+		httpRequest.setAcceptType(mimeType);
 
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
 
-        // Check expectations
-        j.assertBuildStatusSuccess(build);
-        j.assertLogContains(allIsWellMessage,build);
-    }
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains(this.allIsWellMessage, build);
+	}
 
-    @Test
-    public void canPutResponseInOutputFile() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+	@Test
+	public void canPutResponseInOutputFile() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
 
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
-        httpRequest.setOutputFile("file.txt");
-        httpRequest.setConsoleLogResponseBody(true);
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		httpRequest.setOutputFile("file.txt");
+		httpRequest.setConsoleLogResponseBody(true);
 
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
 
-        // Check expectations
-        j.assertBuildStatusSuccess(build);
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
 
-        // By default, the response is printed to the console even if an outputFile is used
-        j.assertLogContains(allIsWellMessage,build);
+		// By default, the response is printed to the console even if an outputFile is used
+		this.j.assertLogContains(this.allIsWellMessage, build);
 
-        // The response is in the output file as well
-        String outputFile = build.getWorkspace().child("file.txt").readToString();
-        Pattern p = Pattern.compile(allIsWellMessage);
-        Matcher m = p.matcher(outputFile);
-        assertTrue(m.find());
-    }
+		// The response is in the output file as well
+		String outputFile = build.getWorkspace().child("file.txt").readToString();
+		Pattern p = Pattern.compile(this.allIsWellMessage);
+		Matcher m = p.matcher(outputFile);
+		assertTrue(m.find());
+	}
 
-    @Test
-    public void canPutResponseInOutputFileWhenNotSetToGoToConsole() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+	@Test
+	public void canPutResponseInOutputFileWhenNotSetToGoToConsole() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
 
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/doGET");
-        httpRequest.setOutputFile("file.txt");
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		httpRequest.setOutputFile("file.txt");
 
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
 
-        // Check expectations
-        j.assertBuildStatusSuccess(build);
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
 
-        // Check that the console does NOT have the response body
-        j.assertLogNotContains(allIsWellMessage,build);
+		// Check that the console does NOT have the response body
+		this.j.assertLogNotContains(this.allIsWellMessage, build);
 
-        // The response is in the output file
-        String outputFile = build.getWorkspace().child("file.txt").readToString();
-        Pattern p = Pattern.compile(allIsWellMessage);
-        Matcher m = p.matcher(outputFile);
-        assertTrue(m.find());
-    }
+		// The response is in the output file
+		String outputFile = build.getWorkspace().child("file.txt").readToString();
+		Pattern p = Pattern.compile(this.allIsWellMessage);
+		Matcher m = p.matcher(outputFile);
+		assertTrue(m.find());
+	}
 
-    @Test
-    public void timeoutFailsTheBuild() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+	@Test
+	public void timeoutFailsTheBuild() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
 
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/timeout");
-        httpRequest.setTimeout(2);
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/timeout");
+		httpRequest.setTimeout(2);
 
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
 
-        // Check expectations
-        j.assertBuildStatus(Result.FAILURE, build);
-    }
+		// Check expectations
+		this.j.assertBuildStatus(Result.FAILURE, build);
+	}
 
-    @Test
-    public void canDoCustomHeaders() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+	@Test
+	public void canDoCustomHeaders() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
 
-        List<HttpRequestNameValuePair> customHeaders = new ArrayList<HttpRequestNameValuePair>();
-        customHeaders.add(new HttpRequestNameValuePair("customHeader","value1"));
-        customHeaders.add(new HttpRequestNameValuePair("customHeader","value2"));
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/customHeaders");
-        httpRequest.setCustomHeaders(customHeaders);
+		List<HttpRequestNameValuePair> customHeaders = new ArrayList<HttpRequestNameValuePair>();
+		customHeaders.add(new HttpRequestNameValuePair("customHeader", "value1"));
+		customHeaders.add(new HttpRequestNameValuePair("customHeader", "value2"));
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/customHeaders");
+		httpRequest.setCustomHeaders(customHeaders);
 
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
 
-        // Check expectations
-        j.assertBuildStatus(Result.SUCCESS, build);
-    }
-    
-    @Test
-    public void replaceParametesInCustomHeaders() throws Exception {
+		// Check expectations
+		this.j.assertBuildStatus(Result.SUCCESS, build);
+	}
 
-    	// Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+	@Test
+	public void replaceParametesInCustomHeaders() throws Exception {
 
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/customHeadersResolved");
-        httpRequest.setConsoleLogResponseBody(true);
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
 
-        // Activate requsetBody
-        httpRequest.setHttpMode(HttpMode.POST);
-        
-        // Add some custom headers
-        List<HttpRequestNameValuePair> customHeaders = new ArrayList<HttpRequestNameValuePair>();
-        customHeaders.add(new HttpRequestNameValuePair("resolveCustomParam","${Tag}"));
-        customHeaders.add(new HttpRequestNameValuePair("resolveEnvParam","${WORKSPACE}"));
-        httpRequest.setCustomHeaders(customHeaders);
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/customHeadersResolved");
+		httpRequest.setConsoleLogResponseBody(true);
 
-        // Activate passBuildParameters
-        httpRequest.setPassBuildParameters(true);
-        
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        
-        FreeStyleBuild build = project.scheduleBuild2(0,
-                new UserIdCause(),
-                new ParametersAction(new StringParameterValue("Tag","trunk"),
-                					 new StringParameterValue("WORKSPACE", "C:/path/to/my/workspace"))
-            ).get();
+		// Activate requsetBody
+		httpRequest.setHttpMode(HttpMode.POST);
 
-        // Check expectations
-        j.assertBuildStatus(Result.SUCCESS, build);
-        j.assertLogContains(allIsWellMessage,build);
-    }
+		// Add some custom headers
+		List<HttpRequestNameValuePair> customHeaders = new ArrayList<HttpRequestNameValuePair>();
+		customHeaders.add(new HttpRequestNameValuePair("resolveCustomParam", "${Tag}"));
+		customHeaders.add(new HttpRequestNameValuePair("resolveEnvParam", "${WORKSPACE}"));
+		httpRequest.setCustomHeaders(customHeaders);
 
-    @Test
-    public void nonExistentBasicAuthFailsTheBuild() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+		// Activate passBuildParameters
+		httpRequest.setPassBuildParameters(true);
 
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/basicAuth");
-        httpRequest.setAuthentication("non-existent-key");
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
 
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
+		FreeStyleBuild build = project.scheduleBuild2(0, new UserIdCause(),
+				new ParametersAction(new StringParameterValue("Tag", "trunk"), new StringParameterValue("WORKSPACE", "C:/path/to/my/workspace"))).get();
 
-        // Check expectations
-        j.assertBuildStatus(Result.FAILURE, build);
-    }
+		// Check expectations
+		this.j.assertBuildStatus(Result.SUCCESS, build);
+		this.j.assertLogContains(this.allIsWellMessage, build);
+	}
 
-    @Test
-    public void canDoBasicDigestAuthentication() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+	@Test
+	public void nonExistentBasicAuthFailsTheBuild() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
 
-        // Prepare the authentication
-        List<BasicDigestAuthentication> bda = new ArrayList<BasicDigestAuthentication>();
-        bda.add(new BasicDigestAuthentication("keyname1","username1","password1"));
-        bda.add(new BasicDigestAuthentication("keyname2","username2","password2"));
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/basicAuth");
+		httpRequest.setAuthentication("non-existent-key");
 
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/basicAuth");
-        HttpRequestGlobalConfig.get().setBasicDigestAuthentications(bda);
-        httpRequest.setAuthentication("keyname1");
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
 
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
+		// Check expectations
+		this.j.assertBuildStatus(Result.FAILURE, build);
+	}
 
-        // Check expectations
-        j.assertBuildStatus(Result.SUCCESS, build);
-    }
+	@Test
+	public void canDoBasicDigestAuthentication() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
 
-    @Test
-    public void canDoFormAuthentication() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+		// Prepare the authentication
+		List<BasicDigestAuthentication> bda = new ArrayList<BasicDigestAuthentication>();
+		bda.add(new BasicDigestAuthentication("keyname1", "username1", "password1"));
+		bda.add(new BasicDigestAuthentication("keyname2", "username2", "password2"));
 
-        // Prepare the authentication
-        List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
-        params.add(new HttpRequestNameValuePair("param1","value1"));
-        params.add(new HttpRequestNameValuePair("param2","value2"));
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/basicAuth");
+		HttpRequestGlobalConfig.get().setBasicDigestAuthentications(bda);
+		httpRequest.setAuthentication("keyname1");
 
-        RequestAction action = new RequestAction(new URL(baseURL+"/reqAction"),HttpMode.GET,null,params);
-        List<RequestAction> actions = new ArrayList<RequestAction>();
-        actions.add(action);
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
 
-        FormAuthentication formAuth = new FormAuthentication("keyname",actions);
-        List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
-        formAuthList.add(formAuth);
+		// Check expectations
+		this.j.assertBuildStatus(Result.SUCCESS, build);
+	}
 
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/formAuth");
-        HttpRequestGlobalConfig.get().setFormAuthentications(formAuthList);
-        httpRequest.setAuthentication("keyname");
+	@Test
+	public void canDoFormAuthentication() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
 
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
+		// Prepare the authentication
+		List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
+		params.add(new HttpRequestNameValuePair("param1", "value1"));
+		params.add(new HttpRequestNameValuePair("param2", "value2"));
 
-        // Check expectations
-        j.assertBuildStatus(Result.SUCCESS, build);
-    }
+		RequestAction action = new RequestAction(new URL(baseURL + "/reqAction"), HttpMode.GET, null, params);
+		List<RequestAction> actions = new ArrayList<RequestAction>();
+		actions.add(action);
 
-    @Test
-    public void rejectedFormCredentialsFailTheBuild() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+		FormAuthentication formAuth = new FormAuthentication("keyname", actions);
+		List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
+		formAuthList.add(formAuth);
 
-        // Prepare the authentication
-        List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
-        params.add(new HttpRequestNameValuePair("param1","value1"));
-        params.add(new HttpRequestNameValuePair("param2","value2"));
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/formAuth");
+		HttpRequestGlobalConfig.get().setFormAuthentications(formAuthList);
+		httpRequest.setAuthentication("keyname");
 
-        RequestAction action = new RequestAction(new URL(baseURL+"/formAuthBad"),HttpMode.GET,null,params);
-        List<RequestAction> actions = new ArrayList<RequestAction>();
-        actions.add(action);
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
 
-        FormAuthentication formAuth = new FormAuthentication("keyname",actions);
-        List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
-        formAuthList.add(formAuth);
+		// Check expectations
+		this.j.assertBuildStatus(Result.SUCCESS, build);
+	}
 
-        // Prepare HttpRequest
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/formAuthBad");
-        httpRequest.setConsoleLogResponseBody(true);
-        HttpRequestGlobalConfig.get().setFormAuthentications(formAuthList);
-        httpRequest.setAuthentication("keyname");
+	@Test
+	public void rejectedFormCredentialsFailTheBuild() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
 
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
+		// Prepare the authentication
+		List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
+		params.add(new HttpRequestNameValuePair("param1", "value1"));
+		params.add(new HttpRequestNameValuePair("param2", "value2"));
 
-        // Check expectations
-        j.assertBuildStatus(Result.FAILURE, build);
-        j.assertLogContains("Error doing authentication",build);
-    }
+		RequestAction action = new RequestAction(new URL(baseURL + "/formAuthBad"), HttpMode.GET, null, params);
+		List<RequestAction> actions = new ArrayList<RequestAction>();
+		actions.add(action);
 
-    @Test
-    public void invalidKeyFormAuthenticationFailsTheBuild() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+		FormAuthentication formAuth = new FormAuthentication("keyname", actions);
+		List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
+		formAuthList.add(formAuth);
 
-        // Prepare the authentication
-        List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
-        params.add(new HttpRequestNameValuePair("param1","value1"));
-        params.add(new HttpRequestNameValuePair("param2","value2"));
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/formAuthBad");
+		httpRequest.setConsoleLogResponseBody(true);
+		HttpRequestGlobalConfig.get().setFormAuthentications(formAuthList);
+		httpRequest.setAuthentication("keyname");
 
-        // The request action won't be sent but we need to prepare it
-        RequestAction action = new RequestAction(new URL(baseURL+"/non-existent"),HttpMode.GET,null,params);
-        List<RequestAction> actions = new ArrayList<RequestAction>();
-        actions.add(action);
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
 
-        FormAuthentication formAuth = new FormAuthentication("keyname",actions);
-        List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
-        formAuthList.add(formAuth);
+		// Check expectations
+		this.j.assertBuildStatus(Result.FAILURE, build);
+		this.j.assertLogContains("Error doing authentication", build);
+	}
 
-        // Prepare HttpRequest - the actual request won't be sent
-        HttpRequest httpRequest = new HttpRequest(baseURL+"/non-existent");
-        httpRequest.setConsoleLogResponseBody(true);
-        HttpRequestGlobalConfig.get().setFormAuthentications(formAuthList);
+	@Test
+	public void invalidKeyFormAuthenticationFailsTheBuild() throws Exception {
+		// Prepare the server
+		final HttpHost target = start();
+		final String baseURL = "http://localhost:" + target.getPort();
 
-        // Select a non-existent form authentication, this will error the build before any request is made
-        httpRequest.setAuthentication("non-existent");
+		// Prepare the authentication
+		List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
+		params.add(new HttpRequestNameValuePair("param1", "value1"));
+		params.add(new HttpRequestNameValuePair("param2", "value2"));
 
-        // Run build
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(httpRequest);
-        FreeStyleBuild build = project.scheduleBuild2(0).get();
+		// The request action won't be sent but we need to prepare it
+		RequestAction action = new RequestAction(new URL(baseURL + "/non-existent"), HttpMode.GET, null, params);
+		List<RequestAction> actions = new ArrayList<RequestAction>();
+		actions.add(action);
 
-        // Check expectations
-        j.assertBuildStatus(Result.FAILURE, build);
-        j.assertLogContains("Authentication 'non-existent' doesn't exist anymore",build);
-    }
+		FormAuthentication formAuth = new FormAuthentication("keyname", actions);
+		List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
+		formAuthList.add(formAuth);
+
+		// Prepare HttpRequest - the actual request won't be sent
+		HttpRequest httpRequest = new HttpRequest(baseURL + "/non-existent");
+		httpRequest.setConsoleLogResponseBody(true);
+		HttpRequestGlobalConfig.get().setFormAuthentications(formAuthList);
+
+		// Select a non-existent form authentication, this will error the build before any request is made
+		httpRequest.setAuthentication("non-existent");
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatus(Result.FAILURE, build);
+		this.j.assertLogContains("Authentication 'non-existent' doesn't exist anymore", build);
+	}
+
+	@Test
+	public void responseContentSupplierHeadersFilling() throws Exception {
+		// Prepare test context
+		HttpResponse response = new BasicHttpResponse(new ProtocolVersion("HTTP", 1, 1), 200, "OK");
+		response.setEntity(new StringEntity("TEST"));
+		response.setHeader("Server", "Jenkins");
+		response.setHeader("Set-Cookie", "JSESSIONID=123456789");
+		response.addHeader("Set-Cookie", "JSESSIONID=abcdefghijk");
+		// Run test
+		ResponseContentSupplier respSupplier = new ResponseContentSupplier(response);
+		// Check expectations
+		Assert.assertEquals(2, respSupplier.getHeaders().size());
+		Assert.assertTrue(respSupplier.getHeaders().containsKey("Server"));
+		Assert.assertTrue(respSupplier.getHeaders().containsKey("Set-Cookie"));
+		Assert.assertEquals(1, respSupplier.getHeaders().get("Server").size());
+		Assert.assertEquals(2, respSupplier.getHeaders().get("Set-Cookie").size());
+		Assert.assertEquals("Jenkins", respSupplier.getHeaders().get("Server").get(0));
+		int valuesFoundCounter = 0;
+		for (String s : respSupplier.getHeaders().get("Set-Cookie")) {
+			if ("JSESSIONID=123456789".equals(s)) {
+				valuesFoundCounter++;
+			} else if ("JSESSIONID=abcdefghijk".equals(s)) {
+				valuesFoundCounter++;
+			}
+		}
+		Assert.assertEquals(2, valuesFoundCounter);
+
+	}
 }
