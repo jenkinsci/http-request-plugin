@@ -269,7 +269,11 @@ public class HttpRequest extends Builder {
         logger.println("HttpMode: " + requestAction.getMode());
         logger.println(String.format("URL: %s", requestAction.getUrl()));
         for (HttpRequestNameValuePair header : requestAction.getHeaders()) {
-            logger.println(header.getName() + ": " + header.getValue());
+            if (header.getName().equalsIgnoreCase("Authorization")) {
+              logger.println(header.getName() + ": *****");
+            } else {
+              logger.println(header.getName() + ": " + header.getValue());
+            }
         }
 
         DefaultHttpClient httpclient = new SystemDefaultHttpClient();
