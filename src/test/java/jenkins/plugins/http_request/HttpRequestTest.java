@@ -8,7 +8,9 @@ import hudson.model.Result;
 import hudson.model.StringParameterValue;
 
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,8 +21,10 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.http.Consts;
 import org.apache.http.HttpHost;
 
+import org.apache.http.entity.ContentType;
 import org.junit.Test;
 import static org.junit.Assert.assertTrue;
 
@@ -461,6 +465,10 @@ public class HttpRequestTest extends HttpRequestTestBase {
     }
 
     public void sendContentType(final MimeType mimeType) throws Exception {
+        setupContentTypeRequestChecker(mimeType, allIsWellMessage);
+    }
+
+    public void sendContentType(final MimeType mimeType, String checkMessage, String body) throws Exception {
         // Prepare the server
         final HttpHost target = start();
         final String baseURL = "http://localhost:" + target.getPort();
@@ -469,6 +477,10 @@ public class HttpRequestTest extends HttpRequestTestBase {
         HttpRequest httpRequest = new HttpRequest(baseURL+"/incoming_"+mimeType.toString());
         httpRequest.setConsoleLogResponseBody(true);
         httpRequest.setContentType(mimeType);
+        if (body != null) {
+            httpRequest.setHttpMode(HttpMode.POST);
+            httpRequest.setRequestBody(body);
+        }
 
         // Run build
         FreeStyleProject project = j.createFreeStyleProject();
@@ -477,7 +489,20 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatusSuccess(build);
-        j.assertLogContains(allIsWellMessage,build);
+        j.assertLogContains(checkMessage,build);
+    }
+
+    @Test
+    public void sendNonAsciiRequestBody() throws Exception {
+        setupContentTypeRequestChecker(MimeType.APPLICATION_JSON, HttpMode.POST, "");
+        sendContentType(MimeType.APPLICATION_JSON, allIsWellMessage, allIsWellMessage);
+    }
+
+    @Test
+    public void sendUTF8equestBody() throws Exception {
+        String notAsciiUTF8Message = "ἱερογλύφος";
+        setupContentTypeRequestChecker(MimeType.APPLICATION_JSON_UTF8, HttpMode.POST, "");
+        sendContentType(MimeType.APPLICATION_JSON_UTF8, notAsciiUTF8Message, notAsciiUTF8Message);
     }
 
     @Test

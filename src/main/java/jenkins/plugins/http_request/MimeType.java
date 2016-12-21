@@ -1,28 +1,34 @@
 package jenkins.plugins.http_request;
 
 import hudson.util.ListBoxModel;
+import org.apache.http.entity.ContentType;
 
 /**
  * @author James Chapman
  */
 public enum MimeType {
 
-    NOT_SET(""),
-    TEXT_HTML("text/html"),
-    TEXT_PLAIN("text/plain"),
-    APPLICATION_JSON("application/json"),
-    APPLICATION_TAR("application/x-tar"),
-    APPLICATION_ZIP("application/zip"),
-    APPLICATION_OCTETSTREAM("application/octet-stream");
+    NOT_SET(ContentType.create("")),
+    TEXT_HTML(ContentType.TEXT_HTML),
+    TEXT_PLAIN(ContentType.TEXT_PLAIN),
+    APPLICATION_JSON(ContentType.create("application/json")),
+    APPLICATION_JSON_UTF8(ContentType.APPLICATION_JSON),
+    APPLICATION_TAR(ContentType.create("application/x-tar")),
+    APPLICATION_ZIP(ContentType.create("application/zip")),
+    APPLICATION_OCTETSTREAM(ContentType.APPLICATION_OCTET_STREAM);
 
-    private final String value;
+    private final ContentType contentType;
 
-    MimeType(String value) {
-        this.value = value;
+    MimeType(ContentType contentType) {
+        this.contentType = contentType;
     }
 
     public String getValue() {
-        return value;
+        return contentType.getMimeType();
+    }
+
+    public ContentType getContentType() {
+        return contentType;
     }
 
     public static ListBoxModel getContentTypeFillItems() {
