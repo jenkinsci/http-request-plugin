@@ -230,6 +230,7 @@ public class HttpRequest extends Builder {
         for (HttpRequestNameValuePair header : customHeaders) {
             String headerName = evaluate(header.getName(), buildVariableResolver, envVars);
             String headerValue = evaluate(header.getValue(), buildVariableResolver, envVars);
+            boolean maskValue = Boolean.parseBoolean(evaluate(String.valueOf(header.getMaskValue()), buildVariableResolver, envVars));
 
             headers.add(new HttpRequestNameValuePair(headerName, headerValue));
         }
@@ -254,7 +255,7 @@ public class HttpRequest extends Builder {
             headers.add(new HttpRequestNameValuePair("Accept", acceptType.getValue()));
         }
         for (HttpRequestNameValuePair header : customHeaders) {
-            headers.add(new HttpRequestNameValuePair(header.getName(), header.getValue()));
+            headers.add(new HttpRequestNameValuePair(header.getName(), header.getValue(), header.getMaskValue()));
         }
 
         RequestAction requestAction = new RequestAction(new URL(url), httpMode, requestBody, params, headers, contentType.getContentType());
@@ -269,7 +270,7 @@ public class HttpRequest extends Builder {
         logger.println("HttpMode: " + requestAction.getMode());
         logger.println(String.format("URL: %s", requestAction.getUrl()));
         for (HttpRequestNameValuePair header : requestAction.getHeaders()) {
-            if (header.getName().equalsIgnoreCase("Authorization")) {
+            if (header.getMaskValue() || header.getName().equalsIgnoreCase("Authorization")) {
               logger.println(header.getName() + ": *****");
             } else {
               logger.println(header.getName() + ": " + header.getValue());
