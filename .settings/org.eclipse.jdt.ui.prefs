@@ -1,0 +1,6 @@
+cleanup_settings_version=2
+eclipse.preferences.version=1
+org.eclipse.jdt.ui.ignorelowercasenames=true
+org.eclipse.jdt.ui.importorder=\#;groovy;java;javax;net;org;com;;jenkins.plugins.http_request;
+org.eclipse.jdt.ui.ondemandthreshold=5000
+org.eclipse.jdt.ui.staticondemandthreshold=5000
