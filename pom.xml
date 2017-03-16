@@ -124,13 +124,12 @@ THE SOFTWARE.
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>${httpcomponents.version}</version>
-            <classifier>tests</classifier>
-            <scope>test</scope>
-        </dependency>
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-servlets</artifactId>
+			<version>9.2.21.v20170120</version>
+			<scope>test</scope>
+		</dependency>
 
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>

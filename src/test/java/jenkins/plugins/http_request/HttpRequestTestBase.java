@@ -1,397 +1,387 @@
 package jenkins.plugins.http_request;
 
-import hudson.model.Cause.UserIdCause;
-import hudson.model.FreeStyleBuild;
-import hudson.model.FreeStyleProject;
-import hudson.model.ParametersAction;
-import hudson.model.Result;
-import hudson.model.StringParameterValue;
-
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
-import jenkins.plugins.http_request.auth.FormAuthentication;
-import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
-import jenkins.plugins.http_request.util.RequestAction;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.http.*;
-import org.apache.http.util.EntityUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import org.jvnet.hudson.test.JenkinsRule;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.FileUtils;
-import org.apache.http.client.fluent.Executor;
-import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.localserver.LocalServerTestBase;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.protocol.HttpRequestHandler;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.handler.DefaultHandler;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.jvnet.hudson.test.JenkinsRule;
+
+import com.google.common.collect.Iterables;
+import com.google.common.io.CharStreams;
 
 /**
  * @author Martin d'Anjou
  */
-public class HttpRequestTestBase extends LocalServerTestBase {
+public class HttpRequestTestBase {
 
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+	private static ServerRunning SERVER;
+	static final String ALL_IS_WELL = "All is well";
+	@Rule
+	public JenkinsRule j = new JenkinsRule();
 
-    final String allIsWellMessage = "All is well";
+	final void registerRequestChecker(final HttpMode method) {
+		registerHandler("/do" + method.name(), method, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+				assertEquals(method.name(), request.getMethod());
 
-    public void setupRequestChecker(final HttpMode httpMode) {
-        this.serverBootstrap.registerHandler("/do"+httpMode.toString(), new HttpRequestHandler() {
-            @Override
-            public void handle(
-                final org.apache.http.HttpRequest request,
-                final HttpResponse response,
-                final HttpContext context
-            ) throws HttpException, IOException {
-                List<NameValuePair> parameters;
-                assertEquals(httpMode.toString(), request.getRequestLine().getMethod());
-                String uriStr = request.getRequestLine().getUri();
-                String query;
-                try {
-                    query = new URI(uriStr).getQuery();
-                } catch (URISyntaxException ex) {
-                    throw new IOException("A URISyntaxException occured: "+ex.getCause().getMessage());
-                }
-                assertNull(query);
-                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
-            }
-        });
-    }
+				String query = request.getQueryString();
+				assertNull(query);
+				okAllIsWell(response);
+			}
+		});
+	}
 
-    public void setupContentTypeRequestChecker(final MimeType mimeType) {
-        setupContentTypeRequestChecker(mimeType, HttpMode.GET, allIsWellMessage);
-    }
+	final void registerContentTypeRequestChecker(final MimeType mimeType, final HttpMode httpMode, final String responseMessage) {
+		registerHandler("/incoming_" + mimeType.toString(), httpMode, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+				assertEquals(httpMode.name(), request.getMethod());
 
-    public void setupContentTypeRequestChecker(final MimeType mimeType, final String responseMessage) {
-        setupContentTypeRequestChecker(mimeType, HttpMode.GET, responseMessage);
-    }
+				Enumeration<String> headers = request.getHeaders("Content-type");
+				if (mimeType == MimeType.NOT_SET) {
+					assertFalse(headers.hasMoreElements());
+				} else {
+					assertTrue(headers.hasMoreElements());
+					String value = headers.nextElement();
+					assertFalse(headers.hasMoreElements());
 
-    public void setupContentTypeRequestChecker(final MimeType mimeType, final HttpMode httpMode, final String responseMessage) {
-        this.serverBootstrap.registerHandler("/incoming_"+mimeType.toString(), new HttpRequestHandler() {
-            @Override
-            public void handle(
-                final org.apache.http.HttpRequest request,
-                final HttpResponse response,
-                final HttpContext context
-            ) throws HttpException, IOException {
-                assertEquals(httpMode.name(), request.getRequestLine().getMethod());
-                Header[] headers = request.getHeaders("Content-type");
-                if (mimeType == MimeType.NOT_SET) {
-                    assertEquals(0, headers.length);
-                } else {
-                    assertEquals(1, headers.length);
-                    assertEquals(mimeType.getContentType().toString(), headers[0].getValue());
-                }
-                String uriStr = request.getRequestLine().getUri();
-                String query;
-                try {
-                    query = new URI(uriStr).getQuery();
-                } catch (URISyntaxException ex) {
-                    throw new IOException("A URISyntaxException occured: "+ex.getCause().getMessage());
-                }
-                assertNull(query);
-                response.setEntity(new StringEntity(responseMessage, mimeType.getContentType()));
-                if (request instanceof HttpEntityEnclosingRequest) {
-                    HttpEntity httpEntity = ((HttpEntityEnclosingRequest) request).getEntity();
-                    if (httpEntity != null) {
-                        String encoding = httpEntity.getContentEncoding() != null ?
-                            httpEntity.getContentEncoding().getValue() : mimeType.getContentType().getCharset() != null ? mimeType.getContentType().getCharset().name() :
-                            ContentType.DEFAULT_TEXT.getCharset().name();
-                        String requestBody = IOUtils.toString(httpEntity.getContent(), encoding);
-                        response.setEntity(new StringEntity(requestBody, encoding));
-                    }
-                }
-            }
-        });
-    }
+					assertEquals(mimeType.getContentType().toString(), value);
+				}
 
-    public void setupAcceptedTypeRequestChecker(final MimeType mimeType) {
-        this.serverBootstrap.registerHandler("/accept_"+mimeType.toString(), new HttpRequestHandler() {
-            @Override
-            public void handle(
-                final org.apache.http.HttpRequest request,
-                final HttpResponse response,
-                final HttpContext context
-            ) throws HttpException, IOException {
-                assertEquals("GET", request.getRequestLine().getMethod());
-                Header[] headers = request.getHeaders("Accept");
-                if (mimeType == MimeType.NOT_SET) {
-                    assertEquals(0, headers.length);
-                } else {
-                    assertEquals(1, headers.length);
-                    assertEquals(mimeType.getValue(), headers[0].getValue());
-                }
-                String uriStr = request.getRequestLine().getUri();
-                String query;
-                try {
-                    query = new URI(uriStr).getQuery();
-                } catch (URISyntaxException ex) {
-                    throw new IOException("A URISyntaxException occured: "+ex.getCause().getMessage());
-                }
-                assertNull(query);
-                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
-            }
-        });
-    }
+				String query = request.getQueryString();
+				assertNull(query);
+				String body = responseMessage != null ? responseMessage : requestBody(request);
+				body(response, HttpServletResponse.SC_OK, mimeType.getContentType(), body);
+			}
+		});
+	}
 
-    @Before
-    public void setupTest() throws Exception {
-        super.setUp();
+	final void registerAcceptedTypeRequestChecker(final MimeType mimeType) {
+		registerHandler("/accept_" + mimeType.toString(), HttpMode.GET, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+				assertEquals("GET", request.getMethod());
 
-        for (HttpMode httpMode : HttpMode.values()) {
-            setupRequestChecker(httpMode);
-        }
+				Enumeration<String> headers = request.getHeaders("Accept");
 
-        for (MimeType mimeType : MimeType.values()) {
-            setupContentTypeRequestChecker(mimeType);
-        }
+				if (mimeType == MimeType.NOT_SET) {
+					assertFalse(headers.hasMoreElements());
+				} else {
+					assertTrue(headers.hasMoreElements());
+					String value = headers.nextElement();
+					assertFalse(headers.hasMoreElements());
 
-        for (MimeType mimeType : MimeType.values()) {
-            setupAcceptedTypeRequestChecker(mimeType);
-        }
+					assertEquals(mimeType.getValue(), value);
+				}
+				String query = request.getQueryString();
+				assertNull(query);
+				okAllIsWell(response);
+			}
+		});
+	}
 
-        // Check that exactly one build parameter is passed
-        this.serverBootstrap.registerHandler("/checkBuildParameters", new HttpRequestHandler() {
-            @Override
-            public void handle(
-                final org.apache.http.HttpRequest request,
-                final HttpResponse response,
-                final HttpContext context
-            ) throws HttpException, IOException {
-                assertEquals("GET", request.getRequestLine().getMethod());
-                List<NameValuePair> parameters;
-                try {
-                    parameters = URLEncodedUtils.parse(new URI(request.getRequestLine().getUri()).getQuery(), StandardCharsets.UTF_8);
-                } catch (URISyntaxException ex) {
-                    throw new IOException("A URISyntaxException occured: "+ex.getCause().getMessage());
-                }
-                assertEquals(1,parameters.size());
-                assertEquals("foo",parameters.get(0).getName());
-                assertEquals("value",parameters.get(0).getValue());
-                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
-            }
-        });
+	final void registerTimeout() {
+		// Timeout, do not respond!
+		registerHandler("/timeout", HttpMode.GET, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				try {
+					Thread.sleep(10000);
+				} catch (InterruptedException ex) {
+					// do nothing the sleep will be interrupted when the test ends
+				}
+			}
+		});
+	}
 
-        // Check that request body is present and equals to TestRequestBody
-        this.serverBootstrap.registerHandler("/checkRequestBody", new HttpRequestHandler() {
-            @Override
-            public void handle(
-                    final org.apache.http.HttpRequest request,
-                    final HttpResponse response,
-                    final HttpContext context
-            ) throws HttpException, IOException {
-                assertEquals("POST", request.getRequestLine().getMethod());
-                String requestBody = null;
-                if (request instanceof HttpEntityEnclosingRequest) {
-                    HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
-                    if (entity != null) {
-                        requestBody = EntityUtils.toString(entity, "UTF-8");
-                        entity.consumeContent();
-                    }
-                }
-                assertEquals("TestRequestBody",requestBody);
-                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
-            }
-        });
+	final void registerReqAction() {
+		// Accept the form authentication
+		registerHandler("/reqAction", HttpMode.GET, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				assertEquals("GET", request.getMethod());
 
-        // Check that request body is present and that the containing parameter ${Tag} has been resolved to "trunk"
-        this.serverBootstrap.registerHandler("/checkRequestBodyWithTag", new HttpRequestHandler() {
-            @Override
-            public void handle(
-                    final org.apache.http.HttpRequest request,
-                    final HttpResponse response,
-                    final HttpContext context
-            ) throws HttpException, IOException {
-                assertEquals("POST", request.getRequestLine().getMethod());
-                String requestBody = null;
-                if (request instanceof HttpEntityEnclosingRequest) {
-                    HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
-                    if (entity != null) {
-                        requestBody = EntityUtils.toString(entity, "UTF-8");
-                        entity.consumeContent();
-                    }
-                }
-                assertEquals("cleanupDir=D:/continuousIntegration/deployments/Daimler/trunk/standalone",requestBody);
-                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
-            }
-        });
-        
-        // Return an invalid status code
-        this.serverBootstrap.registerHandler("/invalidStatusCode", new HttpRequestHandler() {
-            @Override
-            public void handle(
-                final org.apache.http.HttpRequest request,
-                final HttpResponse response,
-                final HttpContext context
-            ) throws HttpException, IOException {
-                assertEquals("GET", request.getRequestLine().getMethod());
-                String uriStr = request.getRequestLine().getUri();
-                String query;
-                try {
-                    query = new URI(uriStr).getQuery();
-                } catch (URISyntaxException ex) {
-                    throw new IOException("A URISyntaxException occured: "+ex.getCause().getMessage());
-                }
-                assertNull(query);
-                response.setEntity(new StringEntity("Throwing status 400 for test", ContentType.TEXT_PLAIN));
-                response.setStatusCode(400);
-            }
-        });
+				Map<String, String[]> parameters = request.getParameterMap();
 
-        // Timeout, do not respond!
-        this.serverBootstrap.registerHandler("/timeout", new HttpRequestHandler() {
-            @Override
-            public void handle(
-                final org.apache.http.HttpRequest request,
-                final HttpResponse response,
-                final HttpContext context
-            ) throws HttpException, IOException {
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException ex) {
-                    // do nothing the sleep will be interrupted when the test ends
-                }
-            }
-        });
+				assertEquals(2, parameters.size());
+				Entry<String, String[]> e = Iterables.getFirst(parameters.entrySet(), null);
+				assertEquals("param1", e.getKey());
+				assertEquals(1, e.getValue().length);
+				assertEquals("value1", e.getValue()[0]);
 
-        // Check the basic authentication header
-        this.serverBootstrap.registerHandler("/basicAuth", new HttpRequestHandler() {
-            @Override
-            public void handle(
-                final org.apache.http.HttpRequest request,
-                final HttpResponse response,
-                final HttpContext context
-            ) throws HttpException, IOException {
-                Header[] headers = request.getAllHeaders();
-                headers = request.getHeaders("Authorization");
-                assertEquals(1, headers.length);
-                Header auth = headers[0];
-                Base64 base64 = new Base64();
-                byte[] bytes = base64.decodeBase64(auth.getValue().substring(6));
-                String usernamePasswordPair = new String(bytes);
-                String[] usernamePassword = usernamePasswordPair.split(":");
-                assertEquals("username1", usernamePassword[0]);
-                assertEquals("password1", usernamePassword[1]);
-                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
-            }
-        });
+				e = Iterables.get(parameters.entrySet(), 1);
+				assertEquals("param2", e.getKey());
+				assertEquals(1, e.getValue().length);
+				assertEquals("value2", e.getValue()[0]);
+				okAllIsWell(response);
+			}
+		});
+	}
 
-        // Accept the form authentication
-        this.serverBootstrap.registerHandler("/reqAction", new HttpRequestHandler() {
-            @Override
-            public void handle(
-                final org.apache.http.HttpRequest request,
-                final HttpResponse response,
-                final HttpContext context
-            ) throws HttpException, IOException {
-                assertEquals("GET", request.getRequestLine().getMethod());
-                List<NameValuePair> parameters;
-                try {
-                    parameters = URLEncodedUtils.parse(new URI(request.getRequestLine().getUri()).getQuery(), StandardCharsets.UTF_8);
-                } catch (URISyntaxException ex) {
-                    throw new IOException("A URISyntaxException occured: "+ex.getCause().getMessage());
-                }
-                assertEquals(2,parameters.size());
-                assertEquals("param1",parameters.get(0).getName());
-                assertEquals("value1",parameters.get(0).getValue());
-                assertEquals("param2",parameters.get(1).getName());
-                assertEquals("value2",parameters.get(1).getValue());
-                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
-            }
-        });
+	final void registerFormAuth() {
+		// Check the form authentication
+		registerHandler("/formAuth", HttpMode.GET, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				okAllIsWell(response);
+			}
+		});
+	}
 
-        // Check the form authentication
-        this.serverBootstrap.registerHandler("/formAuth", new HttpRequestHandler() {
-            @Override
-            public void handle(
-                final org.apache.http.HttpRequest request,
-                final HttpResponse response,
-                final HttpContext context
-            ) throws HttpException, IOException {
-                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
-            }
-        });
+	final void registerFormAuthBad() {
+		// Check the form authentication header
+		registerHandler("/formAuthBad", HttpMode.GET, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				body(response, HttpServletResponse.SC_BAD_REQUEST, ContentType.TEXT_PLAIN, "Not allowed");
+			}
+		});
+	}
 
-        // Check the form authentication header
-        this.serverBootstrap.registerHandler("/formAuthBad", new HttpRequestHandler() {
-            @Override
-            public void handle(
-                final org.apache.http.HttpRequest request,
-                final HttpResponse response,
-                final HttpContext context
-            ) throws HttpException, IOException {
-                response.setEntity(new StringEntity("Not allowed", ContentType.TEXT_PLAIN));
-                response.setStatusCode(400);
-            }
-        });
+	final void registerBasicAuth() {
+		// Check the basic authentication header
+		registerHandler("/basicAuth", HttpMode.GET, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				Enumeration<String> headers = request.getHeaders("Authorization");
 
-        // Check the custom headers
-        this.serverBootstrap.registerHandler("/customHeaders", new HttpRequestHandler() {
-            @Override
-            public void handle(
-                final org.apache.http.HttpRequest request,
-                final HttpResponse response,
-                final HttpContext context
-            ) throws HttpException, IOException {
-                Header[] headers = request.getAllHeaders();
-                headers = request.getHeaders("customHeader");
-                assertEquals(2, headers.length);
-                assertEquals("value1", headers[0].getValue());
-                assertEquals("value2", headers[1].getValue());
-                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
-            }
-        });
-        
-        // Check if the parameters in custom headers have been resolved
-        this.serverBootstrap.registerHandler("/customHeadersResolved", new HttpRequestHandler() {
-            @Override
-            public void handle(
-                final org.apache.http.HttpRequest request,
-                final HttpResponse response,
-                final HttpContext context
-            ) throws HttpException, IOException {
-                Header[] headers = request.getAllHeaders();
+				String value = headers.nextElement();
+				assertFalse(headers.hasMoreElements());
 
-                headers = request.getHeaders("resolveCustomParam");
-                assertEquals(1, headers.length);
-                assertEquals("trunk", headers[0].getValue());
-                
-                headers = request.getHeaders("resolveEnvParam");
-                assertEquals(1, headers.length);
-                assertEquals("C:/path/to/my/workspace", headers[0].getValue());
-                
-                response.setEntity(new StringEntity(allIsWellMessage, ContentType.TEXT_PLAIN));
-            }
-        });
-    }
+				byte[] bytes = Base64.decodeBase64(value.substring(6));
+				String usernamePasswordPair = new String(bytes);
+				String[] usernamePassword = usernamePasswordPair.split(":");
+				assertEquals("username1", usernamePassword[0]);
+				assertEquals("password1", usernamePassword[1]);
 
-    @After
-    public void afterTest() throws Exception {
-        Executor.closeIdleConnections();
-        super.shutDown();
-    }
+				okAllIsWell(response);
+			}
+		});
+	}
 
+	final void registerCheckRequestBodyWithTag() {
+		// Check that request body is present and that the containing parameter ${Tag} has been resolved to "trunk"
+		registerHandler("/checkRequestBodyWithTag", HttpMode.POST, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				assertEquals("POST", request.getMethod());
+				String requestBody = requestBody(request);
+
+				assertEquals("cleanupDir=D:/continuousIntegration/deployments/Daimler/trunk/standalone", requestBody);
+				okAllIsWell(response);
+			}
+		});
+	}
+
+	final void registerCustomHeaders() {
+		// Check the custom headers
+		registerHandler("/customHeaders", HttpMode.GET, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				Enumeration<String> headers = request.getHeaders("customHeader");
+
+				String value1 = headers.nextElement();
+				String value2 = headers.nextElement();
+
+				assertFalse(headers.hasMoreElements());
+				assertEquals("value1", value1);
+				assertEquals("value2", value2);
+
+				okAllIsWell(response);
+			}
+		});
+	}
+
+	final void registerInvalidStatusCode() {
+		// Return an invalid status code
+		registerHandler("/invalidStatusCode", HttpMode.GET, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				assertEquals("GET", request.getMethod());
+				String query = request.getQueryString();
+				assertNull(query);
+
+				body(response, HttpServletResponse.SC_BAD_REQUEST, ContentType.TEXT_PLAIN, "Throwing status 400 for test");
+			}
+		});
+	}
+
+	final void registerCustomHeadersResolved() {
+		// Check if the parameters in custom headers have been resolved
+		registerHandler("/customHeadersResolved", HttpMode.POST, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				Enumeration<String> headers = request.getHeaders("resolveCustomParam");
+				String value = headers.nextElement();
+				assertFalse(headers.hasMoreElements());
+				assertEquals("trunk", value);
+
+				headers = request.getHeaders("resolveEnvParam");
+				value = headers.nextElement();
+				assertFalse(headers.hasMoreElements());
+				assertEquals("C:/path/to/my/workspace", value);
+
+				okAllIsWell(response);
+			}
+		});
+	}
+
+	final void registerCheckBuildParameters() {
+		// Check that exactly one build parameter is passed
+		registerHandler("/checkBuildParameters", HttpMode.GET, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				assertEquals("GET", request.getMethod());
+
+				Map<String, String[]> parameters = request.getParameterMap();
+				assertEquals(1, parameters.size());
+				Entry<String, String[]> parameter = Iterables.getFirst(parameters.entrySet(), null);
+				assertEquals("foo", parameter.getKey());
+				assertEquals(1, parameter.getValue().length);
+				assertEquals("value", parameter.getValue()[0]);
+
+				okAllIsWell(response);
+			}
+		});
+	}
+
+	final void registerCheckRequestBody() {
+		// Check that request body is present and equals to TestRequestBody
+		registerHandler("/checkRequestBody", HttpMode.POST, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				assertEquals("POST", request.getMethod());
+				String requestBody = requestBody(request);
+				assertEquals("TestRequestBody", requestBody);
+				okAllIsWell(response);
+			}
+		});
+	}
+
+	final String baseURL() {
+		return SERVER.baseURL;
+	}
+
+	final void registerHandler(String target, HttpMode method, SimpleHandler handler) {
+		Map<HttpMode, Handler> handlerByMethod = SERVER.handlersByMethodByTarget.get(target);
+		if (handlerByMethod == null) {
+			SERVER.handlersByMethodByTarget.put(target, handlerByMethod = new HashMap<>());
+		}
+		handlerByMethod.put(method, handler);
+	}
+
+	@BeforeClass
+	public static void beforeClass() throws Exception {
+		if (SERVER != null) {
+			return;
+		}
+		SERVER = new ServerRunning();
+	}
+
+	@AfterClass
+	public static void afterClass() throws Exception {
+		if (SERVER != null) {
+			SERVER.server.stop();
+			SERVER = null;
+		}
+	}
+
+	@After
+	public void cleanHandlers() {
+		if (SERVER != null) {
+			SERVER.handlersByMethodByTarget.clear();
+		}
+	}
+
+	public static abstract class SimpleHandler extends DefaultHandler {
+		@Override
+		public final void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+			doHandle(target, baseRequest, request, response);
+			baseRequest.setHandled(true);
+		}
+
+		String requestBody(HttpServletRequest request) throws IOException {
+			try (BufferedReader reader = request.getReader()) {
+				return CharStreams.toString(reader);
+			}
+		}
+
+		void okAllIsWell(HttpServletResponse response) throws IOException {
+			okText(response, ALL_IS_WELL);
+		}
+
+		void okText(HttpServletResponse response, String body) throws IOException {
+			body(response, HttpServletResponse.SC_OK, ContentType.TEXT_PLAIN, body);
+		}
+
+		void body(HttpServletResponse response, int status, ContentType contentType, String body) throws IOException {
+			response.setContentType(contentType.toString());
+			response.setStatus(status);
+			response.getWriter().append(body);
+		}
+
+		abstract void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException;
+	}
+
+	private static final class ServerRunning {
+		private final Server server;
+		private final int port;
+		private final String baseURL;
+		private final Map<String, Map<HttpMode, Handler>> handlersByMethodByTarget = new HashMap<>();
+
+		private ServerRunning() throws Exception {
+			server = new Server();
+			ServerConnector connector = new ServerConnector(server);
+			server.setConnectors(new Connector[]{connector});
+
+			ContextHandler context = new ContextHandler();
+			context.setContextPath("/");
+			context.setHandler(new DefaultHandler() {
+				@Override
+				public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+					Map<HttpMode, Handler> handlerByMethod = handlersByMethodByTarget.get(target);
+					if (handlerByMethod != null) {
+						Handler handler = handlerByMethod.get(HttpMode.valueOf(request.getMethod()));
+						if (handler != null) {
+							handler.handle(target, baseRequest, request, response);
+							return;
+						}
+					}
+
+					super.handle(target, baseRequest, request, response);
+				}
+			});
+			server.setHandler(context);
+
+			server.start();
+			port = connector.getLocalPort();
+			baseURL = "http://localhost:" + port;
+		}
+	}
 }

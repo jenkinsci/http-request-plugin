@@ -1,27 +1,7 @@
 package jenkins.plugins.http_request;
 
-import hudson.model.Result;
-import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
-import jenkins.plugins.http_request.auth.FormAuthentication;
-import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
-import jenkins.plugins.http_request.util.RequestAction;
-import org.apache.commons.io.FileUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpException;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicHttpEntityEnclosingRequest;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.protocol.HttpRequestHandler;
-import org.apache.http.util.EntityUtils;
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.URL;
@@ -30,7 +10,23 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertTrue;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.http.entity.ContentType;
+import org.eclipse.jetty.server.Request;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.junit.Test;
+
+import hudson.model.Result;
+
+import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
+import jenkins.plugins.http_request.auth.FormAuthentication;
+import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
+import jenkins.plugins.http_request.util.RequestAction;
 
 /**
  * @author Martin d'Anjou
@@ -40,13 +36,12 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void simpleGetTest() throws Exception {
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+		registerRequestChecker(HttpMode.GET);
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest '"+baseURL+"/doGET'\n" +
+            "def response = httpRequest '"+baseURL()+"/doGET'\n" +
             "println('Status: '+response.status)\n" +
             "println('Response: '+response.content)\n",
             true));
@@ -57,22 +52,21 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains("Status: 200",run);
-        j.assertLogContains("Response: "+allIsWellMessage,run);
+        j.assertLogContains("Response: "+ ALL_IS_WELL,run);
     }
 
     @Test
     public void canDetectActualContent() throws Exception {
         // Setup the expected pattern
-        String findMe = allIsWellMessage;
+        String findMe = ALL_IS_WELL;
 
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+		registerRequestChecker(HttpMode.GET);
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/doGET',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/doGET',\n" +
             "    consoleLogResponseBody: true\n",
             true));
 
@@ -87,13 +81,12 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void badContentFailsTheBuild() throws Exception {
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+		registerRequestChecker(HttpMode.GET);
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/doGET',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/doGET',\n" +
             "    consoleLogResponseBody: true,\n" +
             "    validResponseContent: 'bad content'\n" +
             "println('Status: '+response.getStatus())\n" +
@@ -114,13 +107,12 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void responseMatchAcceptedMimeType() throws Exception {
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+		registerRequestChecker(HttpMode.GET);
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/doGET',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/doGET',\n" +
             "    consoleLogResponseBody: true,\n" +
             "    acceptType: 'TEXT_PLAIN'\n" +
             "println('Status: '+response.getStatus())\n" +
@@ -132,19 +124,18 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatusSuccess(run);
-        j.assertLogContains(allIsWellMessage,run);
+        j.assertLogContains(ALL_IS_WELL,run);
     }
 
     @Test
     public void responseDoesNotMatchAcceptedMimeTypeDoesNotFailTheBuild() throws Exception {
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+		registerRequestChecker(HttpMode.GET);
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/doGET',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/doGET',\n" +
             "    consoleLogResponseBody: true,\n" +
             "    acceptType: 'TEXT_HTML'\n" +
             "println('Status: '+response.getStatus())\n" +
@@ -156,27 +147,25 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatusSuccess(run);
-        j.assertLogContains(allIsWellMessage,run);
+        j.assertLogContains(ALL_IS_WELL,run);
     }
 
     @Test
     public void doAllRequestTypes() throws Exception {
         for (HttpMode mode: HttpMode.values()) {
+			// Prepare the server
+			registerRequestChecker(mode);
             doRequest(mode);
+
+            cleanHandlers();
         }
     }
 
     public void doRequest(final HttpMode mode) throws Exception {
-        //JenkinsRule doesn't support PATCH
-        if (mode == HttpMode.PATCH) return;
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj"+mode.toString());
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/do"+mode.toString()+"',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/do"+mode.toString()+"',\n" +
             "    consoleLogResponseBody: true,\n" +
             "    httpMode: '"+mode.toString()+"'\n" +
             "println('Status: '+response.getStatus())\n" +
@@ -191,19 +180,18 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         if (mode == HttpMode.HEAD) return;
 
-        j.assertLogContains(allIsWellMessage,run);
+        j.assertLogContains(ALL_IS_WELL,run);
     }
 
     @Test
     public void invalidResponseCodeFailsTheBuild() throws Exception {
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+		registerInvalidStatusCode();
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/invalidStatusCode',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/invalidStatusCode',\n" +
             "    consoleLogResponseBody: true\n" +
             "println('Status: '+response.getStatus())\n" +
             "println('Response: '+response.getContent())\n",
@@ -220,13 +208,12 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void invalidResponseCodeIsAccepted() throws Exception {
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+		registerInvalidStatusCode();
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/invalidStatusCode',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/invalidStatusCode',\n" +
             "    consoleLogResponseBody: true,\n" +
             "    validResponseCodes: '100:599'\n" +
             "println('Status: '+response.getStatus())\n" +
@@ -244,13 +231,12 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void reverseRangeFailsTheBuild() throws Exception {
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+		registerInvalidStatusCode();
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/invalidStatusCode',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/invalidStatusCode',\n" +
             "    consoleLogResponseBody: true,\n" +
             "    validResponseCodes: '599:100'\n" +
             "println('Status: '+response.getStatus())\n" +
@@ -267,13 +253,12 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void notANumberRangeValueFailsTheBuild() throws Exception {
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+		registerInvalidStatusCode();
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/invalidStatusCode',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/invalidStatusCode',\n" +
             "    consoleLogResponseBody: true,\n" +
             "    validResponseCodes: 'text'\n" +
             "println('Status: '+response.getStatus())\n" +
@@ -290,13 +275,12 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void rangeWithTextFailsTheBuild() throws Exception {
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+		registerInvalidStatusCode();
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/invalidStatusCode',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/invalidStatusCode',\n" +
             "    consoleLogResponseBody: true,\n" +
             "    validResponseCodes: '1:text'\n" +
             "println('Status: '+response.getStatus())\n" +
@@ -313,13 +297,12 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void invalidRangeFailsTheBuild() throws Exception {
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+		registerInvalidStatusCode();
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/invalidStatusCode',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/invalidStatusCode',\n" +
             "    consoleLogResponseBody: true,\n" +
             "    validResponseCodes: '1:2:3'\n" +
             "println('Status: '+response.getStatus())\n" +
@@ -336,20 +319,20 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void sendAllContentTypes() throws Exception {
         for (MimeType mimeType : MimeType.values()) {
+			// Prepare the server
+			registerContentTypeRequestChecker(mimeType, HttpMode.GET, ALL_IS_WELL);
+
             sendContentType(mimeType);
+            cleanHandlers();
         }
     }
 
     public void sendContentType(final MimeType mimeType) throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj"+mimeType.toString());
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/incoming_"+mimeType.toString()+"',\n" +
-            "    consoleLogResponseBody: true,\n" +
+            "def response = httpRequest url:'"+baseURL()+"/incoming_"+mimeType.toString()+"',\n" +
+			"    consoleLogResponseBody: true,\n" +
             "    contentType: '"+mimeType.toString()+"'\n" +
             "println('Status: '+response.getStatus())\n" +
             "println('Response: '+response.getContent())\n",
@@ -360,25 +343,25 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatusSuccess(run);
-        j.assertLogContains(allIsWellMessage,run);
+        j.assertLogContains(ALL_IS_WELL,run);
     }
 
     @Test
     public void sendAllAcceptTypes() throws Exception {
         for (MimeType mimeType : MimeType.values()) {
+			// Prepare the server
+			registerAcceptedTypeRequestChecker(mimeType);
             sendAcceptType(mimeType);
+
+            cleanHandlers();
         }
     }
 
     public void sendAcceptType(final MimeType mimeType) throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj"+mimeType.toString());
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/accept_"+mimeType.toString()+"',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/accept_"+mimeType.toString()+"',\n" +
             "    consoleLogResponseBody: true,\n" +
             "    acceptType: '"+mimeType.toString()+"'\n" +
             "println('Status: '+response.getStatus())\n" +
@@ -390,19 +373,18 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatusSuccess(run);
-        j.assertLogContains(allIsWellMessage,run);
+        j.assertLogContains(ALL_IS_WELL,run);
     }
 
     @Test
     public void timeoutFailsTheBuild() throws Exception {
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+        registerTimeout();
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/timeout',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/timeout',\n" +
             "    timeout: 2\n" +
             "println('Status: '+response.getStatus())\n" +
             "println('Response: '+response.getContent())\n",
@@ -418,13 +400,12 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void canDoCustomHeaders() throws Exception {
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+        registerCustomHeaders();
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/customHeaders',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/customHeaders',\n" +
             "    customHeaders: [[name: 'customHeader', value: 'value1'],[name: 'customHeader', value: 'value2']]\n" +
             "println('Status: '+response.getStatus())\n" +
             "println('Response: '+response.getContent())\n",
@@ -440,13 +421,12 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void nonExistentBasicAuthFailsTheBuild() throws Exception {
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+        registerBasicAuth();
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/basicAuth',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/basicAuth',\n" +
             "    authentication: 'invalid'\n" +
             "println('Status: '+response.getStatus())\n" +
             "println('Response: '+response.getContent())\n",
@@ -462,8 +442,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void canDoBasicDigestAuthentication() throws Exception {
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+        registerBasicAuth();
 
         // Prepare the authentication
         List<BasicDigestAuthentication> bda = new ArrayList<BasicDigestAuthentication>();
@@ -474,7 +453,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Prepare HttpRequest
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/basicAuth',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/basicAuth',\n" +
             "    authentication: 'keyname1'\n" +
             "println('Status: '+response.getStatus())\n" +
             "println('Response: '+response.getContent())\n",
@@ -490,15 +469,15 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void canDoFormAuthentication() throws Exception {
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+        registerReqAction();
+        registerFormAuth();
 
         // Prepare the authentication
         List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
         params.add(new HttpRequestNameValuePair("param1","value1"));
         params.add(new HttpRequestNameValuePair("param2","value2"));
 
-        RequestAction action = new RequestAction(new URL(baseURL+"/reqAction"),HttpMode.GET,null,params);
+        RequestAction action = new RequestAction(new URL(baseURL()+"/reqAction"),HttpMode.GET,null,params);
         List<RequestAction> actions = new ArrayList<RequestAction>();
         actions.add(action);
 
@@ -512,7 +491,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Prepare HttpRequest
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/formAuth',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/formAuth',\n" +
             "    authentication: 'keyname'\n",
             true));
 
@@ -526,15 +505,14 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void rejectedFormCredentialsFailTheBuild() throws Exception {
         // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+        registerFormAuthBad();
 
         // Prepare the authentication
         List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
         params.add(new HttpRequestNameValuePair("param1","value1"));
         params.add(new HttpRequestNameValuePair("param2","value2"));
 
-        RequestAction action = new RequestAction(new URL(baseURL+"/formAuthBad"),HttpMode.GET,null,params);
+        RequestAction action = new RequestAction(new URL(baseURL()+"/formAuthBad"),HttpMode.GET,null,params);
         List<RequestAction> actions = new ArrayList<RequestAction>();
         actions.add(action);
 
@@ -548,7 +526,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Prepare HttpRequest
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/formAuthBad',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/formAuthBad',\n" +
             "    authentication: 'keyname'\n",
             true));
 
@@ -562,17 +540,13 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
     @Test
     public void invalidKeyFormAuthenticationFailsTheBuild() throws Exception {
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
-
         // Prepare the authentication
         List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
         params.add(new HttpRequestNameValuePair("param1","value1"));
         params.add(new HttpRequestNameValuePair("param2","value2"));
 
         // The request action won't be sent but we need to prepare it
-        RequestAction action = new RequestAction(new URL(baseURL+"/non-existent"),HttpMode.GET,null,params);
+        RequestAction action = new RequestAction(new URL(baseURL()+"/non-existent"),HttpMode.GET,null,params);
         List<RequestAction> actions = new ArrayList<RequestAction>();
         actions.add(action);
 
@@ -586,7 +560,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Prepare HttpRequest
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL+"/non-existent',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/non-existent',\n" +
             "    authentication: 'non-existent'\n",
             true));
 
@@ -601,26 +575,15 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void testPostBody() throws Exception {
         //configure server
-        this.serverBootstrap.registerHandler("/doPostBody", new HttpRequestHandler() {
-            @Override
-            public void handle(
-                    final org.apache.http.HttpRequest request,
-                    final HttpResponse response,
-                    final HttpContext context
-            ) throws HttpException, IOException {
-                String method = request.getRequestLine().getMethod();
-                if (method.equals("POST")) {
-                    HttpEntityEnclosingRequest post = (HttpEntityEnclosingRequest) request;
-                    String body = EntityUtils.toString(post.getEntity());
-                    response.setEntity(new StringEntity(body, ContentType.TEXT_PLAIN));
-                    response.setStatusCode(200);
-                }
-            }
-        });
+		registerHandler("/doPostBody", HttpMode.POST, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+				assertEquals("POST", request.getMethod());
 
-        // Prepare the server
-        final HttpHost target = start();
-        final String baseURL = "http://localhost:" + target.getPort();
+				String body = requestBody(request);
+				body(response, HttpServletResponse.SC_OK, ContentType.TEXT_PLAIN, body);
+			}
+		});
 
         String body = "send-body-workflow";
 
@@ -630,7 +593,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
                 "def response = httpRequest" +
                         " httpMode: 'POST'," +
                         " requestBody: '" + body + "'," +
-                        " url: '" + baseURL + "/doPostBody'\n" +
+                        " url: '" + baseURL() + "/doPostBody'\n" +
                         "println('Response: ' + response.content)\n",
                 true));
 

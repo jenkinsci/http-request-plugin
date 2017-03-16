@@ -1,37 +1,32 @@
 package jenkins.plugins.http_request;
 
 import static org.junit.Assert.assertTrue;
-import hudson.model.FreeStyleBuild;
-import hudson.model.Result;
-import hudson.model.Cause.UserIdCause;
-import hudson.model.FreeStyleProject;
-import hudson.model.ParametersAction;
-import hudson.model.StringParameterValue;
 
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
-import jenkins.plugins.http_request.auth.FormAuthentication;
-import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
-import jenkins.plugins.http_request.util.RequestAction;
-
 import org.apache.commons.io.FileUtils;
-import org.apache.http.Consts;
-import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHttpResponse;
 import org.junit.Assert;
-
-import org.apache.http.entity.ContentType;
 import org.junit.Test;
+
+import hudson.model.Cause.UserIdCause;
+import hudson.model.FreeStyleBuild;
+import hudson.model.FreeStyleProject;
+import hudson.model.ParametersAction;
+import hudson.model.Result;
+import hudson.model.StringParameterValue;
+
+import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
+import jenkins.plugins.http_request.auth.FormAuthentication;
+import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
+import jenkins.plugins.http_request.util.RequestAction;
 
 /**
  * @author Martin d'Anjou
@@ -41,11 +36,10 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	@Test
 	public void simpleGetTest() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerRequestChecker(HttpMode.GET);
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/doGET");
 		httpRequest.setConsoleLogResponseBody(true);
 
 		// Run build
@@ -55,21 +49,19 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.allIsWellMessage, build);
+		this.j.assertLogContains(this.ALL_IS_WELL, build);
 	}
 
 	@Test
 	public void canDetectActualContent() throws Exception {
 		// Setup the expected pattern
-		String findMe = this.allIsWellMessage;
-		String findMePattern = Pattern.quote(findMe);
+		String findMe = this.ALL_IS_WELL;
 
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerRequestChecker(HttpMode.GET);
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/doGET");
 		httpRequest.setConsoleLogResponseBody(true);
 		httpRequest.setValidResponseContent(findMe);
 
@@ -86,11 +78,10 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	@Test
 	public void badContentFailsTheBuild() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerRequestChecker(HttpMode.GET);
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/doGET");
 		httpRequest.setConsoleLogResponseBody(true);
 		httpRequest.setValidResponseContent("bad content");
 
@@ -110,11 +101,10 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	@Test
 	public void responseMatchAcceptedMimeType() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerRequestChecker(HttpMode.GET);
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/doGET");
 		httpRequest.setConsoleLogResponseBody(true);
 
 		// Expect a mime type that matches the response
@@ -127,17 +117,16 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.allIsWellMessage, build);
+		this.j.assertLogContains(this.ALL_IS_WELL, build);
 	}
 
 	@Test
 	public void responseDoesNotMatchAcceptedMimeTypeDoesNotFailTheBuild() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerRequestChecker(HttpMode.GET);
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/doGET");
 		httpRequest.setConsoleLogResponseBody(true);
 
 		// Expect a mime type that does not match the response
@@ -150,17 +139,16 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.allIsWellMessage, build);
+		this.j.assertLogContains(this.ALL_IS_WELL, build);
 	}
 
 	@Test
 	public void passBuildParametersWhenAskedAndParamtersArePresent() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerCheckBuildParameters();
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/checkBuildParameters");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/checkBuildParameters");
 		httpRequest.setConsoleLogResponseBody(true);
 
 		// Activate passBuildParameters
@@ -173,18 +161,17 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.allIsWellMessage, build);
+		this.j.assertLogContains(this.ALL_IS_WELL, build);
 	}
 
 	@Test
 	public void replaceParametersInRequestBody() throws Exception {
 
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerCheckRequestBodyWithTag();
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/checkRequestBodyWithTag");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/checkRequestBodyWithTag");
 		httpRequest.setConsoleLogResponseBody(true);
 
 		// Activate requsetBody
@@ -204,17 +191,16 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.allIsWellMessage, build);
+		this.j.assertLogContains(this.ALL_IS_WELL, build);
 	}
 
 	@Test
 	public void silentlyIgnoreNonExistentBuildParameters() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerRequestChecker(HttpMode.GET);
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/doGET");
 		httpRequest.setConsoleLogResponseBody(true);
 
 		// Activate passBuildParameters without parameters present
@@ -227,17 +213,16 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.allIsWellMessage, build);
+		this.j.assertLogContains(this.ALL_IS_WELL, build);
 	}
 
 	@Test
 	public void doNotPassBuildParametersWithBuildParameters() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerRequestChecker(HttpMode.GET);
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/doGET");
 		httpRequest.setConsoleLogResponseBody(true);
 
 		// Activate passBuildParameters
@@ -250,17 +235,16 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.allIsWellMessage, build);
+		this.j.assertLogContains(this.ALL_IS_WELL, build);
 	}
 
 	@Test
 	public void passRequestBodyWhenRequestIsPostAndBodyIsPresent() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerCheckRequestBody();
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/checkRequestBody");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/checkRequestBody");
 		httpRequest.setConsoleLogResponseBody(true);
 
 		// Activate requsetBody
@@ -274,17 +258,16 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.allIsWellMessage, build);
+		this.j.assertLogContains(this.ALL_IS_WELL, build);
 	}
 
 	@Test
 	public void doNotPassRequestBodyWhenMethodIsGet() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerRequestChecker(HttpMode.GET);
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/doGET");
 		httpRequest.setConsoleLogResponseBody(true);
 
 		// Activate passBuildParameters
@@ -297,27 +280,24 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.allIsWellMessage, build);
+		this.j.assertLogContains(this.ALL_IS_WELL, build);
 	}
 
 	@Test
 	public void doAllRequestTypes() throws Exception {
-		for (HttpMode mode : HttpMode.values()) {
-			doRequest(mode);
+		for (HttpMode method : HttpMode.values()) {
+			// Prepare the server
+			registerRequestChecker(method);
+			doRequest(method);
+
+			cleanHandlers();
 		}
 	}
 
-	public void doRequest(final HttpMode mode) throws Exception {
-		// JenkinsRule doesn't support PATCH
-		if (mode == HttpMode.PATCH)
-			return;
-		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
-
+	public void doRequest(final HttpMode method) throws Exception {
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/do" + mode.toString());
-		httpRequest.setHttpMode(mode);
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/do" + method.toString());
+		httpRequest.setHttpMode(method);
 		httpRequest.setConsoleLogResponseBody(true);
 
 		// Run build
@@ -328,20 +308,20 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
 
-		if (mode == HttpMode.HEAD)
+		if (method == HttpMode.HEAD) {
 			return;
+		}
 
-		this.j.assertLogContains(this.allIsWellMessage, build);
+		this.j.assertLogContains(this.ALL_IS_WELL, build);
 	}
 
 	@Test
 	public void invalidResponseCodeFailsTheBuild() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerInvalidStatusCode();
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/invalidStatusCode");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/invalidStatusCode");
 		httpRequest.setConsoleLogResponseBody(true);
 
 		// Run build
@@ -357,11 +337,10 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	@Test
 	public void invalidResponseCodeIsAccepted() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerInvalidStatusCode();
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/invalidStatusCode");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/invalidStatusCode");
 		httpRequest.setValidResponseCodes("100:599");
 		httpRequest.setConsoleLogResponseBody(true);
 
@@ -378,11 +357,10 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	@Test
 	public void reverseRangeFailsTheBuild() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/doesNotMatter");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/doesNotMatter");
 		httpRequest.setValidResponseCodes("599:100");
 		httpRequest.setConsoleLogResponseBody(true);
 
@@ -398,11 +376,10 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	@Test
 	public void notANumberRangeValueFailsTheBuild() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/doesNotMatter");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/doesNotMatter");
 		httpRequest.setValidResponseCodes("text");
 		httpRequest.setConsoleLogResponseBody(true);
 
@@ -418,11 +395,10 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	@Test
 	public void rangeWithTextFailsTheBuild() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/doesNotMatter");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/doesNotMatter");
 		httpRequest.setValidResponseCodes("1:text");
 		httpRequest.setConsoleLogResponseBody(true);
 
@@ -438,11 +414,10 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	@Test
 	public void invalidRangeFailsTheBuild() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/doesNotMatter");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/doesNotMatter");
 		httpRequest.setValidResponseCodes("1:2:3");
 		httpRequest.setConsoleLogResponseBody(true);
 
@@ -463,16 +438,12 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	}
 
 	public void sendContentType(final MimeType mimeType) throws Exception {
-        setupContentTypeRequestChecker(mimeType, allIsWellMessage);
+		registerContentTypeRequestChecker(mimeType, HttpMode.GET, ALL_IS_WELL);
 	}
 
 	public void sendContentType(final MimeType mimeType, String checkMessage, String body) throws Exception {
-		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
-
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/incoming_" + mimeType.toString());
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/incoming_" + mimeType.toString());
 		httpRequest.setConsoleLogResponseBody(true);
 		httpRequest.setContentType(mimeType);
         if (body != null) {
@@ -492,31 +463,31 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
     @Test
     public void sendNonAsciiRequestBody() throws Exception {
-        setupContentTypeRequestChecker(MimeType.APPLICATION_JSON, HttpMode.POST, "");
-        sendContentType(MimeType.APPLICATION_JSON, allIsWellMessage, allIsWellMessage);
+		registerContentTypeRequestChecker(MimeType.APPLICATION_JSON, HttpMode.POST, null);
+        sendContentType(MimeType.APPLICATION_JSON, ALL_IS_WELL, ALL_IS_WELL);
     }
 
     @Test
     public void sendUTF8equestBody() throws Exception {
         String notAsciiUTF8Message = "ἱερογλύφος";
-        setupContentTypeRequestChecker(MimeType.APPLICATION_JSON_UTF8, HttpMode.POST, "");
+		registerContentTypeRequestChecker(MimeType.APPLICATION_JSON_UTF8, HttpMode.POST, null);
         sendContentType(MimeType.APPLICATION_JSON_UTF8, notAsciiUTF8Message, notAsciiUTF8Message);
     }
 
 	@Test
 	public void sendAllAcceptTypes() throws Exception {
 		for (MimeType mimeType : MimeType.values()) {
+			// Prepare the server
+			registerAcceptedTypeRequestChecker(mimeType);
 			sendAcceptType(mimeType);
+
+			cleanHandlers();
 		}
 	}
 
 	public void sendAcceptType(final MimeType mimeType) throws Exception {
-		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
-
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/accept_" + mimeType.toString());
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/accept_" + mimeType.toString());
 		httpRequest.setConsoleLogResponseBody(true);
 		httpRequest.setAcceptType(mimeType);
 
@@ -527,17 +498,16 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.allIsWellMessage, build);
+		this.j.assertLogContains(this.ALL_IS_WELL, build);
 	}
 
 	@Test
 	public void canPutResponseInOutputFile() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerRequestChecker(HttpMode.GET);
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/doGET");
 		httpRequest.setOutputFile("file.txt");
 		httpRequest.setConsoleLogResponseBody(true);
 
@@ -550,11 +520,11 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		this.j.assertBuildStatusSuccess(build);
 
 		// By default, the response is printed to the console even if an outputFile is used
-		this.j.assertLogContains(this.allIsWellMessage, build);
+		this.j.assertLogContains(this.ALL_IS_WELL, build);
 
 		// The response is in the output file as well
 		String outputFile = build.getWorkspace().child("file.txt").readToString();
-		Pattern p = Pattern.compile(this.allIsWellMessage);
+		Pattern p = Pattern.compile(this.ALL_IS_WELL);
 		Matcher m = p.matcher(outputFile);
 		assertTrue(m.find());
 	}
@@ -562,11 +532,10 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	@Test
 	public void canPutResponseInOutputFileWhenNotSetToGoToConsole() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerRequestChecker(HttpMode.GET);
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/doGET");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/doGET");
 		httpRequest.setOutputFile("file.txt");
 
 		// Run build
@@ -578,11 +547,11 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		this.j.assertBuildStatusSuccess(build);
 
 		// Check that the console does NOT have the response body
-		this.j.assertLogNotContains(this.allIsWellMessage, build);
+		this.j.assertLogNotContains(this.ALL_IS_WELL, build);
 
 		// The response is in the output file
 		String outputFile = build.getWorkspace().child("file.txt").readToString();
-		Pattern p = Pattern.compile(this.allIsWellMessage);
+		Pattern p = Pattern.compile(this.ALL_IS_WELL);
 		Matcher m = p.matcher(outputFile);
 		assertTrue(m.find());
 	}
@@ -590,11 +559,11 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	@Test
 	public void timeoutFailsTheBuild() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerTimeout();
+
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/timeout");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/timeout");
 		httpRequest.setTimeout(2);
 
 		// Run build
@@ -609,13 +578,12 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	@Test
 	public void canDoCustomHeaders() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerCustomHeaders();
 
 		List<HttpRequestNameValuePair> customHeaders = new ArrayList<HttpRequestNameValuePair>();
 		customHeaders.add(new HttpRequestNameValuePair("customHeader", "value1"));
 		customHeaders.add(new HttpRequestNameValuePair("customHeader", "value2"));
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/customHeaders");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/customHeaders");
 		httpRequest.setCustomHeaders(customHeaders);
 
 		// Run build
@@ -629,13 +597,11 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 	@Test
 	public void replaceParametesInCustomHeaders() throws Exception {
-
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerCustomHeadersResolved();
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/customHeadersResolved");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/customHeadersResolved");
 		httpRequest.setConsoleLogResponseBody(true);
 
 		// Activate requsetBody
@@ -659,17 +625,17 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatus(Result.SUCCESS, build);
-		this.j.assertLogContains(this.allIsWellMessage, build);
+		this.j.assertLogContains(this.ALL_IS_WELL, build);
 	}
 
 	@Test
 	public void nonExistentBasicAuthFailsTheBuild() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerBasicAuth();
+
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/basicAuth");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/basicAuth");
 		httpRequest.setAuthentication("non-existent-key");
 
 		// Run build
@@ -684,8 +650,8 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	@Test
 	public void canDoBasicDigestAuthentication() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerBasicAuth();
+
 
 		// Prepare the authentication
 		List<BasicDigestAuthentication> bda = new ArrayList<BasicDigestAuthentication>();
@@ -693,7 +659,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		bda.add(new BasicDigestAuthentication("keyname2", "username2", "password2"));
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/basicAuth");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/basicAuth");
 		HttpRequestGlobalConfig.get().setBasicDigestAuthentications(bda);
 		httpRequest.setAuthentication("keyname1");
 
@@ -709,15 +675,15 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	@Test
 	public void canDoFormAuthentication() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerFormAuth();
+		registerReqAction();
 
 		// Prepare the authentication
 		List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
 		params.add(new HttpRequestNameValuePair("param1", "value1"));
 		params.add(new HttpRequestNameValuePair("param2", "value2"));
 
-		RequestAction action = new RequestAction(new URL(baseURL + "/reqAction"), HttpMode.GET, null, params);
+		RequestAction action = new RequestAction(new URL(baseURL() + "/reqAction"), HttpMode.GET, null, params);
 		List<RequestAction> actions = new ArrayList<RequestAction>();
 		actions.add(action);
 
@@ -726,7 +692,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		formAuthList.add(formAuth);
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/formAuth");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/formAuth");
 		HttpRequestGlobalConfig.get().setFormAuthentications(formAuthList);
 		httpRequest.setAuthentication("keyname");
 
@@ -742,15 +708,14 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	@Test
 	public void rejectedFormCredentialsFailTheBuild() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+		registerFormAuthBad();
 
 		// Prepare the authentication
 		List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
 		params.add(new HttpRequestNameValuePair("param1", "value1"));
 		params.add(new HttpRequestNameValuePair("param2", "value2"));
 
-		RequestAction action = new RequestAction(new URL(baseURL + "/formAuthBad"), HttpMode.GET, null, params);
+		RequestAction action = new RequestAction(new URL(baseURL() + "/formAuthBad"), HttpMode.GET, null, params);
 		List<RequestAction> actions = new ArrayList<RequestAction>();
 		actions.add(action);
 
@@ -759,7 +724,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		formAuthList.add(formAuth);
 
 		// Prepare HttpRequest
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/formAuthBad");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/formAuthBad");
 		httpRequest.setConsoleLogResponseBody(true);
 		HttpRequestGlobalConfig.get().setFormAuthentications(formAuthList);
 		httpRequest.setAuthentication("keyname");
@@ -777,8 +742,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	@Test
 	public void invalidKeyFormAuthenticationFailsTheBuild() throws Exception {
 		// Prepare the server
-		final HttpHost target = start();
-		final String baseURL = "http://localhost:" + target.getPort();
+
 
 		// Prepare the authentication
 		List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
@@ -786,7 +750,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		params.add(new HttpRequestNameValuePair("param2", "value2"));
 
 		// The request action won't be sent but we need to prepare it
-		RequestAction action = new RequestAction(new URL(baseURL + "/non-existent"), HttpMode.GET, null, params);
+		RequestAction action = new RequestAction(new URL(baseURL() + "/non-existent"), HttpMode.GET, null, params);
 		List<RequestAction> actions = new ArrayList<RequestAction>();
 		actions.add(action);
 
@@ -795,7 +759,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		formAuthList.add(formAuth);
 
 		// Prepare HttpRequest - the actual request won't be sent
-		HttpRequest httpRequest = new HttpRequest(baseURL + "/non-existent");
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/non-existent");
 		httpRequest.setConsoleLogResponseBody(true);
 		HttpRequestGlobalConfig.get().setFormAuthentications(formAuthList);
 
