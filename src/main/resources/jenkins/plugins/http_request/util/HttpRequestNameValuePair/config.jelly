@@ -6,6 +6,9 @@
     <f:entry title="Value" field="value">
         <f:textbox/>
     </f:entry>
+    <f:entry title="Mask value" field="maskValue" description="If checked, this will mask the value in the logs.">
+        <f:checkbox/>
+    </f:entry>
     <f:entry>
         <div align="right">
             <f:repeatableDeleteButton/>
