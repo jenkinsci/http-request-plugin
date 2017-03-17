@@ -17,11 +17,17 @@ public class HttpRequestNameValuePair extends AbstractDescribableImpl<HttpReques
 
     private final String name;
     private final String value;
+    private final boolean maskValue;
 
     @DataBoundConstructor
-    public HttpRequestNameValuePair(String name, String value) {
+    public HttpRequestNameValuePair(String name, String value, boolean maskValue) {
         this.name = name;
         this.value = value;
+        this.maskValue = maskValue;
+    }
+
+    public HttpRequestNameValuePair(String name, String value) {
+        this(name, value, false);
     }
 
     public String getName() {
@@ -30,6 +36,10 @@ public class HttpRequestNameValuePair extends AbstractDescribableImpl<HttpReques
 
     public String getValue() {
         return value;
+    }
+
+    public boolean getMaskValue() {
+        return maskValue;
     }
 
     @Extension
