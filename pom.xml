@@ -22,9 +22,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
@@ -33,7 +31,7 @@ THE SOFTWARE.
 	</parent>
 
 	<artifactId>http_request</artifactId>
-	<version>1.8.14-SNAPSHOT</version>
+	<version>1.8.14</version>
 	<packaging>hpi</packaging>
 	<name>HTTP Request Plugin</name>
 	<description>This plugin sends a http request to an url with some parameters</description>
@@ -127,7 +125,7 @@ THE SOFTWARE.
 		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/http-request-plugin.git
 		</developerConnection>
 		<url>https://github.com/jenkinsci/http-request-plugin</url>
-		<tag>HEAD</tag>
+		<tag>http_request-1.8.14</tag>
 	</scm>
 	<developers>
 		<developer>
