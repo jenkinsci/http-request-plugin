@@ -3,6 +3,7 @@
 
 #Jenkins work
 work/*
+work_copy/*
 
 # Vim files
 Session.vim

@@ -35,7 +35,8 @@ THE SOFTWARE.
 	<artifactId>http_request</artifactId>
 	<version>1.8.14-SNAPSHOT</version>
 	<packaging>hpi</packaging>
-	<name>HTTP Request Plugin</name>
+	<name>HTTP Request Plugin(Renamed)</name>
+	<description>This plugin was internal renamed. You should uninstall it and and install 'HTTP Request Plugin'</description>
 	<url>http://wiki.jenkins-ci.org/display/JENKINS/HTTP+Request+Plugin</url>
 
 	<licenses>
