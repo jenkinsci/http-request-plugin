@@ -22,107 +22,96 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.jenkins-ci.plugins</groupId>
-        <artifactId>plugin</artifactId>
-        <version>2.16</version>
-    </parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.jenkins-ci.plugins</groupId>
+		<artifactId>plugin</artifactId>
+		<version>2.16</version>
+	</parent>
 
-    <artifactId>http_request</artifactId>
-    <version>1.8.14-SNAPSHOT</version>
-    <packaging>hpi</packaging>
-    <name>HTTP Request Plugin</name>
-    <url>http://wiki.jenkins-ci.org/display/JENKINS/HTTP+Request+Plugin</url>
+	<artifactId>http_request</artifactId>
+	<version>1.8.14-SNAPSHOT</version>
+	<packaging>hpi</packaging>
+	<name>HTTP Request Plugin</name>
+	<url>http://wiki.jenkins-ci.org/display/JENKINS/HTTP+Request+Plugin</url>
 
-    <licenses>
-        <license>
-            <name>The MIT license</name>
-            <url>http://www.opensource.org/licenses/mit-license.php</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
+	<licenses>
+		<license>
+			<name>The MIT license</name>
+			<url>http://www.opensource.org/licenses/mit-license.php</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <surefire.rerunFailingTestsCount>0</surefire.rerunFailingTestsCount>
-        <commons.version>1.10</commons.version>
-        <httpcomponents.version>4.5.1</httpcomponents.version>
-        <script-security.version>1.17</script-security.version>
-        <jenkins.version>1.609.3</jenkins.version>
-        <workflow.version>1.10</workflow.version>
-    </properties>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<jenkins.version>1.609.3</jenkins.version>
+		<workflow.version>1.10</workflow.version>
+	</properties>
 
-    <repositories>
-        <repository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </repository>
-    </repositories>
+	<repositories>
+		<repository>
+			<id>repo.jenkins-ci.org</id>
+			<url>http://repo.jenkins-ci.org/public/</url>
+		</repository>
+	</repositories>
 
-    <pluginRepositories>
-        <pluginRepository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </pluginRepository>
-    </pluginRepositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>repo.jenkins-ci.org</id>
+			<url>http://repo.jenkins-ci.org/public/</url>
+		</pluginRepository>
+	</pluginRepositories>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <argLine>-Xmx320m</argLine>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.jenkins-ci.tools</groupId>
-                <artifactId>maven-hpi-plugin</artifactId>
-                <configuration>
-                    <pluginFirstClassLoader>true</pluginFirstClassLoader>
-                    <compatibleSinceVersion>1.8.8</compatibleSinceVersion>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.jenkins-ci.tools</groupId>
+				<artifactId>maven-hpi-plugin</artifactId>
+				<configuration>
+					<pluginFirstClassLoader>true</pluginFirstClassLoader>
+					<compatibleSinceVersion>1.8.8</compatibleSinceVersion>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
-    <dependencies>
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.5.1</version>
+		</dependency>
 
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>${httpcomponents.version}</version>
-        </dependency>
+		<dependency>
+			<groupId>org.jenkins-ci.plugins</groupId>
+			<artifactId>script-security</artifactId>
+			<version>1.17</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jenkins-ci.plugins.workflow</groupId>
+			<artifactId>workflow-step-api</artifactId>
+			<version>${workflow.version}</version>
+			<optional>true</optional>
+		</dependency>
 
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>script-security</artifactId>
-            <version>${script-security.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-step-api</artifactId>
-            <version>${workflow.version}</version>
-            <optional>true</optional>
-        </dependency>
-
-        <!-- Test framework -->
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>${commons.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>fluent-hc</artifactId>
-            <version>${httpcomponents.version}</version>
-            <scope>test</scope>
-        </dependency>
+		<!-- Test framework -->
+		<dependency>
+			<groupId>org.jenkins-ci.plugins.workflow</groupId>
+			<artifactId>workflow-step-api</artifactId>
+			<version>${workflow.version}</version>
+			<classifier>tests</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.jenkins-ci.plugins.workflow</groupId>
+			<artifactId>workflow-aggregator</artifactId>
+			<version>${workflow.version}</version>
+			<scope>test</scope>
+		</dependency>
 
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
@@ -130,41 +119,26 @@ THE SOFTWARE.
 			<version>9.2.21.v20170120</version>
 			<scope>test</scope>
 		</dependency>
+	</dependencies>
 
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-aggregator</artifactId>
-            <version>${workflow.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-step-api</artifactId>
-            <version>${workflow.version}</version>
-            <classifier>tests</classifier>
-            <scope>test</scope>
-        </dependency>
-
-    </dependencies>
-
-    <scm>
-        <connection>scm:git:ssh://github.com/jenkinsci/http-request-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/http-request-plugin.git</developerConnection>
-        <url>https://github.com/jenkinsci/http-request-plugin</url>
-      <tag>HEAD</tag>
-  </scm>
-    <developers>
-        <developer>
-            <id>janario</id>
-            <name>Janario Oliveira</name>
-            <email>janarioliver@gmail.com</email>
-        </developer>
-    </developers>
-    <contributors>
-        <contributor>
-            <name>Martin d'Anjou</name>
-            <email>martin.danjou14@gmail.com</email>
-        </contributor>
-    </contributors>
+	<scm>
+		<connection>scm:git:ssh://github.com/jenkinsci/http-request-plugin.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/http-request-plugin.git
+		</developerConnection>
+		<url>https://github.com/jenkinsci/http-request-plugin</url>
+		<tag>HEAD</tag>
+	</scm>
+	<developers>
+		<developer>
+			<id>janario</id>
+			<name>Janario Oliveira</name>
+			<email>janarioliver@gmail.com</email>
+		</developer>
+	</developers>
+	<contributors>
+		<contributor>
+			<name>Martin d'Anjou</name>
+			<email>martin.danjou14@gmail.com</email>
+		</contributor>
+	</contributors>
 </project>
