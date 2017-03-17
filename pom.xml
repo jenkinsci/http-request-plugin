@@ -31,7 +31,7 @@ THE SOFTWARE.
 	</parent>
 
 	<artifactId>http_request</artifactId>
-	<version>1.8.15-SNAPSHOT</version>
+	<version>1.8.15</version>
 	<packaging>hpi</packaging>
 	<name>HTTP Request Plugin(Renamed)</name>
 	<description>This plugin was internal renamed. You should uninstall it and and install 'HTTP Request Plugin'</description>
@@ -125,7 +125,7 @@ THE SOFTWARE.
 		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/http-request-plugin.git
 		</developerConnection>
 		<url>https://github.com/jenkinsci/http-request-plugin</url>
-		<tag>HEAD</tag>
+		<tag>http_request-1.8.15</tag>
 	</scm>
 	<developers>
 		<developer>
