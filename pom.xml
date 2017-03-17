@@ -36,6 +36,7 @@ THE SOFTWARE.
 	<version>1.8.14-SNAPSHOT</version>
 	<packaging>hpi</packaging>
 	<name>HTTP Request Plugin</name>
+	<description>This plugin sends a http request to an url with some parameters</description>
 	<url>http://wiki.jenkins-ci.org/display/JENKINS/HTTP+Request+Plugin</url>
 
 	<licenses>
