@@ -74,7 +74,8 @@ import jenkins.plugins.http_request.util.RequestAction;
 public class HttpRequest extends Builder {
 
     private @Nonnull String url;
-    private HttpMode httpMode                 = DescriptorImpl.httpMode;
+	private Boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
+	private HttpMode httpMode                 = DescriptorImpl.httpMode;
     private Boolean passBuildParameters       = DescriptorImpl.passBuildParameters;
     private String validResponseCodes         = DescriptorImpl.validResponseCodes;
     private String validResponseContent       = DescriptorImpl.validResponseContent;
@@ -92,7 +93,12 @@ public class HttpRequest extends Builder {
         this.url = url;
     }
 
-    @DataBoundSetter
+	@DataBoundSetter
+    public void setIgnoreSslErrors(Boolean ignoreSslErrors) {
+		this.ignoreSslErrors = ignoreSslErrors;
+	}
+
+	@DataBoundSetter
     public void setHttpMode(HttpMode httpMode) {
         this.httpMode = httpMode;
     }
@@ -166,7 +172,11 @@ public class HttpRequest extends Builder {
         if (validResponseCodes == null || validResponseCodes.trim().isEmpty()) {
             validResponseCodes = DescriptorImpl.validResponseCodes;
         }
-        return this;
+		if (ignoreSslErrors == null) {
+        	//default for new job false(DescriptorImpl.ignoreSslErrors) for old ones true to keep same behavior
+			ignoreSslErrors = true;
+		}
+		return this;
     }
 
     public @Nonnull String getUrl() {
@@ -313,19 +323,20 @@ public class HttpRequest extends Builder {
 				clientBuilder.setDefaultRequestConfig(config);
 			}
 			//ssl
-			try {
-				//TODO JENKINS-41934 will parametrize 'ignoreSslErro', default false. Make compatibility to true in olders
-				SSLContextBuilder builder = SSLContextBuilder.create();
-				builder.loadTrustMaterial(null, new TrustStrategy() {
-					@Override
-					public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-						return true;
-					}
-				});
-				SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build(), NoopHostnameVerifier.INSTANCE);
-				clientBuilder.setSSLSocketFactory(sslsf);
-			} catch (KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
-				throw new IllegalStateException(e);
+			if (ignoreSslErrors) {
+				try {
+					SSLContextBuilder builder = SSLContextBuilder.create();
+					builder.loadTrustMaterial(null, new TrustStrategy() {
+						@Override
+						public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+							return true;
+						}
+					});
+					SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build(), NoopHostnameVerifier.INSTANCE);
+					clientBuilder.setSSLSocketFactory(sslsf);
+				} catch (KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
+					throw new IllegalStateException(e);
+				}
 			}
 
 			HttpClientUtil clientUtil = new HttpClientUtil();
@@ -455,7 +466,8 @@ public class HttpRequest extends Builder {
 
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
-        public static final HttpMode httpMode                  = HttpMode.GET;
+		public static final boolean ignoreSslErrors = false;
+		public static final HttpMode httpMode                  = HttpMode.GET;
         public static final Boolean  passBuildParameters       = false;
         public static final String   validResponseCodes        = "100:399";
         public static final String   validResponseContent      = "";

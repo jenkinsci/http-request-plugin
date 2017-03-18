@@ -27,7 +27,8 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 public final class HttpRequestStep extends AbstractStepImpl {
 
     private @Nonnull String url;
-    private HttpMode httpMode                 = DescriptorImpl.httpMode;
+	private boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
+	private HttpMode httpMode                 = DescriptorImpl.httpMode;
     private String validResponseCodes         = DescriptorImpl.validResponseCodes;
     private String validResponseContent       = DescriptorImpl.validResponseContent;
     private MimeType acceptType               = DescriptorImpl.acceptType;
@@ -47,7 +48,12 @@ public final class HttpRequestStep extends AbstractStepImpl {
         return url;
     }
 
-    @DataBoundSetter
+	@DataBoundSetter
+	public void setIgnoreSslErrors(boolean ignoreSslErrors) {
+		this.ignoreSslErrors = ignoreSslErrors;
+	}
+
+	@DataBoundSetter
     public void setHttpMode(HttpMode httpMode) {
         this.httpMode = httpMode;
     }
@@ -143,6 +149,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
     }
     @Extension
     public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
+        public static final boolean ignoreSslErrors = HttpRequest.DescriptorImpl.ignoreSslErrors;
         public static final HttpMode httpMode                  = HttpRequest.DescriptorImpl.httpMode;
         public static final String   validResponseCodes        = HttpRequest.DescriptorImpl.validResponseCodes;
         public static final String   validResponseContent      = HttpRequest.DescriptorImpl.validResponseContent;
@@ -205,6 +212,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
         @Override
         protected ResponseContentSupplier run() throws Exception {
             HttpRequest httpRequest = new HttpRequest(step.url);
+			httpRequest.setIgnoreSslErrors(step.ignoreSslErrors);
             httpRequest.setHttpMode(step.httpMode);
             httpRequest.setConsoleLogResponseBody(step.consoleLogResponseBody);
             httpRequest.setValidResponseCodes(step.validResponseCodes);
