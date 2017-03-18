@@ -75,6 +75,16 @@ THE SOFTWARE.
 					<compatibleSinceVersion>1.8.8</compatibleSinceVersion>
 				</configuration>
 			</plugin>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<encoding>${project.build.sourceEncoding}</encoding>
+					<showDeprecation>true</showDeprecation>
+					<compilerArgs>
+						<compilerArg>-Xlint:all,-serial,-processing</compilerArg>
+					</compilerArgs>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
