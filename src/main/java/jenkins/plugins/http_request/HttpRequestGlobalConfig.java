@@ -1,15 +1,18 @@
 package jenkins.plugins.http_request;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import net.sf.json.JSONObject;
+
+import org.kohsuke.stapler.StaplerRequest;
+
 import hudson.Extension;
 import hudson.XmlFile;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
 import hudson.util.XStream2;
-
-import java.io.File;
-import java.util.List;
-import java.util.ArrayList;
-
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 
@@ -17,11 +20,6 @@ import jenkins.plugins.http_request.auth.Authenticator;
 import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
-
-import net.sf.json.JSONObject;
-
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * @author Martin d'Anjou

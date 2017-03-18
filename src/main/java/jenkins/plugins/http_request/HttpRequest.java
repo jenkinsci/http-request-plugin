@@ -10,6 +10,11 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,11 +24,16 @@ import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.SystemDefaultHttpClient;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustStrategy;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -281,47 +291,90 @@ public class HttpRequest extends Builder {
             }
         }
 
-        DefaultHttpClient httpclient = new SystemDefaultHttpClient();
+		ResponseContentSupplier responseContentSupplier = authAndRequest(requestAction, logger);
+		responseCodeIsValid(responseContentSupplier, logger);
+		contentIsValid(responseContentSupplier, logger);
 
-        HttpClientUtil clientUtil = new HttpClientUtil();
-        HttpRequestBase httpRequestBase = clientUtil.createRequestBase(requestAction);
+		return responseContentSupplier;
+	}
 
-        HttpContext context = new BasicHttpContext();
+	private ResponseContentSupplier authAndRequest(RequestAction requestAction, PrintStream logger) throws IOException, InterruptedException {
+		CloseableHttpClient httpclient = null;
+		try {
+			HttpClientBuilder clientBuilder = HttpClientBuilder.create().useSystemProperties();
+			//timeout
+			if (timeout != null) {
+				int t = timeout * 1000;
+				RequestConfig config = RequestConfig.custom()
+						.setSocketTimeout(t)
+						.setConnectTimeout(t)
+						.setConnectionRequestTimeout(t)
+						.build();
+				clientBuilder.setDefaultRequestConfig(config);
+			}
+			//ssl
+			try {
+				//TODO JENKINS-41934 will parametrize 'ignoreSslErro', default false. Make compatibility to true in olders
+				SSLContextBuilder builder = SSLContextBuilder.create();
+				builder.loadTrustMaterial(null, new TrustStrategy() {
+					@Override
+					public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+						return true;
+					}
+				});
+				SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build(), NoopHostnameVerifier.INSTANCE);
+				clientBuilder.setSSLSocketFactory(sslsf);
+			} catch (KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
+				throw new IllegalStateException(e);
+			}
 
-        if (authentication != null && !authentication.isEmpty()) {
-            final Authenticator auth = HttpRequestGlobalConfig.get().getAuthentication(authentication);
-            if (auth == null) {
-                throw new IllegalStateException("Authentication '" + authentication + "' doesn't exist anymore");
-            }
+			HttpClientUtil clientUtil = new HttpClientUtil();
+			HttpRequestBase httpRequestBase = clientUtil.createRequestBase(requestAction);
+			HttpContext context = new BasicHttpContext();
 
-            logger.println("Using authentication: " + auth.getKeyName());
-            auth.authenticate(httpclient, context, httpRequestBase, logger, timeout);
-        }
+			httpclient = auth(logger, clientBuilder, httpRequestBase, context);
+			return executeRequest(logger, httpclient, clientUtil, httpRequestBase, context);
+		} finally {
+			if (httpclient != null) {
+				httpclient.close();
+			}
+		}
+	}
 
-        ResponseContentSupplier responseContentSupplier;
-        try {
-            final HttpResponse response = clientUtil.execute(httpclient, context, httpRequestBase, logger, timeout);
-            // The HttpEntity is consumed by the ResponseContentSupplier
-            responseContentSupplier = new ResponseContentSupplier(response);
-        } catch (UnknownHostException uhe) {
-            logger.println("Treating UnknownHostException(" + uhe.getMessage() + ") as 404 Not Found");
-            responseContentSupplier = new ResponseContentSupplier("UnknownHostException as 404 Not Found", 404);
-        } catch (SocketTimeoutException | ConnectException ce) {
-            logger.println("Treating " + ce.getClass() + "(" + ce.getMessage() + ") as 408 Request Timeout");
-            responseContentSupplier = new ResponseContentSupplier(ce.getClass() + "(" + ce.getMessage() + ") as 408 Request Timeout", 408);
-        }
+	private CloseableHttpClient auth(PrintStream logger, HttpClientBuilder clientBuilder, HttpRequestBase httpRequestBase, HttpContext context) throws IOException, InterruptedException {
+		if (authentication != null && !authentication.isEmpty()) {
+			final Authenticator auth = HttpRequestGlobalConfig.get().getAuthentication(authentication);
+			if (auth == null) {
+				throw new IllegalStateException("Authentication '" + authentication + "' doesn't exist anymore");
+			}
 
-        if (consoleLogResponseBody) {
-            logger.println("Response: \n" + responseContentSupplier.getContent());
-        }
+			logger.println("Using authentication: " + auth.getKeyName());
+			return auth.authenticate(clientBuilder, context, httpRequestBase, logger);
+		}
+		return clientBuilder.build();
+	}
 
-        responseCodeIsValid(responseContentSupplier, logger);
-        contentIsValid(responseContentSupplier, logger);
+	private ResponseContentSupplier executeRequest(PrintStream logger, CloseableHttpClient httpclient, HttpClientUtil clientUtil, HttpRequestBase httpRequestBase, HttpContext context) throws IOException, InterruptedException {
+		ResponseContentSupplier responseContentSupplier;
+		try {
+			final HttpResponse response = clientUtil.execute(httpclient, context, httpRequestBase, logger);
+			// The HttpEntity is consumed by the ResponseContentSupplier
+			responseContentSupplier = new ResponseContentSupplier(response);
+		} catch (UnknownHostException uhe) {
+			logger.println("Treating UnknownHostException(" + uhe.getMessage() + ") as 404 Not Found");
+			responseContentSupplier = new ResponseContentSupplier("UnknownHostException as 404 Not Found", 404);
+		} catch (SocketTimeoutException | ConnectException ce) {
+			logger.println("Treating " + ce.getClass() + "(" + ce.getMessage() + ") as 408 Request Timeout");
+			responseContentSupplier = new ResponseContentSupplier(ce.getClass() + "(" + ce.getMessage() + ") as 408 Request Timeout", 408);
+		}
 
-        return responseContentSupplier;
-    }
+		if (consoleLogResponseBody) {
+			logger.println("Response: \n" + responseContentSupplier.getContent());
+		}
+		return responseContentSupplier;
+	}
 
-    private void contentIsValid(ResponseContentSupplier responseContentSupplier, PrintStream logger)
+	private void contentIsValid(ResponseContentSupplier responseContentSupplier, PrintStream logger)
     throws AbortException
     {
         if (Strings.isNullOrEmpty(validResponseContent)) {

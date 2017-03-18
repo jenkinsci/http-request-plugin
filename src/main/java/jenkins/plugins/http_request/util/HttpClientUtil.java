@@ -1,9 +1,15 @@
 package jenkins.plugins.http_request.util;
 
-import com.google.common.base.Strings;
-import jenkins.plugins.http_request.HttpMode;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -12,24 +18,13 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.HttpContext;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import com.google.common.base.Strings;
+
+import jenkins.plugins.http_request.HttpMode;
 
 /**
  * @author Janario Oliveira
@@ -139,43 +134,13 @@ public class HttpClientUtil {
         return httpDelete;
     }
 
-    public HttpResponse execute(DefaultHttpClient client, HttpContext context, HttpRequestBase method,
-                                PrintStream logger, Integer timeout) throws IOException, InterruptedException {
-        doSecurity(client, method.getURI());
-
+    public HttpResponse execute(HttpClient client, HttpContext context, HttpRequestBase method,
+								PrintStream logger) throws IOException, InterruptedException {
         logger.println("Sending request to url: " + method.getURI());
-        
-        if (timeout !=null) {
-            client.getParams().setParameter("http.socket.timeout", timeout * 1000);
-            client.getParams().setParameter("http.connection.timeout", timeout * 1000);
-            client.getParams().setParameter("http.connection-manager.timeout", timeout * 1000);
-            client.getParams().setParameter("http.protocol.head-body-timeout", timeout * 1000);
-        }
         
         final HttpResponse httpResponse = client.execute(method, context);
         logger.println("Response Code: " + httpResponse.getStatusLine());
         
         return httpResponse;
-    }
-
-    private void doSecurity(DefaultHttpClient base, URI uri) throws IOException {
-        if (!uri.getScheme().equals("https")) {
-            return;
-        }
-
-        try {
-            final SSLSocketFactory ssf = new SSLSocketFactory(new TrustStrategy() {
-                public boolean isTrusted(X509Certificate[] chain,
-                        String authType) throws CertificateException {
-                    return true;
-                }
-            }, SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-
-            final SchemeRegistry schemeRegistry = base.getConnectionManager().getSchemeRegistry();
-            final int port = uri.getPort() < 0 ? 443 : uri.getPort();
-            schemeRegistry.register(new Scheme(uri.getScheme(), port, ssf));
-        } catch (Exception ex) {
-            throw new IOException("Error unknown", ex);
-        }
     }
 }

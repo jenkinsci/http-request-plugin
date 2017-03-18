@@ -2,24 +2,28 @@ package jenkins.plugins.http_request.auth;
 
 import java.io.PrintStream;
 
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.client.utils.URIUtils;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.BasicAuthCache;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.protocol.HttpContext;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
-import jenkins.model.Jenkins;
+
 import jenkins.plugins.http_request.HttpRequest;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.AuthCache;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.protocol.ClientContext;
-import org.apache.http.client.utils.URIUtils;
-import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.BasicAuthCache;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.HttpContext;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
 
 /**
  * @author Janario Oliveira
@@ -51,15 +55,21 @@ public class BasicDigestAuthentication extends AbstractDescribableImpl<BasicDige
         return password;
     }
 
-    public void authenticate(DefaultHttpClient client, HttpContext context,
-            HttpRequestBase requestBase, PrintStream logger, Integer timeout) {
-        client.getCredentialsProvider().setCredentials(
-                new AuthScope(requestBase.getURI().getHost(), requestBase.getURI().getPort()),
-                new UsernamePasswordCredentials(userName, password));
-        AuthCache authCache = new BasicAuthCache();
-        authCache.put(URIUtils.extractHost(requestBase.getURI()), new BasicScheme());
-        context.setAttribute(ClientContext.AUTH_CACHE, authCache);
-    }
+	@Override
+	public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpContext context,
+											HttpRequestBase requestBase, PrintStream logger) {
+		CredentialsProvider provider = new BasicCredentialsProvider();
+		provider.setCredentials(
+				new AuthScope(requestBase.getURI().getHost(), requestBase.getURI().getPort()),
+				new UsernamePasswordCredentials(userName, password));
+		clientBuilder.setDefaultCredentialsProvider(provider);
+
+		AuthCache authCache = new BasicAuthCache();
+		authCache.put(URIUtils.extractHost(requestBase.getURI()), new BasicScheme());
+		context.setAttribute(HttpClientContext.AUTH_CACHE, authCache);
+
+		return clientBuilder.build();
+	}
 
     @Extension
     public static class BasicDigestAuthenticationDescriptor extends Descriptor<BasicDigestAuthentication> {
