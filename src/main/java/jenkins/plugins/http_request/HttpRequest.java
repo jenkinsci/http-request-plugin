@@ -93,6 +93,10 @@ public class HttpRequest extends Builder {
         this.url = url;
     }
 
+	public Boolean getIgnoreSslErrors() {
+		return ignoreSslErrors;
+	}
+
 	@DataBoundSetter
     public void setIgnoreSslErrors(Boolean ignoreSslErrors) {
 		this.ignoreSslErrors = ignoreSslErrors;
