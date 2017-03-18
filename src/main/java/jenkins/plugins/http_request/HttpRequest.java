@@ -88,152 +88,154 @@ public class HttpRequest extends Builder {
     private String requestBody                = DescriptorImpl.requestBody;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 
-    @DataBoundConstructor
-    public HttpRequest(@Nonnull String url) {
-        this.url = url;
-    }
+	@DataBoundConstructor
+	public HttpRequest(@Nonnull String url) {
+		this.url = url;
+	}
+
+	@Nonnull
+	public String getUrl() {
+		return url;
+	}
 
 	public Boolean getIgnoreSslErrors() {
 		return ignoreSslErrors;
 	}
 
 	@DataBoundSetter
-    public void setIgnoreSslErrors(Boolean ignoreSslErrors) {
+	public void setIgnoreSslErrors(Boolean ignoreSslErrors) {
 		this.ignoreSslErrors = ignoreSslErrors;
 	}
 
+	public HttpMode getHttpMode() {
+		return httpMode;
+	}
+
 	@DataBoundSetter
-    public void setHttpMode(HttpMode httpMode) {
-        this.httpMode = httpMode;
-    }
+	public void setHttpMode(HttpMode httpMode) {
+		this.httpMode = httpMode;
+	}
 
-    @DataBoundSetter
-    public void setPassBuildParameters(Boolean passBuildParameters) {
-        this.passBuildParameters = passBuildParameters;
-    }
+	public Boolean getPassBuildParameters() {
+		return passBuildParameters;
+	}
 
-    @DataBoundSetter
-    public void setValidResponseCodes(String validResponseCodes) {
-        this.validResponseCodes = validResponseCodes;
-    }
+	@DataBoundSetter
+	public void setPassBuildParameters(Boolean passBuildParameters) {
+		this.passBuildParameters = passBuildParameters;
+	}
 
-    @DataBoundSetter
-    public void setValidResponseContent(String validResponseContent) {
-        this.validResponseContent = validResponseContent;
-    }
+	@Nonnull
+	public String getValidResponseCodes() {
+		return validResponseCodes;
+	}
 
-    @DataBoundSetter
-    public void setAcceptType(MimeType acceptType) {
-        this.acceptType = acceptType;
-    }
+	@DataBoundSetter
+	public void setValidResponseCodes(String validResponseCodes) {
+		this.validResponseCodes = validResponseCodes;
+	}
 
-    @DataBoundSetter
-    public void setContentType(MimeType contentType) {
-        this.contentType = contentType;
-    }
+	public String getValidResponseContent() {
+		return validResponseContent;
+	}
 
-    @DataBoundSetter
-    public void setOutputFile(String outputFile) {
-        this.outputFile = outputFile;
-    }
+	@DataBoundSetter
+	public void setValidResponseContent(String validResponseContent) {
+		this.validResponseContent = validResponseContent;
+	}
 
-    @DataBoundSetter
-    public void setTimeout(Integer timeout) {
-        this.timeout = timeout;
-    }
+	public MimeType getAcceptType() {
+		return acceptType;
+	}
 
-    @DataBoundSetter
-    public void setConsoleLogResponseBody(Boolean consoleLogResponseBody) {
-        this.consoleLogResponseBody = consoleLogResponseBody;
-    }
+	@DataBoundSetter
+	public void setAcceptType(MimeType acceptType) {
+		this.acceptType = acceptType;
+	}
 
-    @DataBoundSetter
-    public void setAuthentication(String authentication) {
-        this.authentication = authentication;
-    }
+	public MimeType getContentType() {
+		return contentType;
+	}
 
-    @DataBoundSetter
-    public void setRequestBody(String requestBody) {
-        this.requestBody = requestBody;
-    }
+	@DataBoundSetter
+	public void setContentType(MimeType contentType) {
+		this.contentType = contentType;
+	}
 
-    @DataBoundSetter
-    public void setCustomHeaders(List<HttpRequestNameValuePair> customHeaders) {
-        this.customHeaders = customHeaders;
-    }
+	public String getOutputFile() {
+		return outputFile;
+	}
 
-    @Initializer(before = InitMilestone.PLUGINS_STARTED)
-    public static void xStreamCompatibility() {
-        Items.XSTREAM2.aliasField("logResponseBody", HttpRequest.class, "consoleLogResponseBody");
-        Items.XSTREAM2.aliasField("consoleLogResponseBody", HttpRequest.class, "consoleLogResponseBody");
-        Items.XSTREAM2.alias("pair", HttpRequestNameValuePair.class);
-    }
+	@DataBoundSetter
+	public void setOutputFile(String outputFile) {
+		this.outputFile = outputFile;
+	}
 
-    protected Object readResolve() {
-        if (customHeaders == null) {
-            customHeaders = DescriptorImpl.customHeaders;
-        }
-        if (validResponseCodes == null || validResponseCodes.trim().isEmpty()) {
-            validResponseCodes = DescriptorImpl.validResponseCodes;
-        }
+	public Integer getTimeout() {
+		return timeout;
+	}
+
+	@DataBoundSetter
+	public void setTimeout(Integer timeout) {
+		this.timeout = timeout;
+	}
+
+	public Boolean getConsoleLogResponseBody() {
+		return consoleLogResponseBody;
+	}
+
+	@DataBoundSetter
+	public void setConsoleLogResponseBody(Boolean consoleLogResponseBody) {
+		this.consoleLogResponseBody = consoleLogResponseBody;
+	}
+
+	public String getAuthentication() {
+		return authentication;
+	}
+
+	@DataBoundSetter
+	public void setAuthentication(String authentication) {
+		this.authentication = authentication;
+	}
+
+	public String getRequestBody() {
+		return requestBody;
+	}
+
+	@DataBoundSetter
+	public void setRequestBody(String requestBody) {
+		this.requestBody = requestBody;
+	}
+
+	public List<HttpRequestNameValuePair> getCustomHeaders() {
+		return customHeaders;
+	}
+
+	@DataBoundSetter
+	public void setCustomHeaders(List<HttpRequestNameValuePair> customHeaders) {
+		this.customHeaders = customHeaders;
+	}
+
+	@Initializer(before = InitMilestone.PLUGINS_STARTED)
+	public static void xStreamCompatibility() {
+		Items.XSTREAM2.aliasField("logResponseBody", HttpRequest.class, "consoleLogResponseBody");
+		Items.XSTREAM2.aliasField("consoleLogResponseBody", HttpRequest.class, "consoleLogResponseBody");
+		Items.XSTREAM2.alias("pair", HttpRequestNameValuePair.class);
+	}
+
+	protected Object readResolve() {
+		if (customHeaders == null) {
+			customHeaders = DescriptorImpl.customHeaders;
+		}
+		if (validResponseCodes == null || validResponseCodes.trim().isEmpty()) {
+			validResponseCodes = DescriptorImpl.validResponseCodes;
+		}
 		if (ignoreSslErrors == null) {
-        	//default for new job false(DescriptorImpl.ignoreSslErrors) for old ones true to keep same behavior
+			//default for new job false(DescriptorImpl.ignoreSslErrors) for old ones true to keep same behavior
 			ignoreSslErrors = true;
 		}
 		return this;
-    }
-
-    public @Nonnull String getUrl() {
-        return url;
-    }
-
-    public HttpMode getHttpMode() {
-        return httpMode;
-    }
-
-    public String getAuthentication() {
-        return authentication;
-    }
-
-    public MimeType getContentType() {
-        return contentType;
-    }
-
-    public MimeType getAcceptType() {
-        return acceptType;
-    }
-
-    public String getOutputFile() {
-        return outputFile;
-    }
-
-    public Boolean getConsoleLogResponseBody() {
-        return consoleLogResponseBody;
-    }
-
-    public Boolean getPassBuildParameters() {
-        return passBuildParameters;
-    }
-
-    public List<HttpRequestNameValuePair> getCustomHeaders() {
-        return customHeaders;
-    }
-
-    public Integer getTimeout() {
-        return timeout;
-    }
-
-    public @Nonnull String getValidResponseCodes() {
-        return validResponseCodes;
-    }
-
-    public String getValidResponseContent() {
-        return validResponseContent;
-    }
-
-    public String getRequestBody() {
-        return requestBody;
-    }
+	}
 
     @Override
     public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener)
