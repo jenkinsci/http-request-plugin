@@ -92,7 +92,7 @@ public class HttpRequestTestBase {
 		}
 
 		void body(HttpServletResponse response, int status, ContentType contentType, String body) throws IOException {
-			response.setContentType(contentType.toString());
+			response.setContentType(contentType != null ? contentType.toString() : "");
 			response.setStatus(status);
 			response.getWriter().append(body);
 		}

@@ -1,14 +1,15 @@
 package jenkins.plugins.http_request;
 
-import hudson.util.ListBoxModel;
 import org.apache.http.entity.ContentType;
+
+import hudson.util.ListBoxModel;
 
 /**
  * @author James Chapman
  */
 public enum MimeType {
 
-    NOT_SET(ContentType.create("")),
+    NOT_SET(null),
     TEXT_HTML(ContentType.TEXT_HTML),
     TEXT_PLAIN(ContentType.TEXT_PLAIN),
     APPLICATION_FORM(ContentType.APPLICATION_FORM_URLENCODED),
