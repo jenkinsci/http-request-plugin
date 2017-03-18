@@ -1,26 +1,24 @@
 package jenkins.plugins.http_request;
 
-import hudson.model.AbstractProject;
-import hudson.model.FreeStyleProject;
-import hudson.tasks.Builder;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
-import jenkins.plugins.http_request.auth.FormAuthentication;
-import jenkins.plugins.http_request.util.RequestAction;
-import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
-
 import org.junit.Rule;
 import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertNotNull;
-
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
+
+import hudson.model.FreeStyleProject;
+import hudson.tasks.Builder;
+
+import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
+import jenkins.plugins.http_request.auth.FormAuthentication;
+import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
+import jenkins.plugins.http_request.util.RequestAction;
 
 /**
  * @author Martin d'Anjou
@@ -50,32 +48,32 @@ public class HttpRequestBackwardCompatibilityTest {
 
         List<BasicDigestAuthentication> bdas = cfg.getBasicDigestAuthentications();
         assertEquals(2,bdas.size());
-        Iterator itr = bdas.iterator();
-        BasicDigestAuthentication bda = (BasicDigestAuthentication)itr.next();
-        assertEquals("k1",bda.getKeyName());
+		Iterator<BasicDigestAuthentication> itr = bdas.iterator();
+		BasicDigestAuthentication bda = itr.next();
+		assertEquals("k1",bda.getKeyName());
         assertEquals("u1",bda.getUserName());
         assertEquals("p1",bda.getPassword());
-        bda = (BasicDigestAuthentication)itr.next();
-        assertEquals("k2",bda.getKeyName());
+		bda = itr.next();
+		assertEquals("k2",bda.getKeyName());
         assertEquals("u2",bda.getUserName());
         assertEquals("p2",bda.getPassword());
 
         List<FormAuthentication> fas = cfg.getFormAuthentications();
         assertEquals(1,fas.size());
-        itr = fas.iterator();
-        FormAuthentication fa = (FormAuthentication)itr.next();
-        assertEquals("k3", fa.getKeyName());
+
+        FormAuthentication fa = fas.iterator().next();
+		assertEquals("k3", fa.getKeyName());
         List<RequestAction> ras = fa.getActions();
         assertEquals(1,ras.size());
-        itr = ras.iterator();
-        RequestAction ra = (RequestAction)itr.next();
-        assertEquals("http://localhost1",ra.getUrl().toString());
+
+		RequestAction ra = ras.iterator().next();
+		assertEquals("http://localhost1",ra.getUrl().toString());
         assertEquals("GET",ra.getMode().toString());
         List<HttpRequestNameValuePair> nvps = ra.getParams();
         assertEquals(1,nvps.size());
-        itr = nvps.iterator();
-        HttpRequestNameValuePair nvp = (HttpRequestNameValuePair)itr.next();
-        assertEquals("name1",nvp.getName());
+
+		HttpRequestNameValuePair nvp = nvps.iterator().next();
+		assertEquals("name1",nvp.getName());
         assertEquals("value1",nvp.getValue());
     }
 
@@ -84,9 +82,9 @@ public class HttpRequestBackwardCompatibilityTest {
     public void oldConfigWithoutCustomHeadersShouldLoad() {
         // Test that a job config from 1.8.6 can be loaded
         // Specifically tests the HttpRequest.readResolve() method
-        AbstractProject p = (AbstractProject) j.getInstance().getItem("old");
+		FreeStyleProject p = (FreeStyleProject) j.getInstance().getItem("old");
 
-        List<Builder> builders = ((FreeStyleProject) p).getBuilders();
+        List<Builder> builders = p.getBuilders();
 
         HttpRequest httpRequest = (HttpRequest) builders.get(0);
         assertEquals("url", httpRequest.getUrl());
@@ -100,9 +98,9 @@ public class HttpRequestBackwardCompatibilityTest {
     public void oldConfigWithCustomHeadersShouldLoad() {
         // Test that a job config from 1.8.8 can be loaded
         // Specifically tests the HttpRequest.xStreamCompatibility() method
-        AbstractProject p = (AbstractProject) j.getInstance().getItem("old");
+		FreeStyleProject p = (FreeStyleProject) j.getInstance().getItem("old");
 
-        List<Builder> builders = ((FreeStyleProject) p).getBuilders();
+        List<Builder> builders = p.getBuilders();
 
         HttpRequest httpRequest = (HttpRequest) builders.get(0);
         assertEquals("url", httpRequest.getUrl());
@@ -110,9 +108,9 @@ public class HttpRequestBackwardCompatibilityTest {
         assertNotNull(httpRequest.getCustomHeaders());
         List<HttpRequestNameValuePair> customHeaders = httpRequest.getCustomHeaders();
         assertEquals(1,customHeaders.size());
-        Iterator itr = customHeaders.iterator();
-        HttpRequestNameValuePair nvp = (HttpRequestNameValuePair)itr.next();
-        assertEquals("h1",nvp.getName());
+		Iterator<HttpRequestNameValuePair> itr = customHeaders.iterator();
+		HttpRequestNameValuePair nvp = itr.next();
+		assertEquals("h1",nvp.getName());
         assertEquals("v1",nvp.getValue());
 
         assertNotNull(httpRequest.getValidResponseCodes());

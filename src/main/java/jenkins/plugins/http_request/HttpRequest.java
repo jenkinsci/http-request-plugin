@@ -419,6 +419,7 @@ public class HttpRequest extends Builder {
             load();
         }
 
+        @SuppressWarnings("rawtypes")
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             return true;

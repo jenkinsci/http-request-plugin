@@ -1,11 +1,11 @@
 package jenkins.plugins.http_request;
 
-import hudson.Extension;
-import hudson.model.Run;
-import hudson.model.TaskListener;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
+import java.util.Collections;
+import java.util.List;
+
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
@@ -14,10 +14,12 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import java.util.Collections;
-import java.util.List;
+import hudson.Extension;
+import hudson.model.TaskListener;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+
+import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 
 /**
  * @author Martin d'Anjou
@@ -196,9 +198,6 @@ public final class HttpRequestStep extends AbstractStepImpl {
 
         @Inject
         private transient HttpRequestStep step;
-
-        @StepContextParameter
-        private transient Run run;
 
         @StepContextParameter
         private transient TaskListener listener;

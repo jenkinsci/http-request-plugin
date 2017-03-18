@@ -63,13 +63,13 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.ALL_IS_WELL, build);
+		this.j.assertLogContains(ALL_IS_WELL, build);
 	}
 
 	@Test
 	public void canDetectActualContent() throws Exception {
 		// Setup the expected pattern
-		String findMe = this.ALL_IS_WELL;
+		String findMe = ALL_IS_WELL;
 
 		// Prepare the server
 		registerRequestChecker(HttpMode.GET);
@@ -131,7 +131,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.ALL_IS_WELL, build);
+		this.j.assertLogContains(ALL_IS_WELL, build);
 	}
 
 	@Test
@@ -153,7 +153,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.ALL_IS_WELL, build);
+		this.j.assertLogContains(ALL_IS_WELL, build);
 	}
 
 	@Test
@@ -175,7 +175,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.ALL_IS_WELL, build);
+		this.j.assertLogContains(ALL_IS_WELL, build);
 	}
 
 	@Test
@@ -205,7 +205,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.ALL_IS_WELL, build);
+		this.j.assertLogContains(ALL_IS_WELL, build);
 	}
 
 	@Test
@@ -227,7 +227,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.ALL_IS_WELL, build);
+		this.j.assertLogContains(ALL_IS_WELL, build);
 	}
 
 	@Test
@@ -249,7 +249,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.ALL_IS_WELL, build);
+		this.j.assertLogContains(ALL_IS_WELL, build);
 	}
 
 	@Test
@@ -272,7 +272,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.ALL_IS_WELL, build);
+		this.j.assertLogContains(ALL_IS_WELL, build);
 	}
 
 	@Test
@@ -294,7 +294,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.ALL_IS_WELL, build);
+		this.j.assertLogContains(ALL_IS_WELL, build);
 	}
 
 	@Test
@@ -326,7 +326,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 			return;
 		}
 
-		this.j.assertLogContains(this.ALL_IS_WELL, build);
+		this.j.assertLogContains(ALL_IS_WELL, build);
 	}
 
 	@Test
@@ -512,7 +512,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatusSuccess(build);
-		this.j.assertLogContains(this.ALL_IS_WELL, build);
+		this.j.assertLogContains(ALL_IS_WELL, build);
 	}
 
 	@Test
@@ -534,11 +534,11 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		this.j.assertBuildStatusSuccess(build);
 
 		// By default, the response is printed to the console even if an outputFile is used
-		this.j.assertLogContains(this.ALL_IS_WELL, build);
+		this.j.assertLogContains(ALL_IS_WELL, build);
 
 		// The response is in the output file as well
 		String outputFile = build.getWorkspace().child("file.txt").readToString();
-		Pattern p = Pattern.compile(this.ALL_IS_WELL);
+		Pattern p = Pattern.compile(ALL_IS_WELL);
 		Matcher m = p.matcher(outputFile);
 		assertTrue(m.find());
 	}
@@ -561,11 +561,11 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		this.j.assertBuildStatusSuccess(build);
 
 		// Check that the console does NOT have the response body
-		this.j.assertLogNotContains(this.ALL_IS_WELL, build);
+		this.j.assertLogNotContains(ALL_IS_WELL, build);
 
 		// The response is in the output file
 		String outputFile = build.getWorkspace().child("file.txt").readToString();
-		Pattern p = Pattern.compile(this.ALL_IS_WELL);
+		Pattern p = Pattern.compile(ALL_IS_WELL);
 		Matcher m = p.matcher(outputFile);
 		assertTrue(m.find());
 	}
@@ -639,7 +639,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatus(Result.SUCCESS, build);
-		this.j.assertLogContains(this.ALL_IS_WELL, build);
+		this.j.assertLogContains(ALL_IS_WELL, build);
 	}
 
 	@Test
