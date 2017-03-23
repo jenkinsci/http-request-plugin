@@ -16,17 +16,24 @@ import static jenkins.plugins.http_request.Registers.registerRequestChecker;
 import static jenkins.plugins.http_request.Registers.registerTimeout;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHttpResponse;
+import org.eclipse.jetty.server.Request;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -676,6 +683,75 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		HttpRequest httpRequest = new HttpRequest(baseURL() + "/basicAuth");
 		HttpRequestGlobalConfig.get().setBasicDigestAuthentications(bda);
 		httpRequest.setAuthentication("keyname1");
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatus(Result.SUCCESS, build);
+	}
+
+	@Test
+	public void testFormAuthentication() throws Exception {
+		final String paramUsername = "username";
+		final String valueUsername = "user";
+		final String paramPassword = "password";
+		final String valuePassword = "pass";
+		final String sessionName = "VALID_SESSIONID";
+
+		registerHandler("/form-auth", HttpMode.POST, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				String username = request.getParameter(paramUsername);
+				String password = request.getParameter(paramPassword);
+				if (!username.equals(valueUsername) || !password.equals(valuePassword)) {
+					response.setStatus(401);
+					return;
+				}
+				response.addCookie(new Cookie(sessionName, "ok"));
+				okAllIsWell(response);
+			}
+		});
+		registerHandler("/test-auth", HttpMode.GET, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				String jsessionValue = "";
+				Cookie[] cookies = request.getCookies();
+				for (Cookie cookie : cookies) {
+					if (cookie.getName().equals(sessionName)) {
+						jsessionValue = cookie.getValue();
+						break;
+					}
+				}
+
+				if (!jsessionValue.equals("ok")) {
+					response.setStatus(401);
+					return;
+				}
+				okAllIsWell(response);
+			}
+		});
+
+
+		// Prepare the authentication
+		List<HttpRequestNameValuePair> params = new ArrayList<>();
+		params.add(new HttpRequestNameValuePair(paramUsername, valueUsername));
+		params.add(new HttpRequestNameValuePair(paramPassword, valuePassword));
+
+		RequestAction action = new RequestAction(new URL(baseURL() + "/form-auth"), HttpMode.POST, null, params);
+		List<RequestAction> actions = new ArrayList<RequestAction>();
+		actions.add(action);
+
+		FormAuthentication formAuth = new FormAuthentication("Form", actions);
+		List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
+		formAuthList.add(formAuth);
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/test-auth");
+		HttpRequestGlobalConfig.get().setFormAuthentications(formAuthList);
+		httpRequest.setAuthentication("Form");
 
 		// Run build
 		FreeStyleProject project = this.j.createFreeStyleProject();
