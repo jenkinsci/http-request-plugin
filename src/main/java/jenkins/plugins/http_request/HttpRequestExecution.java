@@ -50,6 +50,7 @@ import jenkins.plugins.http_request.util.RequestAction;
  */
 public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentSupplier, RuntimeException> {
 
+	private static final long serialVersionUID = -2066857816168989599L;
 	private final String url;
 	private final HttpMode httpMode;
 	private final boolean ignoreSslErrors;

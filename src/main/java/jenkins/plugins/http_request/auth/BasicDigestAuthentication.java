@@ -30,8 +30,9 @@ import jenkins.plugins.http_request.HttpRequest;
  */
 public class BasicDigestAuthentication extends AbstractDescribableImpl<BasicDigestAuthentication>
         implements Authenticator {
+	private static final long serialVersionUID = 4818288270720177069L;
 
-    private final String keyName;
+	private final String keyName;
     private final String userName;
     private final String password;
 

@@ -1,6 +1,5 @@
 package jenkins.plugins.http_request;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +26,7 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 /**
  * @author Martin d'Anjou
  */
-public final class HttpRequestStep extends AbstractStepImpl implements Serializable {
+public final class HttpRequestStep extends AbstractStepImpl {
 
     private @Nonnull String url;
 	private boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;

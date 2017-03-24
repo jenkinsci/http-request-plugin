@@ -29,7 +29,8 @@ import jenkins.plugins.http_request.util.RequestAction;
 public class FormAuthentication extends AbstractDescribableImpl<FormAuthentication>
         implements Authenticator {
 
-    private final String keyName;
+	private static final long serialVersionUID = -4370238820437831639L;
+	private final String keyName;
     private final List<RequestAction> actions;
 
     @DataBoundConstructor

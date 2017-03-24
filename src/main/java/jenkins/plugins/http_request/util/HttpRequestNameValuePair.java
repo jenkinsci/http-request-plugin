@@ -17,7 +17,8 @@ import hudson.util.FormValidation;
 public class HttpRequestNameValuePair extends AbstractDescribableImpl<HttpRequestNameValuePair>
         implements NameValuePair, Serializable {
 
-    private final String name;
+	private static final long serialVersionUID = -5179602567301232134L;
+	private final String name;
     private final String value;
     private final boolean maskValue;
 

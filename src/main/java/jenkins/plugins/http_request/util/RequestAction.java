@@ -22,7 +22,8 @@ import jenkins.plugins.http_request.HttpMode;
  */
 public class RequestAction extends AbstractDescribableImpl<RequestAction> implements Serializable {
 
-    private final URL url;
+	private static final long serialVersionUID = 7846277147434838878L;
+	private final URL url;
     private final HttpMode mode;
     private final String requestBody;
     private final List<HttpRequestNameValuePair> params;
