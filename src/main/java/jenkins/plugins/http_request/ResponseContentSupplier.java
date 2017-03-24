@@ -59,9 +59,8 @@ class ResponseContentSupplier implements Serializable {
 			}
 			this.content = EntityUtils.toString(entity);
 			EntityUtils.consume(response.getEntity());
-		}
-		catch (IOException e) {
-			this.content = "IOException while reading HttpResponse: " + e.getMessage();
+		} catch (IOException e) {
+			throw new IllegalStateException(e);
 		}
 	}
 
@@ -74,9 +73,8 @@ class ResponseContentSupplier implements Serializable {
 				}
 				this.headers.get(respHeader.getName()).add(respHeader.getValue());
 			}
-		}
-		catch (Exception e) {
-			this.content = "Exception while reading HttpResponse headers: " + e.getMessage();
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
 		}
 	}
 

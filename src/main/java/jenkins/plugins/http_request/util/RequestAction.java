@@ -1,31 +1,32 @@
 package jenkins.plugins.http_request.util;
 
-import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
-import hudson.model.Descriptor;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-import jenkins.plugins.http_request.HttpMode;
-import org.apache.http.entity.ContentType;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-
+import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+
+import hudson.Extension;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+
+import jenkins.plugins.http_request.HttpMode;
+
 /**
  * @author Janario Oliveira
  */
-public class RequestAction extends AbstractDescribableImpl<RequestAction> {
+public class RequestAction extends AbstractDescribableImpl<RequestAction> implements Serializable {
 
     private final URL url;
     private final HttpMode mode;
     private final String requestBody;
     private final List<HttpRequestNameValuePair> params;
     private final List<HttpRequestNameValuePair> headers;
-    private ContentType contentType;
 
     @DataBoundConstructor
     public RequestAction(URL url, HttpMode mode, String requestBody, List<HttpRequestNameValuePair> params) {
@@ -33,16 +34,11 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> {
     }
 
     public RequestAction(URL url, HttpMode mode, String requestBody, List<HttpRequestNameValuePair> params, List<HttpRequestNameValuePair> headers) {
-        this(url, mode, requestBody, params, headers, ContentType.DEFAULT_TEXT);
-    }
-
-    public RequestAction(URL url, HttpMode mode, String requestBody, List<HttpRequestNameValuePair> params, List<HttpRequestNameValuePair> headers, ContentType contentType) {
         this.url = url;
         this.mode = mode;
         this.requestBody = requestBody;
         this.params = params == null ? new ArrayList<HttpRequestNameValuePair>() : params;
         this.headers = headers  == null ? new ArrayList<HttpRequestNameValuePair>() : headers;
-        this.contentType = contentType;
     }
 
     public URL getUrl() {
@@ -63,10 +59,6 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> {
 
     public String getRequestBody() {
         return requestBody;
-    }
-
-    public ContentType getContentType() {
-        return contentType;
     }
 
     @Extension

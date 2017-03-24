@@ -3,18 +3,7 @@ package jenkins.plugins.http_request;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.PrintStream;
-import java.net.ConnectException;
-import java.net.SocketTimeoutException;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.nio.charset.Charset;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,17 +12,6 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustStrategy;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.ssl.SSLContextBuilder;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -42,12 +20,10 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Range;
 import com.google.common.collect.Ranges;
 
-import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.Util;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
 import hudson.model.AbstractBuild;
@@ -59,14 +35,12 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import hudson.util.VariableResolver;
 
 import jenkins.plugins.http_request.auth.Authenticator;
 import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
-import jenkins.plugins.http_request.util.RequestAction;
 
 /**
  * @author Janario Oliveira
@@ -237,240 +211,91 @@ public class HttpRequest extends Builder {
 		return this;
 	}
 
+	private List<HttpRequestNameValuePair> createParams(EnvVars envVars, AbstractBuild<?, ?> build, TaskListener listener) throws IOException {
+		Map<String, String> buildVariables = build.getBuildVariables();
+		if (buildVariables.isEmpty()) {
+			return Collections.emptyList();
+		}
+		PrintStream logger = listener.getLogger();
+		logger.println("Parameters: ");
+
+		List<HttpRequestNameValuePair> l = new ArrayList<>();
+		for (Map.Entry<String, String> entry : buildVariables.entrySet()) {
+			String value = envVars.expand(entry.getValue());
+			logger.println("  " + entry.getKey() + " = " + value);
+
+			l.add(new HttpRequestNameValuePair(entry.getKey(), value));
+		}
+		return l;
+	}
+
+	String resolveUrl(EnvVars envVars,
+					  AbstractBuild<?, ?> build, TaskListener listener) throws IOException {
+		String url = envVars.expand(getUrl());
+		if (Boolean.TRUE.equals(getPassBuildParameters()) && getHttpMode() == HttpMode.GET) {
+			List<HttpRequestNameValuePair> params = createParams(envVars, build, listener);
+			if (!params.isEmpty()) {
+				url = HttpClientUtil.appendParamsToUrl(url, params);
+			}
+		}
+		return url;
+	}
+
+	List<HttpRequestNameValuePair> resolveHeaders(EnvVars envVars) {
+		final List<HttpRequestNameValuePair> headers = new ArrayList<>();
+		if (contentType != null && contentType != MimeType.NOT_SET) {
+			headers.add(new HttpRequestNameValuePair("Content-type", contentType.getContentType().toString()));
+		}
+		if (acceptType != null && acceptType != MimeType.NOT_SET) {
+			headers.add(new HttpRequestNameValuePair("Accept", acceptType.getValue()));
+		}
+		for (HttpRequestNameValuePair header : customHeaders) {
+			String headerName = envVars.expand(header.getName());
+			String headerValue = envVars.expand(header.getValue());
+			boolean maskValue = headerName.equalsIgnoreCase("Authorization") ||
+					header.getMaskValue();
+
+			headers.add(new HttpRequestNameValuePair(headerName, headerValue, maskValue));
+		}
+		return headers;
+	}
+
+	String resolveBody(EnvVars envVars,
+					  AbstractBuild<?, ?> build, TaskListener listener) throws IOException {
+		String body = envVars.expand(getRequestBody());
+		if (Strings.isNullOrEmpty(body) && Boolean.TRUE.equals(getPassBuildParameters())) {
+			List<HttpRequestNameValuePair> params = createParams(envVars, build, listener);
+			if (!params.isEmpty()) {
+				body = HttpClientUtil.paramsToString(params);
+			}
+		}
+		return body;
+	}
+
+	FilePath resolveOutputFile(EnvVars envVars, AbstractBuild<?,?> build) {
+		if (outputFile == null || outputFile.trim().isEmpty()) {
+			return null;
+		}
+		String filePath = envVars.expand(outputFile);
+		return build.getWorkspace().child(filePath);
+	}
+
     @Override
     public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener)
     throws InterruptedException, IOException
     {
-        final PrintStream logger = listener.getLogger();
-        final EnvVars envVars = build.getEnvironment(listener);
-        final VariableResolver<String> buildVariableResolver = build.getBuildVariableResolver();
+		EnvVars envVars = build.getEnvironment(listener);
+		for (Map.Entry<String, String> e : build.getBuildVariables().entrySet()) {
+			envVars.put(e.getKey(), e.getValue());
+		}
 
-        String evaluatedUrl = evaluate(url, buildVariableResolver, envVars);
-        String evaluatedBody = evaluate(requestBody, buildVariableResolver, envVars);
+		HttpRequestExecution exec = HttpRequestExecution.from(this, envVars, build, listener);
+		launcher.getChannel().call(exec);
 
-        final List<HttpRequestNameValuePair> params = createParameters(build, logger, envVars);
-        final List<HttpRequestNameValuePair> headers = new ArrayList<>();
-
-        if (contentType != MimeType.NOT_SET) {
-            headers.add(new HttpRequestNameValuePair("Content-type", contentType.getContentType().toString()));
-        }
-        if (acceptType != MimeType.NOT_SET) {
-            headers.add(new HttpRequestNameValuePair("Accept", acceptType.getValue()));
-        }
-        for (HttpRequestNameValuePair header : customHeaders) {
-            String headerName = evaluate(header.getName(), buildVariableResolver, envVars);
-            String headerValue = evaluate(header.getValue(), buildVariableResolver, envVars);
-            boolean maskValue = header.getMaskValue();
-
-            headers.add(new HttpRequestNameValuePair(headerName, headerValue, maskValue));
-        }
-
-        RequestAction requestAction = new RequestAction(new URL(evaluatedUrl), httpMode, evaluatedBody, params, headers, contentType.getContentType());
-
-        ResponseContentSupplier responseContentSupplier = performHttpRequest(listener, requestAction);
-
-        logResponseToFile(build.getWorkspace(), logger, responseContentSupplier);
         return true;
     }
 
-    public ResponseContentSupplier performHttpRequest(TaskListener listener)
-    throws InterruptedException, IOException
-    {
-        List<HttpRequestNameValuePair> params = Collections.emptyList();
-        List<HttpRequestNameValuePair> headers = new ArrayList<>();
-        if (contentType != MimeType.NOT_SET) {
-            headers.add(new HttpRequestNameValuePair("Content-type", contentType.getContentType().toString()));
-        }
-        if (acceptType != MimeType.NOT_SET) {
-            headers.add(new HttpRequestNameValuePair("Accept", acceptType.getValue()));
-        }
-        for (HttpRequestNameValuePair header : customHeaders) {
-            headers.add(new HttpRequestNameValuePair(header.getName(), header.getValue(), header.getMaskValue()));
-        }
-
-        RequestAction requestAction = new RequestAction(new URL(url), httpMode, requestBody, params, headers, contentType.getContentType());
-
-        return performHttpRequest(listener, requestAction);
-    }
-
-    public ResponseContentSupplier performHttpRequest(TaskListener listener, RequestAction requestAction)
-    throws InterruptedException, IOException
-    {
-        final PrintStream logger = listener.getLogger();
-        logger.println("HttpMode: " + requestAction.getMode());
-        logger.println(String.format("URL: %s", requestAction.getUrl()));
-        for (HttpRequestNameValuePair header : requestAction.getHeaders()) {
-            if (header.getMaskValue() || header.getName().equalsIgnoreCase("Authorization")) {
-              logger.println(header.getName() + ": *****");
-            } else {
-              logger.println(header.getName() + ": " + header.getValue());
-            }
-        }
-
-		ResponseContentSupplier responseContentSupplier = authAndRequest(requestAction, logger);
-		responseCodeIsValid(responseContentSupplier, logger);
-		contentIsValid(responseContentSupplier, logger);
-
-		return responseContentSupplier;
-	}
-
-	private ResponseContentSupplier authAndRequest(RequestAction requestAction, PrintStream logger) throws IOException, InterruptedException {
-		CloseableHttpClient httpclient = null;
-		try {
-			HttpClientBuilder clientBuilder = HttpClientBuilder.create().useSystemProperties();
-			//timeout
-			if (timeout != null) {
-				int t = timeout * 1000;
-				RequestConfig config = RequestConfig.custom()
-						.setSocketTimeout(t)
-						.setConnectTimeout(t)
-						.setConnectionRequestTimeout(t)
-						.build();
-				clientBuilder.setDefaultRequestConfig(config);
-			}
-			//ssl
-			if (ignoreSslErrors) {
-				try {
-					SSLContextBuilder builder = SSLContextBuilder.create();
-					builder.loadTrustMaterial(null, new TrustStrategy() {
-						@Override
-						public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-							return true;
-						}
-					});
-					SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build(), NoopHostnameVerifier.INSTANCE);
-					clientBuilder.setSSLSocketFactory(sslsf);
-				} catch (KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
-					throw new IllegalStateException(e);
-				}
-			}
-
-			HttpClientUtil clientUtil = new HttpClientUtil();
-			HttpRequestBase httpRequestBase = clientUtil.createRequestBase(requestAction);
-			HttpContext context = new BasicHttpContext();
-
-			httpclient = auth(logger, clientBuilder, httpRequestBase, context);
-			return executeRequest(logger, httpclient, clientUtil, httpRequestBase, context);
-		} finally {
-			if (httpclient != null) {
-				httpclient.close();
-			}
-		}
-	}
-
-	private CloseableHttpClient auth(PrintStream logger, HttpClientBuilder clientBuilder, HttpRequestBase httpRequestBase, HttpContext context) throws IOException, InterruptedException {
-		if (authentication != null && !authentication.isEmpty()) {
-			final Authenticator auth = HttpRequestGlobalConfig.get().getAuthentication(authentication);
-			if (auth == null) {
-				throw new IllegalStateException("Authentication '" + authentication + "' doesn't exist anymore");
-			}
-
-			logger.println("Using authentication: " + auth.getKeyName());
-			return auth.authenticate(clientBuilder, context, httpRequestBase, logger);
-		}
-		return clientBuilder.build();
-	}
-
-	private ResponseContentSupplier executeRequest(PrintStream logger, CloseableHttpClient httpclient, HttpClientUtil clientUtil, HttpRequestBase httpRequestBase, HttpContext context) throws IOException, InterruptedException {
-		ResponseContentSupplier responseContentSupplier;
-		try {
-			final HttpResponse response = clientUtil.execute(httpclient, context, httpRequestBase, logger);
-			// The HttpEntity is consumed by the ResponseContentSupplier
-			responseContentSupplier = new ResponseContentSupplier(response);
-		} catch (UnknownHostException uhe) {
-			logger.println("Treating UnknownHostException(" + uhe.getMessage() + ") as 404 Not Found");
-			responseContentSupplier = new ResponseContentSupplier("UnknownHostException as 404 Not Found", 404);
-		} catch (SocketTimeoutException | ConnectException ce) {
-			logger.println("Treating " + ce.getClass() + "(" + ce.getMessage() + ") as 408 Request Timeout");
-			responseContentSupplier = new ResponseContentSupplier(ce.getClass() + "(" + ce.getMessage() + ") as 408 Request Timeout", 408);
-		}
-
-		if (consoleLogResponseBody) {
-			logger.println("Response: \n" + responseContentSupplier.getContent());
-		}
-		return responseContentSupplier;
-	}
-
-	private void contentIsValid(ResponseContentSupplier responseContentSupplier, PrintStream logger)
-    throws AbortException
-    {
-        if (Strings.isNullOrEmpty(validResponseContent)) {
-            return;
-        }
-
-        String response = responseContentSupplier.getContent();
-        if (!response.contains(validResponseContent)) {
-            throw new AbortException("Fail: Response with length " + response.length() + " doesn't contain '" + validResponseContent + "'");
-        }
-        return;
-    }
-
-    private void responseCodeIsValid(ResponseContentSupplier response, PrintStream logger)
-    throws AbortException
-    {
-        List<Range<Integer>> ranges = DescriptorImpl.parseToRange(validResponseCodes);
-        for (Range<Integer> range : ranges) {
-            if (range.contains(response.getStatus())) {
-                logger.println("Success code from " + range);
-                return;
-            }
-        }
-        throw new AbortException("Fail: the returned code " + response.getStatus()+" is not in the accepted range: "+ranges);
-    }
-
-    private void logResponseToFile(FilePath workspace, PrintStream logger, ResponseContentSupplier responseContentSupplier) throws IOException, InterruptedException {
-
-        FilePath outputFilePath = getOutputFilePath(workspace, logger);
-
-        if (outputFilePath != null && responseContentSupplier.getContent() != null) {
-            OutputStreamWriter write = null;
-            try {
-                write = new OutputStreamWriter(outputFilePath.write(), Charset.forName("UTF-8"));
-                write.write(responseContentSupplier.getContent());
-            } finally {
-                if (write != null) {
-                    write.close();
-                }
-            }
-        }
-    }
-
-    private FilePath getOutputFilePath(FilePath workspace, PrintStream logger) {
-        if (outputFile != null && !outputFile.isEmpty()) {
-            return workspace.child(outputFile);
-        }
-        return null;
-    }
-
-    private List<HttpRequestNameValuePair> createParameters(
-            AbstractBuild<?, ?> build, PrintStream logger,
-            EnvVars envVars) {
-        if (passBuildParameters == null || !passBuildParameters) {
-            return Collections.emptyList();
-        }
-
-        if (!envVars.isEmpty()) {
-            logger.println("Parameters: ");
-        }
-
-        final VariableResolver<String> vars = build.getBuildVariableResolver();
-
-        List<HttpRequestNameValuePair> l = new ArrayList<HttpRequestNameValuePair>();
-        for (Map.Entry<String, String> entry : build.getBuildVariables().entrySet()) {
-            String value = evaluate(entry.getValue(), vars, envVars);
-            logger.println("  " + entry.getKey() + " = " + value);
-
-            l.add(new HttpRequestNameValuePair(entry.getKey(), value));
-        }
-
-        return l;
-    }
-
-    private String evaluate(String value, VariableResolver<String> vars, Map<String, String> env) {
-        return Util.replaceMacro(Util.replaceMacro(value, vars), env);
-    }
-
-    @Extension
+	@Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 		public static final boolean ignoreSslErrors = false;
 		public static final HttpMode httpMode                  = HttpMode.GET;

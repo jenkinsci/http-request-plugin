@@ -1,5 +1,7 @@
 package jenkins.plugins.http_request;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -15,6 +17,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import hudson.Extension;
+import hudson.Launcher;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -24,7 +27,7 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 /**
  * @author Martin d'Anjou
  */
-public final class HttpRequestStep extends AbstractStepImpl {
+public final class HttpRequestStep extends AbstractStepImpl implements Serializable {
 
     private @Nonnull String url;
 	private boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
@@ -47,6 +50,10 @@ public final class HttpRequestStep extends AbstractStepImpl {
     public String getUrl() {
         return url;
     }
+
+	public boolean isIgnoreSslErrors() {
+		return ignoreSslErrors;
+	}
 
 	@DataBoundSetter
 	public void setIgnoreSslErrors(boolean ignoreSslErrors) {
@@ -147,6 +154,26 @@ public final class HttpRequestStep extends AbstractStepImpl {
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) super.getDescriptor();
     }
+
+	List<HttpRequestNameValuePair> resolveHeaders() {
+		final List<HttpRequestNameValuePair> headers = new ArrayList<>();
+		if (contentType != null && contentType != MimeType.NOT_SET) {
+			headers.add(new HttpRequestNameValuePair("Content-type", contentType.getContentType().toString()));
+		}
+		if (acceptType != null && acceptType != MimeType.NOT_SET) {
+			headers.add(new HttpRequestNameValuePair("Accept", acceptType.getValue()));
+		}
+		for (HttpRequestNameValuePair header : customHeaders) {
+			String headerName = header.getName();
+			String headerValue = header.getValue();
+			boolean maskValue = headerName.equalsIgnoreCase("Authorization") ||
+					header.getMaskValue();
+
+			headers.add(new HttpRequestNameValuePair(headerName, headerValue, maskValue));
+		}
+		return headers;
+	}
+
     @Extension
     public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
         public static final boolean ignoreSslErrors = HttpRequest.DescriptorImpl.ignoreSslErrors;
@@ -165,7 +192,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
             super(Execution.class);
         }
 
-        @Override
+		@Override
         public String getFunctionName() {
             return "httpRequest";
         }
@@ -206,27 +233,20 @@ public final class HttpRequestStep extends AbstractStepImpl {
         @Inject
         private transient HttpRequestStep step;
 
-        @StepContextParameter
-        private transient TaskListener listener;
+		@StepContextParameter
+		private transient TaskListener listener;
 
-        @Override
-        protected ResponseContentSupplier run() throws Exception {
-            HttpRequest httpRequest = new HttpRequest(step.url);
-			httpRequest.setIgnoreSslErrors(step.ignoreSslErrors);
-            httpRequest.setHttpMode(step.httpMode);
-            httpRequest.setConsoleLogResponseBody(step.consoleLogResponseBody);
-            httpRequest.setValidResponseCodes(step.validResponseCodes);
-            httpRequest.setValidResponseContent(step.validResponseContent);
-            httpRequest.setAcceptType(step.acceptType);
-            httpRequest.setContentType(step.contentType);
-            httpRequest.setTimeout(step.timeout);
-            httpRequest.setConsoleLogResponseBody(step.consoleLogResponseBody);
-            httpRequest.setAuthentication(step.authentication);
-            httpRequest.setRequestBody(step.requestBody);
-            httpRequest.setCustomHeaders(step.customHeaders);
-            ResponseContentSupplier response = httpRequest.performHttpRequest(listener);
-            return response;
-        }
+		@Override
+		protected ResponseContentSupplier run() throws Exception {
+			HttpRequestExecution exec = HttpRequestExecution.from(step, listener);
+
+			Launcher launcher = getContext().get(Launcher.class);
+			if (launcher != null) {
+				return launcher.getChannel().call(exec);
+			}
+
+			return exec.call();
+		}
 
         private static final long serialVersionUID = 1L;
 

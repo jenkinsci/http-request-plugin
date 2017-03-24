@@ -5,7 +5,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -63,42 +64,62 @@ public class HttpClientUtil {
         return makePost(requestAction);
     }
 
-    private HttpEntity makeEntity(RequestAction requestAction) throws
-            UnsupportedEncodingException {
-        if (!Strings.isNullOrEmpty(requestAction.getRequestBody())) {
-            ContentType contentType = requestAction.getContentType();
-            if (contentType == null) {
-                for (HttpRequestNameValuePair header : requestAction.getHeaders()) {
-                    if ("Content-type".equals(header.getName())) {
-                        contentType = ContentType.parse(header.getValue());
-                    }
-                }
-            }
+	private HttpEntity makeEntity(RequestAction requestAction) throws
+			UnsupportedEncodingException {
+		if (!Strings.isNullOrEmpty(requestAction.getRequestBody())) {
+			ContentType contentType = null;
+			for (HttpRequestNameValuePair header : requestAction.getHeaders()) {
+				if ("Content-type".equalsIgnoreCase(header.getName())) {
+					contentType = ContentType.parse(header.getValue());
+					break;
+				}
+			}
 
-        	  return new StringEntity(requestAction.getRequestBody(), contentType);
-        }
-        return new UrlEncodedFormEntity(requestAction.getParams());
-    }
+			return new StringEntity(requestAction.getRequestBody(), contentType);
+		}
+		return toUrlEncoded(requestAction.getParams());
+	}
 
-    public HttpGet makeGet(RequestAction requestAction) throws IOException {
-        final String url = requestAction.getUrl().toString();
-        final StringBuilder sb = new StringBuilder(url);
+	public HttpGet makeGet(RequestAction requestAction) throws IOException {
+        String url = requestAction.getUrl().toString();
 
         if (!requestAction.getParams().isEmpty()) {
-            sb.append(url.contains("?") ? "&" : "?");
-            final HttpEntity entity = makeEntity(requestAction);
-
-            final BufferedReader br = new BufferedReader(new InputStreamReader(entity.getContent(), Charset.forName("UTF-8")));
-            String s;
-            while ((s = br.readLine()) != null) {
-                sb.append(s);
-            }
-            br.close();
+			url = appendParamsToUrl(url, requestAction.getParams());
         }
-        return new HttpGet(sb.toString());
+        return new HttpGet(url);
     }
 
-    public HttpHead makeHead(RequestAction requestAction) throws UnsupportedEncodingException {
+	private static UrlEncodedFormEntity toUrlEncoded(List<HttpRequestNameValuePair> params) throws UnsupportedEncodingException {
+		return new UrlEncodedFormEntity(params);
+	}
+
+	public static String appendParamsToUrl(String url, List<HttpRequestNameValuePair> params) throws IOException {
+		url += url.contains("?") ? "&" : "?";
+		url += paramsToString(params);
+
+		return url;
+	}
+
+	public static String paramsToString(List<HttpRequestNameValuePair> params) throws IOException {
+		StringBuilder sb = new StringBuilder();
+		final HttpEntity entity = toUrlEncoded(params);
+
+		BufferedReader br = null;
+		try {
+			br = new BufferedReader(new InputStreamReader(entity.getContent(), StandardCharsets.UTF_8));
+			String s;
+			while ((s = br.readLine()) != null) {
+				sb.append(s);
+			}
+			return sb.toString();
+		} finally {
+			if (br != null) {
+				br.close();
+			}
+		}
+	}
+
+	public HttpHead makeHead(RequestAction requestAction) throws UnsupportedEncodingException {
         final HttpHead httpHead = new HttpHead(requestAction.getUrl().toString());
 
         return httpHead;

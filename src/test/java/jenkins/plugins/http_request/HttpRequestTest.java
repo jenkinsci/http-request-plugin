@@ -114,9 +114,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		// Check expectations
 		this.j.assertBuildStatus(Result.FAILURE, build);
 		String s = FileUtils.readFileToString(build.getLogFile());
-		Pattern p = Pattern.compile("Fail: Response with length \\d+ doesn't contain 'bad content'");
-		Matcher m = p.matcher(s);
-		assertTrue(m.find());
+		assertTrue(s.contains("Fail: Response doesn't contain expected content 'bad content'"));
 	}
 
 	@Test

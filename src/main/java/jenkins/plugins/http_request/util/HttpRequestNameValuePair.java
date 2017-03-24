@@ -1,19 +1,21 @@
 package jenkins.plugins.http_request.util;
 
+import java.io.Serializable;
+
+import org.apache.http.NameValuePair;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
-import jenkins.plugins.http_request.HttpRequest;
-import org.apache.http.NameValuePair;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
 
 /**
  * @author Janario Oliveira
  */
 public class HttpRequestNameValuePair extends AbstractDescribableImpl<HttpRequestNameValuePair>
-        implements NameValuePair {
+        implements NameValuePair, Serializable {
 
     private final String name;
     private final String value;

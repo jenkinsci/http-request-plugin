@@ -17,8 +17,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -109,9 +107,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
         String s = FileUtils.readFileToString(run.getLogFile());
-        Pattern p = Pattern.compile("Fail: Response with length \\d+ doesn't contain 'bad content'");
-        Matcher m = p.matcher(s);
-        assertTrue(m.find());
+		assertTrue(s.contains("Fail: Response doesn't contain expected content 'bad content'"));
     }
 
     @Test
