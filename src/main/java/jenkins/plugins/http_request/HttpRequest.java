@@ -277,7 +277,11 @@ public class HttpRequest extends Builder {
 			return null;
 		}
 		String filePath = envVars.expand(outputFile);
-		return build.getWorkspace().child(filePath);
+		FilePath workspace = build.getWorkspace();
+		if (workspace == null) {
+			throw new IllegalStateException("Could not find workspace to save file outputFile: " + outputFile);
+		}
+		return workspace.child(filePath);
 	}
 
     @Override

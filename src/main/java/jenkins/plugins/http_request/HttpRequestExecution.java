@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
@@ -164,7 +165,11 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 	private PrintStream logger() {
 		if (localLogger == null) {
-			localLogger = new PrintStream(remoteLogger);
+			try {
+				localLogger = new PrintStream(remoteLogger, true, StandardCharsets.UTF_8.name());
+			} catch (UnsupportedEncodingException e) {
+				throw new IllegalStateException(e);
+			}
 		}
 		return localLogger;
 	}
