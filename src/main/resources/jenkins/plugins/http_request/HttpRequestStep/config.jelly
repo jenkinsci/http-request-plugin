@@ -23,6 +23,9 @@
         <f:entry field="timeout" title="Connection timeout" help="/plugin/http_request/help-timeout.html">
             <f:number default="${descriptor.timeout}"/>
         </f:entry>
+        <f:entry field="outputFile" title="Output response to file" help="/plugin/http_request/help-outputFile.html">
+             <f:textbox />
+        </f:entry>
         <f:entry field="consoleLogResponseBody" title="Response body in console?" help="/plugin/http_request/help-consoleLogResponseBody.html">
             <f:booleanRadio />
         </f:entry>

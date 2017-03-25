@@ -41,6 +41,7 @@ import hudson.remoting.RemoteOutputStream;
 import jenkins.security.MasterToSlaveCallable;
 
 import jenkins.plugins.http_request.HttpRequest.DescriptorImpl;
+import jenkins.plugins.http_request.HttpRequestStep.Execution;
 import jenkins.plugins.http_request.auth.Authenticator;
 import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
@@ -93,8 +94,9 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		}
 	}
 
-	static HttpRequestExecution from(HttpRequestStep step, TaskListener taskListener) {
+	static HttpRequestExecution from(HttpRequestStep step, TaskListener taskListener, Execution execution) {
 		List<HttpRequestNameValuePair> headers = step.resolveHeaders();
+		FilePath outputFile = execution.resolveOutputFile();
 
 		return new HttpRequestExecution(
 				step.getUrl(), step.getHttpMode(), step.isIgnoreSslErrors(),
@@ -102,7 +104,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 				step.getAuthentication(),
 
 				step.getValidResponseCodes(), step.getValidResponseContent(),
-				step.getConsoleLogResponseBody(), null,
+				step.getConsoleLogResponseBody(), outputFile,
 
 				taskListener.getLogger());
 	}

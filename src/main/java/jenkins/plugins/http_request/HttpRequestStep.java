@@ -1,5 +1,6 @@
 package jenkins.plugins.http_request;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
@@ -40,6 +42,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
     private String authentication             = DescriptorImpl.authentication;
     private String requestBody                = DescriptorImpl.requestBody;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
+	private String outputFile = DescriptorImpl.outputFile;
 
     @DataBoundConstructor
     public HttpRequestStep(String url) {
@@ -149,7 +152,16 @@ public final class HttpRequestStep extends AbstractStepImpl {
         return customHeaders;
     }
 
-    @Override
+	public String getOutputFile() {
+		return outputFile;
+	}
+
+	@DataBoundSetter
+	public void setOutputFile(String outputFile) {
+		this.outputFile = outputFile;
+	}
+
+	@Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) super.getDescriptor();
     }
@@ -173,7 +185,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
 		return headers;
 	}
 
-    @Extension
+	@Extension
     public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
         public static final boolean ignoreSslErrors = HttpRequest.DescriptorImpl.ignoreSslErrors;
         public static final HttpMode httpMode                  = HttpRequest.DescriptorImpl.httpMode;
@@ -186,6 +198,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
         public static final String   authentication            = HttpRequest.DescriptorImpl.authentication;
         public static final String   requestBody               = HttpRequest.DescriptorImpl.requestBody;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
+        public static final String outputFile = "";
 
         public DescriptorImpl() {
             super(Execution.class);
@@ -237,7 +250,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
 
 		@Override
 		protected ResponseContentSupplier run() throws Exception {
-			HttpRequestExecution exec = HttpRequestExecution.from(step, listener);
+			HttpRequestExecution exec = HttpRequestExecution.from(step, listener, this);
 
 			Launcher launcher = getContext().get(Launcher.class);
 			if (launcher != null) {
@@ -249,5 +262,22 @@ public final class HttpRequestStep extends AbstractStepImpl {
 
         private static final long serialVersionUID = 1L;
 
-    }
+		FilePath resolveOutputFile() {
+			String outputFile = step.getOutputFile();
+			if (outputFile == null || outputFile.trim().isEmpty()) {
+				return null;
+			}
+
+			try {
+				FilePath workspace = getContext().get(FilePath.class);
+				if (workspace == null) {
+					throw new IllegalStateException("Could not find workspace to save file outputFile: " + outputFile +
+							". You should use it inside a 'node' block");
+				}
+				return workspace.child(outputFile);
+			} catch (IOException | InterruptedException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+	}
 }
