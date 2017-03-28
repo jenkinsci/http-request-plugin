@@ -22,6 +22,8 @@ import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * @author Martin d'Anjou
  *         <p>
@@ -37,7 +39,9 @@ class ResponseContentSupplier implements Serializable, AutoCloseable {
 
 	private ResponseHandle responseHandle;
 	private String content;
+	@SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
 	private transient InputStream contentStream;
+	@SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
 	private transient CloseableHttpClient httpclient;
 
 	public ResponseContentSupplier(String content, int status) {
@@ -58,8 +62,8 @@ class ResponseContentSupplier implements Serializable, AutoCloseable {
 			if (responseHandle == ResponseHandle.STRING && entityContent != null) {
 				byte[] bytes = ByteStreams.toByteArray(entityContent);
 				contentStream = new ByteArrayInputStream(bytes);
-				content = Strings.isNullOrEmpty(charset) ? new String(bytes) :
-						new String(bytes, Charset.forName(charset));
+				content = new String(bytes, Strings.isNullOrEmpty(charset) ?
+						Charset.defaultCharset().name() : charset);
 			} else {
 				contentStream = entityContent;
 			}
@@ -92,9 +96,8 @@ class ResponseContentSupplier implements Serializable, AutoCloseable {
 			return content;
 		}
 
-		try (InputStreamReader in = Strings.isNullOrEmpty(charset) ?
-				new InputStreamReader(contentStream) :
-				new InputStreamReader(contentStream, charset)) {
+		try (InputStreamReader in = new InputStreamReader(contentStream,
+				Strings.isNullOrEmpty(charset) ? Charset.defaultCharset().name() : charset)) {
 			content = CharStreams.toString(in);
 			return content;
 		} catch (IOException e) {
