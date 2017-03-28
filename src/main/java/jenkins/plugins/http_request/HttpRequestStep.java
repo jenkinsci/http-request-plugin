@@ -43,6 +43,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
     private String requestBody                = DescriptorImpl.requestBody;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 	private String outputFile = DescriptorImpl.outputFile;
+	private ResponseHandle responseHandle = ResponseHandle.STRING;
 
     @DataBoundConstructor
     public HttpRequestStep(String url) {
@@ -161,6 +162,16 @@ public final class HttpRequestStep extends AbstractStepImpl {
 		this.outputFile = outputFile;
 	}
 
+	public ResponseHandle getResponseHandle() {
+		return responseHandle;
+	}
+
+
+	@DataBoundSetter
+	public void setResponseHandle(ResponseHandle responseHandle) {
+		this.responseHandle = responseHandle;
+	}
+
 	@Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) super.getDescriptor();
@@ -199,6 +210,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
         public static final String   requestBody               = HttpRequest.DescriptorImpl.requestBody;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
         public static final String outputFile = "";
+		public static final ResponseHandle responseHandle = ResponseHandle.STRING;
 
         public DescriptorImpl() {
             super(Execution.class);
@@ -225,6 +237,14 @@ public final class HttpRequestStep extends AbstractStepImpl {
         public ListBoxModel doFillContentTypeItems() {
             return MimeType.getContentTypeFillItems();
         }
+
+		public ListBoxModel doFillResponseHandleItems() {
+			ListBoxModel items = new ListBoxModel();
+			for (ResponseHandle responseHandle : ResponseHandle.values()) {
+				items.add(responseHandle.name());
+			}
+			return items;
+		}
 
         public ListBoxModel doFillAuthenticationItems() {
             return HttpRequest.DescriptorImpl.fillAuthenticationItems();

@@ -873,7 +873,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		response.setHeader("Set-Cookie", "JSESSIONID=123456789");
 		response.addHeader("Set-Cookie", "JSESSIONID=abcdefghijk");
 		// Run test
-		ResponseContentSupplier respSupplier = new ResponseContentSupplier(response);
+		ResponseContentSupplier respSupplier = new ResponseContentSupplier(ResponseHandle.STRING, response);
 		// Check expectations
 		Assert.assertEquals(2, respSupplier.getHeaders().size());
 		Assert.assertTrue(respSupplier.getHeaders().containsKey("Server"));

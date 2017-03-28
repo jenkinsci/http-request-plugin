@@ -1,39 +1,71 @@
 package jenkins.plugins.http_request;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Serializable;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
+import org.apache.http.entity.ContentType;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.Whitelisted;
+
+import com.google.common.base.Strings;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.CharStreams;
 
 /**
  * @author Martin d'Anjou
- *
+ *         <p>
  *         A container for the Http Response. The container is returned as is to the Pipeline. For the normal plugin, the container is consumed internally (since it cannot be returned).
  */
-class ResponseContentSupplier implements Serializable {
+class ResponseContentSupplier implements Serializable, AutoCloseable {
 
 	private static final long serialVersionUID = 1L;
 
-	private String content;
 	private int status;
-	private Map<String, ArrayList<String>> headers = new HashMap<String, ArrayList<String>>();
+	private Map<String, List<String>> headers = new HashMap<>();
+	private String charset;
+
+	private ResponseHandle responseHandle;
+	private String content;
+	private transient InputStream contentStream;
+	private transient CloseableHttpClient httpclient;
 
 	public ResponseContentSupplier(String content, int status) {
 		this.content = content;
 		this.status = status;
 	}
 
-	public ResponseContentSupplier(HttpResponse response) {
+	public ResponseContentSupplier(ResponseHandle responseHandle, HttpResponse response) {
 		this.status = response.getStatusLine().getStatusCode();
-		setHeaders(response);
-		setContent(response);
+		this.responseHandle = responseHandle;
+		readHeaders(response);
+		readCharset(response);
+
+		try {
+			HttpEntity entity = response.getEntity();
+			InputStream entityContent = entity != null ? entity.getContent() : null;
+
+			if (responseHandle == ResponseHandle.STRING && entityContent != null) {
+				byte[] bytes = ByteStreams.toByteArray(entityContent);
+				contentStream = new ByteArrayInputStream(bytes);
+				content = Strings.isNullOrEmpty(charset) ? new String(bytes) :
+						new String(bytes, Charset.forName(charset));
+			} else {
+				contentStream = entityContent;
+			}
+		} catch (IOException e) {
+			throw new IllegalStateException(e);
+		}
 	}
 
 	@Whitelisted
@@ -42,44 +74,85 @@ class ResponseContentSupplier implements Serializable {
 	}
 
 	@Whitelisted
-	public String getContent() {
-		return this.content;
-	}
-
-	@Whitelisted
-	public Map<String, ArrayList<String>> getHeaders() {
+	public Map<String, List<String>> getHeaders() {
 		return this.headers;
 	}
 
-	private void setContent(HttpResponse response) {
-		try {
-			HttpEntity entity = response.getEntity();
-			if (entity == null) {
-				return;
-			}
-			this.content = EntityUtils.toString(entity);
-			EntityUtils.consume(response.getEntity());
+	@Whitelisted
+	public String getCharset() {
+		return charset;
+	}
+
+	@Whitelisted
+	public String getContent() {
+		if (responseHandle == ResponseHandle.STRING) {
+			return content;
+		}
+		if (content != null) {
+			return content;
+		}
+
+		try (InputStreamReader in = Strings.isNullOrEmpty(charset) ?
+				new InputStreamReader(contentStream) :
+				new InputStreamReader(contentStream, charset)) {
+			content = CharStreams.toString(in);
+			return content;
 		} catch (IOException e) {
-			throw new IllegalStateException(e);
+			throw new IllegalStateException("Error reading response. " +
+					"If you are reading the content in pipeline you should pass responseHandle: 'LEAVE_OPEN' and " +
+					"close the response(response.close()) after consume it.", e);
 		}
 	}
 
-	private void setHeaders(HttpResponse response) {
-		try {
-			Header[] respHeaders = response.getAllHeaders();
-			for (Header respHeader : respHeaders) {
-				if (!this.headers.containsKey(respHeader.getName())) {
-					this.headers.put(respHeader.getName(), new ArrayList<String>());
+	@Whitelisted
+	public InputStream getContentStream() {
+		return contentStream;
+	}
+
+	private void readCharset(HttpResponse response) {
+		Charset charset = null;
+		ContentType contentType = ContentType.get(response.getEntity());
+		if (contentType != null) {
+			charset = contentType.getCharset();
+			if (charset == null) {
+				ContentType defaultContentType = ContentType.getByMimeType(contentType.getMimeType());
+				if (defaultContentType != null) {
+					charset = defaultContentType.getCharset();
 				}
-				this.headers.get(respHeader.getName()).add(respHeader.getValue());
 			}
-		} catch (Exception e) {
-			throw new IllegalStateException(e);
+		}
+		if (charset != null) {
+			this.charset = charset.name();
+		}
+	}
+
+	private void readHeaders(HttpResponse response) {
+		Header[] respHeaders = response.getAllHeaders();
+		for (Header respHeader : respHeaders) {
+			List<String> hs = headers.get(respHeader.getName());
+			if (hs == null) {
+				headers.put(respHeader.getName(), hs = new ArrayList<>());
+			}
+			hs.add(respHeader.getValue());
 		}
 	}
 
 	@Override
 	public String toString() {
-		return "Status: " + this.status + ", Response: " + this.content;
+		return "Status: " + this.status;
+	}
+
+	@Override
+	public void close() throws IOException {
+		if (httpclient != null) {
+			httpclient.close();
+		}
+		if (contentStream != null) {
+			contentStream.close();
+		}
+	}
+
+	void setHttpClient(CloseableHttpClient httpclient) {
+		this.httpclient = httpclient;
 	}
 }

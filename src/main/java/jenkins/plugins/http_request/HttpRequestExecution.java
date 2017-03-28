@@ -1,8 +1,8 @@
 package jenkins.plugins.http_request;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
@@ -30,6 +30,7 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
 
 import com.google.common.collect.Range;
+import com.google.common.io.ByteStreams;
 
 import hudson.AbortException;
 import hudson.CloseProofOutputStream;
@@ -65,6 +66,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	private final FilePath outputFile;
 	private final int timeout;
 	private final boolean consoleLogResponseBody;
+	private final ResponseHandle responseHandle;
 
 	private final Authenticator authenticator;
 
@@ -87,6 +89,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 					http.getValidResponseCodes(), http.getValidResponseContent(),
 					http.getConsoleLogResponseBody(), outputFile,
+					ResponseHandle.NONE,
 
 					taskListener.getLogger());
 		} catch (IOException e) {
@@ -105,7 +108,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 				step.getValidResponseCodes(), step.getValidResponseContent(),
 				step.getConsoleLogResponseBody(), outputFile,
-
+				step.getResponseHandle(),
 				taskListener.getLogger());
 	}
 
@@ -116,6 +119,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 			String validResponseCodes, String validResponseContent,
 			Boolean consoleLogResponseBody, FilePath outputFile,
+			ResponseHandle responseHandle,
 			PrintStream logger
 	) {
 		this.url = url;
@@ -137,6 +141,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		this.validResponseCodes = validResponseCodes;
 		this.validResponseContent = validResponseContent != null ? validResponseContent : "";
 		this.consoleLogResponseBody = Boolean.TRUE.equals(consoleLogResponseBody);
+		this.responseHandle = this.consoleLogResponseBody || !this.validResponseContent.isEmpty() ?
+				ResponseHandle.STRING : responseHandle;
 		this.outputFile = outputFile;
 
 		this.localLogger = logger;
@@ -145,20 +151,15 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 	@Override
 	public ResponseContentSupplier call() throws RuntimeException {
+		logger().println("HttpMethod: " + httpMode);
+		logger().println("URL: " + url);
+		for (HttpRequestNameValuePair header : headers) {
+			logger().print(header.getName() + ": ");
+			logger().println(header.getMaskValue() ? "*****" : header.getValue());
+		}
+
 		try {
-			logger().println("HttpMethod: " + httpMode);
-			logger().println("URL: " + url);
-			for (HttpRequestNameValuePair header : headers) {
-				logger().print(header.getName() + ": ");
-				logger().println(header.getMaskValue() ? "*****" : header.getValue());
-			}
-
-			ResponseContentSupplier response = authAndRequest();
-			responseCodeIsValid(response);
-			contentIsValid(response);
-			logResponseToFile(response);
-
-			return response;
+			return authAndRequest();
 		} catch (IOException | InterruptedException |
 				KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
 			throw new IllegalStateException(e);
@@ -178,42 +179,58 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 	private ResponseContentSupplier authAndRequest()
 			throws IOException, InterruptedException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
+		//only leave open if no error happen
+		ResponseHandle responseHandle = ResponseHandle.NONE;
 		CloseableHttpClient httpclient = null;
 		try {
 			HttpClientBuilder clientBuilder = HttpClientBuilder.create().useSystemProperties();
-			//timeout
-			if (timeout > 0) {
-				int t = timeout * 1000;
-				RequestConfig config = RequestConfig.custom()
-						.setSocketTimeout(t)
-						.setConnectTimeout(t)
-						.setConnectionRequestTimeout(t)
-						.build();
-				clientBuilder.setDefaultRequestConfig(config);
-			}
-			//ssl
-			if (ignoreSslErrors) {
-				SSLContextBuilder builder = SSLContextBuilder.create();
-				builder.loadTrustMaterial(null, new TrustStrategy() {
-					@Override
-					public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-						return true;
-					}
-				});
-				SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build(), NoopHostnameVerifier.INSTANCE);
-				clientBuilder.setSSLSocketFactory(sslsf);
-			}
+			configureTimeoutAndSsl(clientBuilder);
 
 			HttpClientUtil clientUtil = new HttpClientUtil();
 			HttpRequestBase httpRequestBase = clientUtil.createRequestBase(new RequestAction(new URL(url), httpMode, body, null, headers));
 			HttpContext context = new BasicHttpContext();
 
 			httpclient = auth(clientBuilder, httpRequestBase, context);
-			return executeRequest(httpclient, clientUtil, httpRequestBase, context);
-		} finally {
-			if (httpclient != null) {
-				httpclient.close();
+
+			ResponseContentSupplier response = executeRequest(httpclient, clientUtil, httpRequestBase, context);
+			processResponse(response);
+
+			responseHandle = this.responseHandle;
+			if (responseHandle == ResponseHandle.LEAVE_OPEN) {
+				response.setHttpClient(httpclient);
 			}
+			return response;
+		} finally {
+			if (responseHandle != ResponseHandle.LEAVE_OPEN) {
+				if (httpclient != null) {
+					httpclient.close();
+				}
+			}
+		}
+	}
+
+	private void configureTimeoutAndSsl(HttpClientBuilder clientBuilder) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+		//timeout
+		if (timeout > 0) {
+			int t = timeout * 1000;
+			RequestConfig config = RequestConfig.custom()
+					.setSocketTimeout(t)
+					.setConnectTimeout(t)
+					.setConnectionRequestTimeout(t)
+					.build();
+			clientBuilder.setDefaultRequestConfig(config);
+		}
+		//ssl
+		if (ignoreSslErrors) {
+			SSLContextBuilder builder = SSLContextBuilder.create();
+			builder.loadTrustMaterial(null, new TrustStrategy() {
+				@Override
+				public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+					return true;
+				}
+			});
+			SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build(), NoopHostnameVerifier.INSTANCE);
+			clientBuilder.setSSLSocketFactory(sslsf);
 		}
 	}
 
@@ -235,7 +252,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		try {
 			final HttpResponse response = clientUtil.execute(httpclient, context, httpRequestBase, logger());
 			// The HttpEntity is consumed by the ResponseContentSupplier
-			responseContentSupplier = new ResponseContentSupplier(response);
+			responseContentSupplier = new ResponseContentSupplier(responseHandle, response);
 		} catch (UnknownHostException uhe) {
 			logger().println("Treating UnknownHostException(" + uhe.getMessage() + ") as 404 Not Found");
 			responseContentSupplier = new ResponseContentSupplier("UnknownHostException as 404 Not Found", 404);
@@ -244,21 +261,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			responseContentSupplier = new ResponseContentSupplier(ce.getClass() + "(" + ce.getMessage() + ") as 408 Request Timeout", 408);
 		}
 
-		if (consoleLogResponseBody) {
-			logger().println("Response: \n" + responseContentSupplier.getContent());
-		}
 		return responseContentSupplier;
-	}
-
-	private void contentIsValid(ResponseContentSupplier response) throws AbortException {
-		if (validResponseContent.isEmpty()) {
-			return;
-		}
-
-		String content = response.getContent();
-		if (!content.contains(validResponseContent)) {
-			throw new AbortException("Fail: Response doesn't contain expected content '" + validResponseContent + "'");
-		}
 	}
 
 	private void responseCodeIsValid(ResponseContentSupplier response) throws AbortException {
@@ -272,21 +275,41 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		throw new AbortException("Fail: the returned code " + response.getStatus() + " is not in the accepted range: " + ranges);
 	}
 
-	private void logResponseToFile(ResponseContentSupplier response)
-			throws IOException, InterruptedException {
-		if (outputFile == null || response.getContent() == null) {
-			return;
+	private void processResponse(ResponseContentSupplier response) throws IOException, InterruptedException {
+		//logs
+		if (consoleLogResponseBody) {
+			logger().println("Response: \n" + response.getContent());
 		}
 
-		logger().println("Saving response body to " + outputFile);
-		OutputStreamWriter write = null;
-		try {
-			write = new OutputStreamWriter(outputFile.write(), StandardCharsets.UTF_8);
-			write.write(response.getContent());
-		} finally {
-			if (write != null) {
-				write.close();
+		//validate status code
+		responseCodeIsValid(response);
+
+		//validate content
+		if (!validResponseContent.isEmpty()) {
+			if (!response.getContent().contains(validResponseContent)) {
+				throw new AbortException("Fail: Response doesn't contain expected content '" + validResponseContent + "'");
 			}
+		}
+
+		//save file
+		if (outputFile == null) {
+			return;
+		}
+		logger().println("Saving response body to " + outputFile);
+
+		InputStream in = response.getContentStream();
+		if (in == null) {
+			return;
+		}
+		OutputStream out = null;
+		try {
+			out = outputFile.write();
+			ByteStreams.copy(in, out);
+		} finally {
+			if (out != null) {
+				out.close();
+			}
+			in.close();
 		}
 	}
 }

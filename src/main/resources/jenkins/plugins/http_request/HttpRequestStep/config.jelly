@@ -32,6 +32,9 @@
         <f:entry field="requestBody" title="Request body" help="/plugin/http_request/help-requestBody.html">
             <f:textarea />
         </f:entry>
+        <f:entry field="responseHandle" title="Handle of response" help="/plugin/http_request/help-responseHandle.html">
+			<f:select />
+        </f:entry>
         <f:entry field="authentication" title="Authenticate" help="/plugin/http_request/help-authentication.html">
             <f:select />
         </f:entry>
