@@ -12,7 +12,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPatch;
@@ -42,26 +42,29 @@ public class HttpClientUtil {
     }
 
     private HttpRequestBase doCreateRequestBase(RequestAction requestAction) throws IOException {
-        if (requestAction.getMode() == HttpMode.HEAD) {
-            return makeHead(requestAction);
-
+        //without entity
+    	if (requestAction.getMode() == HttpMode.HEAD) {
+			return new HttpHead(getUrlWithParams(requestAction));
         } else if (requestAction.getMode() == HttpMode.GET) {
-            return makeGet(requestAction);
-
-        } else if (requestAction.getMode() == HttpMode.POST) {
-            return makePost(requestAction);
-
-        } else if (requestAction.getMode() == HttpMode.PUT) {
-            return makePut(requestAction);
-
-        }  else if (requestAction.getMode() == HttpMode.PATCH) {
-            return makePatch(requestAction);
-
-        } else if (requestAction.getMode() == HttpMode.DELETE) {
-            return makeDelete(requestAction);
+			return new HttpGet(getUrlWithParams(requestAction));
         }
 
-        return makePost(requestAction);
+		//with entity
+		final String uri = requestAction.getUrl().toString();
+		HttpEntityEnclosingRequestBase http;
+
+		if (requestAction.getMode() == HttpMode.DELETE) {
+			http = new HttpBodyDelete(uri);
+		}else if (requestAction.getMode() == HttpMode.PUT) {
+			http = new HttpPut(uri);
+        }  else if (requestAction.getMode() == HttpMode.PATCH) {
+			http = new HttpPatch(uri);
+		} else { //default post
+			http = new HttpPost(uri);
+		}
+
+		http.setEntity(makeEntity(requestAction));
+        return http;
     }
 
 	private HttpEntity makeEntity(RequestAction requestAction) throws
@@ -80,14 +83,14 @@ public class HttpClientUtil {
 		return toUrlEncoded(requestAction.getParams());
 	}
 
-	public HttpGet makeGet(RequestAction requestAction) throws IOException {
-        String url = requestAction.getUrl().toString();
+	private String getUrlWithParams(RequestAction requestAction) throws IOException {
+		String url = requestAction.getUrl().toString();
 
-        if (!requestAction.getParams().isEmpty()) {
+		if (!requestAction.getParams().isEmpty()) {
 			url = appendParamsToUrl(url, requestAction.getParams());
-        }
-        return new HttpGet(url);
-    }
+		}
+		return url;
+	}
 
 	private static UrlEncodedFormEntity toUrlEncoded(List<HttpRequestNameValuePair> params) throws UnsupportedEncodingException {
 		return new UrlEncodedFormEntity(params);
@@ -118,42 +121,6 @@ public class HttpClientUtil {
 			}
 		}
 	}
-
-	public HttpHead makeHead(RequestAction requestAction) throws UnsupportedEncodingException {
-        final HttpHead httpHead = new HttpHead(requestAction.getUrl().toString());
-
-        return httpHead;
-    }
-
-    public HttpPost makePost(RequestAction requestAction) throws UnsupportedEncodingException {
-        final HttpEntity httpEntity = makeEntity(requestAction);
-        final HttpPost httpPost = new HttpPost(requestAction.getUrl().toString());
-        httpPost.setEntity(httpEntity);
-
-        return httpPost;
-    }
-
-    public HttpPut makePut(RequestAction requestAction) throws UnsupportedEncodingException {
-        final HttpEntity entity = makeEntity(requestAction);
-        final HttpPut httpPut = new HttpPut(requestAction.getUrl().toString());
-        httpPut.setEntity(entity);
-
-        return httpPut;
-    }
-
-    public HttpPatch makePatch(RequestAction requestAction) throws UnsupportedEncodingException {
-        final HttpEntity entity = makeEntity(requestAction);
-        final HttpPatch httpPatch = new HttpPatch(requestAction.getUrl().toString());
-        httpPatch.setEntity(entity);
-
-        return httpPatch;
-    }
-
-    public HttpDelete makeDelete(RequestAction requestAction) throws UnsupportedEncodingException {
-        final HttpDelete httpDelete = new HttpDelete(requestAction.getUrl().toString());
-
-        return httpDelete;
-    }
 
     public HttpResponse execute(HttpClient client, HttpContext context, HttpRequestBase method,
 								PrintStream logger) throws IOException, InterruptedException {
