@@ -44,7 +44,6 @@ import hudson.model.ParametersAction;
 import hudson.model.Result;
 import hudson.model.StringParameterValue;
 
-import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
@@ -671,15 +670,12 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		// Prepare the server
 		registerBasicAuth();
 
-
 		// Prepare the authentication
-		List<BasicDigestAuthentication> bda = new ArrayList<BasicDigestAuthentication>();
-		bda.add(new BasicDigestAuthentication("keyname1", "username1", "password1"));
-		bda.add(new BasicDigestAuthentication("keyname2", "username2", "password2"));
+		registerBasicCredential("keyname1", "username1", "password1");
+		registerBasicCredential("keyname2", "username2", "password2");
 
 		// Prepare HttpRequest
 		HttpRequest httpRequest = new HttpRequest(baseURL() + "/basicAuth");
-		HttpRequestGlobalConfig.get().setBasicDigestAuthentications(bda);
 		httpRequest.setAuthentication("keyname1");
 
 		// Run build

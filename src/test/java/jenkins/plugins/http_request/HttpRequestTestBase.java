@@ -2,7 +2,9 @@ package jenkins.plugins.http_request;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -19,10 +21,16 @@ import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
 
+import com.cloudbees.plugins.credentials.Credentials;
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
+import com.cloudbees.plugins.credentials.domains.Domain;
+import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.google.common.io.CharStreams;
 
 /**
@@ -34,9 +42,17 @@ public class HttpRequestTestBase {
 	static final String ALL_IS_WELL = "All is well";
 	@Rule
 	public JenkinsRule j = new JenkinsRule();
+	private Map<Domain, List<Credentials>> credentials;
 
 	final String baseURL() {
 		return SERVER.baseURL;
+	}
+
+	void registerBasicCredential(String id, String username, String password) {
+		credentials.get(Domain.global()).add(
+				new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL,
+						id, "", username, password));
+		SystemCredentialsProvider.getInstance().setDomainCredentialsMap(credentials);
 	}
 
 	static void registerHandler(String target, HttpMode method, SimpleHandler handler) {
@@ -61,6 +77,12 @@ public class HttpRequestTestBase {
 			SERVER.server.stop();
 			SERVER = null;
 		}
+	}
+
+	@Before
+	public void init() {
+		credentials = new HashMap<>();
+		credentials.put(Domain.global(), new ArrayList<Credentials>());
 	}
 
 	@After

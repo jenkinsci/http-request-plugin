@@ -31,7 +31,6 @@ import org.junit.Test;
 
 import hudson.model.Result;
 
-import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
@@ -451,10 +450,8 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         registerBasicAuth();
 
         // Prepare the authentication
-        List<BasicDigestAuthentication> bda = new ArrayList<BasicDigestAuthentication>();
-        bda.add(new BasicDigestAuthentication("keyname1","username1","password1"));
-        bda.add(new BasicDigestAuthentication("keyname2","username2","password2"));
-        HttpRequestGlobalConfig.get().setBasicDigestAuthentications(bda);
+		registerBasicCredential("keyname1", "username1", "password1");
+		registerBasicCredential("keyname2", "username2", "password2");
 
         // Prepare HttpRequest
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");

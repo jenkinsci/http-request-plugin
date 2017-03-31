@@ -12,6 +12,7 @@ import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -19,6 +20,8 @@ import org.kohsuke.stapler.QueryParameter;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.model.Item;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -43,7 +46,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
     private String requestBody                = DescriptorImpl.requestBody;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 	private String outputFile = DescriptorImpl.outputFile;
-	private ResponseHandle responseHandle = ResponseHandle.STRING;
+	private ResponseHandle responseHandle = DescriptorImpl.responseHandle;
 
     @DataBoundConstructor
     public HttpRequestStep(String url) {
@@ -246,12 +249,9 @@ public final class HttpRequestStep extends AbstractStepImpl {
 			return items;
 		}
 
-        public ListBoxModel doFillAuthenticationItems() {
-            return HttpRequest.DescriptorImpl.fillAuthenticationItems();
-        }
-
-        public FormValidation doValidateKeyName(@QueryParameter String value) {
-            return HttpRequest.DescriptorImpl.validateKeyName(value);
+        public ListBoxModel doFillAuthenticationItems(@AncestorInPath Item project,
+													  @QueryParameter String url) {
+            return HttpRequest.DescriptorImpl.fillAuthenticationItems(project, url);
         }
 
         public FormValidation doCheckValidResponseCodes(@QueryParameter String value) {
@@ -265,6 +265,8 @@ public final class HttpRequestStep extends AbstractStepImpl {
         @Inject
         private transient HttpRequestStep step;
 
+		@StepContextParameter
+		private transient Run<?, ?> run;
 		@StepContextParameter
 		private transient TaskListener listener;
 
@@ -298,6 +300,10 @@ public final class HttpRequestStep extends AbstractStepImpl {
 			} catch (IOException | InterruptedException e) {
 				throw new IllegalStateException(e);
 			}
+		}
+
+		public Item getProject() {
+			return run.getParent();
 		}
 	}
 }

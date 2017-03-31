@@ -12,6 +12,7 @@ import hudson.Extension;
 import hudson.XmlFile;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
+import hudson.util.FormValidation;
 import hudson.util.XStream2;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
@@ -59,6 +60,23 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
         save();
         return true;
     }
+
+	public static FormValidation validateKeyName(String value) {
+		List<Authenticator> list = HttpRequestGlobalConfig.get().getAuthentications();
+
+		int count = 0;
+		for (Authenticator basicAuthentication : list) {
+			if (basicAuthentication.getKeyName().equals(value)) {
+				count++;
+			}
+		}
+
+		if (count > 1) {
+			return FormValidation.error("The Key Name must be unique");
+		}
+
+		return FormValidation.validateRequired(value);
+	}
 
     public static HttpRequestGlobalConfig get() {
         return GlobalConfiguration.all().get(HttpRequestGlobalConfig.class);

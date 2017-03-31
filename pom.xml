@@ -110,6 +110,11 @@ THE SOFTWARE.
 
 		<dependency>
 			<groupId>org.jenkins-ci.plugins</groupId>
+			<artifactId>credentials</artifactId>
+			<version>2.1.13</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jenkins-ci.plugins</groupId>
 			<artifactId>script-security</artifactId>
 			<version>1.17</version>
 		</dependency>

@@ -2,16 +2,7 @@ package jenkins.plugins.http_request.auth;
 
 import java.io.PrintStream;
 
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.AuthCache;
-import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.client.utils.URIUtils;
-import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.BasicAuthCache;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.protocol.HttpContext;
@@ -23,11 +14,13 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 
-import jenkins.plugins.http_request.HttpRequest;
+import jenkins.plugins.http_request.HttpRequestGlobalConfig;
 
 /**
  * @author Janario Oliveira
+ * @deprecated use Jenkins credentials, marked to remove in 1.8.19
  */
+@Deprecated
 public class BasicDigestAuthentication extends AbstractDescribableImpl<BasicDigestAuthentication>
         implements Authenticator {
 	private static final long serialVersionUID = 4818288270720177069L;
@@ -59,24 +52,14 @@ public class BasicDigestAuthentication extends AbstractDescribableImpl<BasicDige
 	@Override
 	public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpContext context,
 											HttpRequestBase requestBase, PrintStream logger) {
-		CredentialsProvider provider = new BasicCredentialsProvider();
-		provider.setCredentials(
-				new AuthScope(requestBase.getURI().getHost(), requestBase.getURI().getPort()),
-				new UsernamePasswordCredentials(userName, password));
-		clientBuilder.setDefaultCredentialsProvider(provider);
-
-		AuthCache authCache = new BasicAuthCache();
-		authCache.put(URIUtils.extractHost(requestBase.getURI()), new BasicScheme());
-		context.setAttribute(HttpClientContext.AUTH_CACHE, authCache);
-
-		return clientBuilder.build();
+		return CredentialBasicAuthentication.auth(clientBuilder, context, requestBase, userName, password);
 	}
 
     @Extension
     public static class BasicDigestAuthenticationDescriptor extends Descriptor<BasicDigestAuthentication> {
 
         public FormValidation doCheckKeyName(@QueryParameter String value) {
-            return HttpRequest.DescriptorImpl.validateKeyName(value);
+            return HttpRequestGlobalConfig.validateKeyName(value);
         }
 
         public FormValidation doCheckUserName(@QueryParameter String value) {

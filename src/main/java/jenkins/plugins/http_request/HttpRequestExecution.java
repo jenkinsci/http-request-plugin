@@ -29,6 +29,10 @@ import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
 
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.google.common.collect.Range;
 import com.google.common.io.ByteStreams;
 
@@ -37,13 +41,16 @@ import hudson.CloseProofOutputStream;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
+import hudson.model.Item;
 import hudson.model.TaskListener;
 import hudson.remoting.RemoteOutputStream;
+import hudson.security.ACL;
 import jenkins.security.MasterToSlaveCallable;
 
 import jenkins.plugins.http_request.HttpRequest.DescriptorImpl;
 import jenkins.plugins.http_request.HttpRequestStep.Execution;
 import jenkins.plugins.http_request.auth.Authenticator;
+import jenkins.plugins.http_request.auth.CredentialBasicAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
@@ -81,6 +88,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			List<HttpRequestNameValuePair> headers = http.resolveHeaders(envVars);
 
 			FilePath outputFile = http.resolveOutputFile(envVars, build);
+			Item project = build.getProject();
 
 			return new HttpRequestExecution(
 					url, http.getHttpMode(), http.getIgnoreSslErrors(),
@@ -91,6 +99,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 					http.getConsoleLogResponseBody(), outputFile,
 					ResponseHandle.NONE,
 
+					project,
 					taskListener.getLogger());
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
@@ -100,7 +109,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	static HttpRequestExecution from(HttpRequestStep step, TaskListener taskListener, Execution execution) {
 		List<HttpRequestNameValuePair> headers = step.resolveHeaders();
 		FilePath outputFile = execution.resolveOutputFile();
-
+		Item project = execution.getProject();
 		return new HttpRequestExecution(
 				step.getUrl(), step.getHttpMode(), step.isIgnoreSslErrors(),
 				step.getRequestBody(), headers, step.getTimeout(),
@@ -109,7 +118,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 				step.getValidResponseCodes(), step.getValidResponseContent(),
 				step.getConsoleLogResponseBody(), outputFile,
 				step.getResponseHandle(),
-				taskListener.getLogger());
+				project, taskListener.getLogger());
 	}
 
 	private HttpRequestExecution(
@@ -120,7 +129,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			String validResponseCodes, String validResponseContent,
 			Boolean consoleLogResponseBody, FilePath outputFile,
 			ResponseHandle responseHandle,
-			PrintStream logger
+
+			Item project, PrintStream logger
 	) {
 		this.url = url;
 		this.httpMode = httpMode;
@@ -130,10 +140,25 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		this.headers = headers;
 		this.timeout = timeout != null ? timeout : -1;
 		if (authentication != null && !authentication.isEmpty()) {
-			authenticator = HttpRequestGlobalConfig.get().getAuthentication(authentication);
-			if (authenticator == null) {
+			Authenticator auth = HttpRequestGlobalConfig.get().getAuthentication(authentication);
+
+			if (auth == null) {
+				StandardUsernamePasswordCredentials credential = CredentialsMatchers.firstOrNull(
+						CredentialsProvider.lookupCredentials(
+								StandardUsernamePasswordCredentials.class,
+								project, ACL.SYSTEM,
+								URIRequirementBuilder.fromUri(url).build()),
+						CredentialsMatchers.withId(authentication));
+				if (credential != null) {
+					auth = new CredentialBasicAuthentication(credential);
+				}
+			}
+
+
+			if (auth == null) {
 				throw new IllegalStateException("Authentication '" + authentication + "' doesn't exist anymore");
 			}
+			authenticator = auth;
 		} else {
 			authenticator = null;
 		}

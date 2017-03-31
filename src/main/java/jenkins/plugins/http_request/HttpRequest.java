@@ -10,12 +10,17 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
-import javax.servlet.ServletException;
 
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import com.cloudbees.plugins.credentials.common.AbstractIdCredentialsListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.google.common.base.Strings;
 import com.google.common.collect.Range;
 import com.google.common.collect.Ranges;
@@ -29,14 +34,16 @@ import hudson.init.Initializer;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
+import hudson.model.Item;
 import hudson.model.Items;
 import hudson.model.TaskListener;
+import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.ListBoxModel.Option;
 
-import jenkins.plugins.http_request.auth.Authenticator;
 import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
@@ -342,48 +349,33 @@ public class HttpRequest extends Builder {
             return MimeType.getContentTypeFillItems();
         }
 
-        public ListBoxModel doFillAuthenticationItems() {
-            return fillAuthenticationItems();
+        public ListBoxModel doFillAuthenticationItems(@AncestorInPath Item project,
+													  @QueryParameter String url) {
+            return fillAuthenticationItems(project, url);
         }
 
-        public static ListBoxModel fillAuthenticationItems() {
-            ListBoxModel items = new ListBoxModel();
-            items.add("");
-            for (BasicDigestAuthentication basicDigestAuthentication : HttpRequestGlobalConfig.get().getBasicDigestAuthentications()) {
-                items.add(basicDigestAuthentication.getKeyName());
+        public static ListBoxModel fillAuthenticationItems(Item project, String url) {
+			if (project == null || !project.hasPermission(Item.CONFIGURE)) {
+				return new StandardListBoxModel();
+			}
+
+			List<Option> options = new ArrayList<>();
+			for (BasicDigestAuthentication basic : HttpRequestGlobalConfig.get().getBasicDigestAuthentications()) {
+				options.add(new Option("(deprecated - use Jenkins Credentials) " +
+						basic.getKeyName(), basic.getKeyName()));
             }
+
             for (FormAuthentication formAuthentication : HttpRequestGlobalConfig.get().getFormAuthentications()) {
-                items.add(formAuthentication.getKeyName());
-            }
+				options.add(new Option(formAuthentication.getKeyName()));
+			}
 
+			AbstractIdCredentialsListBoxModel<StandardListBoxModel, StandardCredentials> items = new StandardListBoxModel()
+					.includeEmptyValue()
+					.includeAs(ACL.SYSTEM,
+							project, StandardUsernamePasswordCredentials.class,
+							URIRequirementBuilder.fromUri(url).build());
+			items.addMissing(options);
             return items;
-        }
-
-        public FormValidation doCheckUrl(@QueryParameter String value)
-                throws IOException, ServletException {
-            return FormValidation.ok();
-        }
-
-        public FormValidation doValidateKeyName(@QueryParameter String value) {
-            return validateKeyName(value);
-        }
-
-        public static FormValidation validateKeyName(String value) {
-            List<Authenticator> list = HttpRequestGlobalConfig.get().getAuthentications();
-
-            int count = 0;
-            for (Authenticator basicAuthentication : list) {
-                if (basicAuthentication.getKeyName().equals(value)) {
-                    count++;
-                }
-            }
-
-            if (count > 1) {
-                return FormValidation.error("The Key Name must be unique");
-            }
-
-            return FormValidation.validateRequired(value);
-
         }
 
         public static List<Range<Integer>> parseToRange(String value) {

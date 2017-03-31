@@ -1,7 +1,7 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
     <f:section title="HTTP Request">
-        <f:entry title="Basic/Digest Authentication">
+    	<f:entry title="DEPRECATED (use Jenkins credentials) Basic/Digest Authentication">
             <f:repeatable field="basicDigestAuthentications">
                 <table width="100%">
                     <f:entry title="Key Name" field="keyName" help="/plugin/http_request/help-keyName.html">

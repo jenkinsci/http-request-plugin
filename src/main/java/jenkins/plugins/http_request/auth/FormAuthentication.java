@@ -19,7 +19,7 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 
-import jenkins.plugins.http_request.HttpRequest;
+import jenkins.plugins.http_request.HttpRequestGlobalConfig;
 import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.RequestAction;
 
@@ -69,7 +69,7 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
     public static class FormAuthenticationDescriptor extends Descriptor<FormAuthentication> {
 
         public FormValidation doCheckKeyName(@QueryParameter String value) {
-            return HttpRequest.DescriptorImpl.validateKeyName(value);
+            return HttpRequestGlobalConfig.validateKeyName(value);
         }
 
         @Override
