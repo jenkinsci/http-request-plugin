@@ -6,7 +6,7 @@
     <f:entry field="httpMode" title="HTTP mode" help="/plugin/http_request/help-httpMode.html">
         <f:select />
     </f:entry>
-    <f:entry field="ignoreSslErrors" title="Ignore Ssl errors?" help="/plugin/http_request/help-ignoreSslErrors.html">
+	<f:entry field="ignoreSslErrors" title="Ignore Ssl errors?" help="/plugin/http_request/help-ignoreSslErrors.html">
 		<f:booleanRadio />
 	</f:entry>
 
