@@ -15,6 +15,7 @@ project types:
 * You can set a connection timeout limit (build fails if timeout is exceeded)
 * You can set an "Accept" header
 * You can set a "Content-type" header
+* You can set any custom header
 
 ### Basic plugin features
 
@@ -62,6 +63,12 @@ def patchOrg = """
     {"description": "$description"}
 """
 def response = httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', httpMode: 'PATCH', requestBody: patchOrg, url: "https://api.github.com/orgs/${orgName}"
+```
+
+You can also set custom headers:
+
+```grovy
+def response = httpRequest customHeaders: [[name: 'foo', value: 'bar']]
 ```
 
 For details on the Pipeline features, use the Pipeline snippet generator
