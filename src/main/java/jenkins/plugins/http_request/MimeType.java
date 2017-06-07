@@ -12,12 +12,16 @@ public enum MimeType {
     NOT_SET(null),
     TEXT_HTML(ContentType.TEXT_HTML),
     TEXT_PLAIN(ContentType.TEXT_PLAIN),
+    TEXT_XML(ContentType.TEXT_XML),
     APPLICATION_FORM(ContentType.APPLICATION_FORM_URLENCODED),
     APPLICATION_JSON(ContentType.create("application/json")),
     APPLICATION_JSON_UTF8(ContentType.APPLICATION_JSON),
     APPLICATION_TAR(ContentType.create("application/x-tar")),
     APPLICATION_ZIP(ContentType.create("application/zip")),
-    APPLICATION_OCTETSTREAM(ContentType.APPLICATION_OCTET_STREAM);
+    APPLICATION_OCTETSTREAM(ContentType.APPLICATION_OCTET_STREAM),
+    APPLICATION_SVG_XML(ContentType.APPLICATION_SVG_XML),
+    APPLICATION_XHTML_XML(ContentType.APPLICATION_XHTML_XML),
+    APPLICATION_ATOM_XML(ContentType.APPLICATION_ATOM_XML);
 
     private final ContentType contentType;
 
