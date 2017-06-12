@@ -67,7 +67,7 @@ def response = httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICA
 
 You can also set custom headers:
 
-```grovy
+```groovy
 def response = httpRequest customHeaders: [[name: 'foo', value: 'bar']]
 ```
 
