@@ -65,6 +65,7 @@ public class HttpRequest extends Builder {
     private String outputFile                 = DescriptorImpl.outputFile;
     private Integer timeout                   = DescriptorImpl.timeout;
     private Boolean consoleLogResponseBody    = DescriptorImpl.consoleLogResponseBody;
+    private Boolean quiet                     = DescriptorImpl.quiet;
     private String authentication             = DescriptorImpl.authentication;
     private String requestBody                = DescriptorImpl.requestBody;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
@@ -168,6 +169,15 @@ public class HttpRequest extends Builder {
 	@DataBoundSetter
 	public void setConsoleLogResponseBody(Boolean consoleLogResponseBody) {
 		this.consoleLogResponseBody = consoleLogResponseBody;
+	}
+
+	public Boolean getQuiet() {
+		return quiet;
+	}
+
+	@DataBoundSetter
+	public void setQuiet(Boolean quiet) {
+		this.quiet = quiet;
 	}
 
 	public String getAuthentication() {
@@ -300,7 +310,8 @@ public class HttpRequest extends Builder {
 			envVars.put(e.getKey(), e.getValue());
 		}
 
-		HttpRequestExecution exec = HttpRequestExecution.from(this, envVars, build, listener);
+		HttpRequestExecution exec = HttpRequestExecution.from(this, envVars, build,
+				this.getQuiet() ? TaskListener.NULL : listener);
 		launcher.getChannel().call(exec);
 
         return true;
@@ -318,6 +329,7 @@ public class HttpRequest extends Builder {
         public static final String   outputFile                = "";
         public static final int      timeout                   = 0;
         public static final Boolean  consoleLogResponseBody    = false;
+        public static final Boolean  quiet                     = false;
         public static final String   authentication            = "";
         public static final String   requestBody               = "";
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();

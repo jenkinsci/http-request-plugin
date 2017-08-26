@@ -63,6 +63,32 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
+    public void quietTest() throws Exception {
+        // Prepare the server
+        registerRequestChecker(HttpMode.GET);
+
+        // Configure the build
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        proj.setDefinition(new CpsFlowDefinition(
+                "def response = httpRequest(url: '"+baseURL()+"/doGET', quiet: true)\n" +
+                        "println('Status: '+response.status)\n" +
+                        "println('Response: '+response.content)\n",
+                true));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatusSuccess(run);
+        j.assertLogContains("Status: 200",run);
+        j.assertLogContains("Response: "+ ALL_IS_WELL,run);
+        j.assertLogNotContains("HttpMethod:", run);
+        j.assertLogNotContains("URL:", run);
+        j.assertLogNotContains("Sending request to url:", run);
+        j.assertLogNotContains("Response Code:", run);
+    }
+
+    @Test
     public void canDetectActualContent() throws Exception {
         // Setup the expected pattern
         String findMe = ALL_IS_WELL;
