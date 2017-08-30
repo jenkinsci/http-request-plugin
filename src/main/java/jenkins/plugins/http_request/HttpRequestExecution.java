@@ -125,6 +125,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 				project, taskListener.getLogger());
 	}
 
+	//TODO: Add support for Proxy
 	private HttpRequestExecution(
 			String url, HttpMode httpMode, boolean ignoreSslErrors,
 			String body, List<HttpRequestNameValuePair> headers, Integer timeout,
