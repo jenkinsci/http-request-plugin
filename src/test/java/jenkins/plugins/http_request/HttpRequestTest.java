@@ -73,6 +73,28 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	}
 
 	@Test
+	public void quietTest() throws Exception {
+		// Prepare the server
+		registerRequestChecker(HttpMode.GET);
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/doGET");
+		httpRequest.setQuiet(true);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogNotContains("HttpMethod:", build);
+		this.j.assertLogNotContains("URL:", build);
+		this.j.assertLogNotContains("Sending request to url:", build);
+		this.j.assertLogNotContains("Response Code:", build);
+	}
+
+	@Test
 	public void canDetectActualContent() throws Exception {
 		// Setup the expected pattern
 		String findMe = ALL_IS_WELL;
