@@ -65,6 +65,7 @@ public class HttpRequest extends Builder {
     private String outputFile                 = DescriptorImpl.outputFile;
     private Integer timeout                   = DescriptorImpl.timeout;
     private Boolean consoleLogResponseBody    = DescriptorImpl.consoleLogResponseBody;
+    private Boolean quiet                     = DescriptorImpl.quiet;
     private String authentication             = DescriptorImpl.authentication;
     private String requestBody                = DescriptorImpl.requestBody;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
@@ -170,6 +171,15 @@ public class HttpRequest extends Builder {
 		this.consoleLogResponseBody = consoleLogResponseBody;
 	}
 
+	public Boolean getQuiet() {
+		return quiet;
+	}
+
+	@DataBoundSetter
+	public void setQuiet(Boolean quiet) {
+		this.quiet = quiet;
+	}
+
 	public String getAuthentication() {
 		return authentication;
 	}
@@ -214,6 +224,9 @@ public class HttpRequest extends Builder {
 		if (ignoreSslErrors == null) {
 			//default for new job false(DescriptorImpl.ignoreSslErrors) for old ones true to keep same behavior
 			ignoreSslErrors = true;
+		}
+		if (quiet == null) {
+			quiet = false;
 		}
 		return this;
 	}
@@ -300,7 +313,8 @@ public class HttpRequest extends Builder {
 			envVars.put(e.getKey(), e.getValue());
 		}
 
-		HttpRequestExecution exec = HttpRequestExecution.from(this, envVars, build, listener);
+		HttpRequestExecution exec = HttpRequestExecution.from(this, envVars, build,
+				this.getQuiet() ? TaskListener.NULL : listener);
 		launcher.getChannel().call(exec);
 
         return true;
@@ -318,6 +332,7 @@ public class HttpRequest extends Builder {
         public static final String   outputFile                = "";
         public static final int      timeout                   = 0;
         public static final Boolean  consoleLogResponseBody    = false;
+        public static final Boolean  quiet                     = false;
         public static final String   authentication            = "";
         public static final String   requestBody               = "";
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();

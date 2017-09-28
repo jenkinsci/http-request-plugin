@@ -42,6 +42,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
     private MimeType contentType              = DescriptorImpl.contentType;
     private Integer timeout                   = DescriptorImpl.timeout;
     private Boolean consoleLogResponseBody    = DescriptorImpl.consoleLogResponseBody;
+    private Boolean quiet                     = DescriptorImpl.quiet;
     private String authentication             = DescriptorImpl.authentication;
     private String requestBody                = DescriptorImpl.requestBody;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
@@ -130,6 +131,15 @@ public final class HttpRequestStep extends AbstractStepImpl {
     }
 
     @DataBoundSetter
+    public void setQuiet(Boolean quiet) {
+        this.quiet = quiet;
+    }
+
+    public Boolean getQuiet() {
+        return quiet;
+    }
+
+    @DataBoundSetter
     public void setAuthentication(String authentication) {
         this.authentication = authentication;
     }
@@ -209,6 +219,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
         public static final MimeType contentType               = HttpRequest.DescriptorImpl.contentType;
         public static final int      timeout                   = HttpRequest.DescriptorImpl.timeout;
         public static final Boolean  consoleLogResponseBody    = HttpRequest.DescriptorImpl.consoleLogResponseBody;
+        public static final Boolean  quiet                     = HttpRequest.DescriptorImpl.quiet;
         public static final String   authentication            = HttpRequest.DescriptorImpl.authentication;
         public static final String   requestBody               = HttpRequest.DescriptorImpl.requestBody;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
@@ -272,7 +283,9 @@ public final class HttpRequestStep extends AbstractStepImpl {
 
 		@Override
 		protected ResponseContentSupplier run() throws Exception {
-			HttpRequestExecution exec = HttpRequestExecution.from(step, listener, this);
+			HttpRequestExecution exec = HttpRequestExecution.from(step,
+					step.getQuiet() ? TaskListener.NULL : listener,
+					this);
 
 			Launcher launcher = getContext().get(Launcher.class);
 			if (launcher != null) {
