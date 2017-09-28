@@ -18,6 +18,7 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -55,10 +56,12 @@ public class HttpClientUtil {
 
 		if (requestAction.getMode() == HttpMode.DELETE) {
 			http = new HttpBodyDelete(uri);
-		}else if (requestAction.getMode() == HttpMode.PUT) {
+		} else if (requestAction.getMode() == HttpMode.PUT) {
 			http = new HttpPut(uri);
-        }  else if (requestAction.getMode() == HttpMode.PATCH) {
+        } else if (requestAction.getMode() == HttpMode.PATCH) {
 			http = new HttpPatch(uri);
+        } else if (requestAction.getMode() == HttpMode.OPTIONS) {
+        	return new HttpOptions(getUrlWithParams(requestAction));
 		} else { //default post
 			http = new HttpPost(uri);
 		}
