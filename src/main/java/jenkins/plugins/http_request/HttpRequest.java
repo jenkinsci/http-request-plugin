@@ -225,6 +225,9 @@ public class HttpRequest extends Builder {
 			//default for new job false(DescriptorImpl.ignoreSslErrors) for old ones true to keep same behavior
 			ignoreSslErrors = true;
 		}
+		if (quiet == null) {
+			quiet = false;
+		}
 		return this;
 	}
 
