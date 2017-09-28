@@ -32,4 +32,6 @@ release.properties
 *.iml
 **/.idea/*
 !.idea/codeStyleSettings.xml
+!.idea/codeStyles/codeStyleConfig.xml
+!.idea/codeStyles/Project.xml
 !.idea/encodings.xml

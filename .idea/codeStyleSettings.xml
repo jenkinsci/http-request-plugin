@@ -51,6 +51,9 @@
         <JSON>
           <option name="ARRAY_WRAPPING" value="1" />
         </JSON>
+        <MarkdownNavigatorCodeStyleSettings>
+          <option name="RIGHT_MARGIN" value="72" />
+        </MarkdownNavigatorCodeStyleSettings>
         <SqlCodeStyleSettings>
           <option name="ALIGN_AS_IN_SELECT_STATEMENT" value="false" />
           <option name="ALIGN_TYPE_IN_CREATE_STATEMENT" value="false" />
