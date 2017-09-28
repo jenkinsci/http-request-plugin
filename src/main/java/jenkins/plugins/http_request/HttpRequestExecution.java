@@ -23,6 +23,8 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedTrustManager;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -68,6 +70,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	private final String url;
 	private final HttpMode httpMode;
 	private final boolean ignoreSslErrors;
+	private final HttpHost httpProxy;
 
 	private final String body;
 	private final List<HttpRequestNameValuePair> headers;
@@ -96,7 +99,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 			return new HttpRequestExecution(
 					url, http.getHttpMode(), http.getIgnoreSslErrors(),
-					body, headers, http.getTimeout(),
+					http.getHttpProxy(), body, headers, http.getTimeout(),
 					http.getAuthentication(),
 
 					http.getValidResponseCodes(), http.getValidResponseContent(),
@@ -116,7 +119,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		Item project = execution.getProject();
 		return new HttpRequestExecution(
 				step.getUrl(), step.getHttpMode(), step.isIgnoreSslErrors(),
-				step.getRequestBody(), headers, step.getTimeout(),
+				step.getHttpProxy(), step.getRequestBody(), headers, step.getTimeout(),
 				step.getAuthentication(),
 
 				step.getValidResponseCodes(), step.getValidResponseContent(),
@@ -127,7 +130,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 	private HttpRequestExecution(
 			String url, HttpMode httpMode, boolean ignoreSslErrors,
-			String body, List<HttpRequestNameValuePair> headers, Integer timeout,
+			String httpProxy, String body, List<HttpRequestNameValuePair> headers, Integer timeout,
 			String authentication,
 
 			String validResponseCodes, String validResponseContent,
@@ -139,6 +142,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		this.url = url;
 		this.httpMode = httpMode;
 		this.ignoreSslErrors = ignoreSslErrors;
+		this.httpProxy = StringUtils.isNotBlank(httpProxy) ? HttpHost.create(httpProxy) : null;
 
 		this.body = body;
 		this.headers = headers;
@@ -214,6 +218,9 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		try {
 			HttpClientBuilder clientBuilder = HttpClientBuilder.create().useSystemProperties();
 			configureTimeoutAndSsl(clientBuilder);
+			if (this.httpProxy != null) {
+				clientBuilder.setProxy(this.httpProxy);
+			}
 
 			HttpClientUtil clientUtil = new HttpClientUtil();
 			HttpRequestBase httpRequestBase = clientUtil.createRequestBase(new RequestAction(new URL(url), httpMode, body, null, headers));

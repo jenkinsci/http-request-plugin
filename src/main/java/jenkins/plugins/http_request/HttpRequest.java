@@ -57,6 +57,7 @@ public class HttpRequest extends Builder {
     private @Nonnull String url;
 	private Boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
 	private HttpMode httpMode                 = DescriptorImpl.httpMode;
+	private String httpProxy                  = DescriptorImpl.httpProxy;
     private Boolean passBuildParameters       = DescriptorImpl.passBuildParameters;
     private String validResponseCodes         = DescriptorImpl.validResponseCodes;
     private String validResponseContent       = DescriptorImpl.validResponseContent;
@@ -96,6 +97,15 @@ public class HttpRequest extends Builder {
 	@DataBoundSetter
 	public void setHttpMode(HttpMode httpMode) {
 		this.httpMode = httpMode;
+	}
+
+	public String getHttpProxy() {
+		return httpProxy;
+	}
+
+	@DataBoundSetter
+	public void setHttpProxy(String httpProxy) {
+		this.httpProxy = httpProxy;
 	}
 
 	public Boolean getPassBuildParameters() {
@@ -324,6 +334,7 @@ public class HttpRequest extends Builder {
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 		public static final boolean ignoreSslErrors = false;
 		public static final HttpMode httpMode                  = HttpMode.GET;
+		public static final String   httpProxy                 = "";
         public static final Boolean  passBuildParameters       = false;
         public static final String   validResponseCodes        = "100:399";
         public static final String   validResponseContent      = "";

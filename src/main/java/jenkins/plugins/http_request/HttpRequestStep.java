@@ -36,6 +36,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
     private @Nonnull String url;
 	private boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
 	private HttpMode httpMode                 = DescriptorImpl.httpMode;
+    private String httpProxy                  = DescriptorImpl.httpProxy;
     private String validResponseCodes         = DescriptorImpl.validResponseCodes;
     private String validResponseContent       = DescriptorImpl.validResponseContent;
     private MimeType acceptType               = DescriptorImpl.acceptType;
@@ -74,6 +75,15 @@ public final class HttpRequestStep extends AbstractStepImpl {
 
     public HttpMode getHttpMode() {
         return httpMode;
+    }
+   
+    @DataBoundSetter
+    public void setHttpProxy(String httpProxy) {
+        this.httpProxy = httpProxy;
+    }
+
+    public String getHttpProxy() {
+        return httpProxy;
     }
 
     @DataBoundSetter
@@ -213,6 +223,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
     public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
         public static final boolean ignoreSslErrors = HttpRequest.DescriptorImpl.ignoreSslErrors;
         public static final HttpMode httpMode                  = HttpRequest.DescriptorImpl.httpMode;
+        public static final String   httpProxy                 = HttpRequest.DescriptorImpl.httpProxy;
         public static final String   validResponseCodes        = HttpRequest.DescriptorImpl.validResponseCodes;
         public static final String   validResponseContent      = HttpRequest.DescriptorImpl.validResponseContent;
         public static final MimeType acceptType                = HttpRequest.DescriptorImpl.acceptType;
