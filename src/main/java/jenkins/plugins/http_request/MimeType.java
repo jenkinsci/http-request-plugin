@@ -14,7 +14,7 @@ public enum MimeType {
     TEXT_PLAIN(ContentType.TEXT_PLAIN),
     APPLICATION_FORM(ContentType.APPLICATION_FORM_URLENCODED),
     APPLICATION_JSON(ContentType.create("application/json")),
-	APPLICATION_XML(ContentType.APPLICATION_XML),
+    APPLICATION_XML(ContentType.APPLICATION_XML),
     APPLICATION_JSON_UTF8(ContentType.APPLICATION_JSON),
     APPLICATION_TAR(ContentType.create("application/x-tar")),
     APPLICATION_ZIP(ContentType.create("application/zip")),
