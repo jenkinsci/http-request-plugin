@@ -656,12 +656,14 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "postBody");
         proj.setDefinition(new CpsFlowDefinition(
+                "node('linux') {\n" +
                 "def response = httpRequest" +
                         " httpMode: 'POST'," +
                         " httpProxy: 'http://localhost:3128'," +
                         " requestBody: '" + body + "'," +
                         " url: '" + baseURL() + "/doPostBody'\n" +
-                        "println('Response: ' + response.content)\n",
+                        "println('Response: ' + response.content)\n" +
+                "}",
                 true));
 
         // Execute the build
