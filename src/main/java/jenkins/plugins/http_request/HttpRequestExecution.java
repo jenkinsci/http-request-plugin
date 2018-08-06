@@ -75,6 +75,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	private final String body;
 	private final List<HttpRequestNameValuePair> headers;
 
+	private final boolean useSystemProperties;
 	private final String validResponseCodes;
 	private final String validResponseContent;
 	private final FilePath outputFile;
@@ -100,7 +101,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			return new HttpRequestExecution(
 					url, http.getHttpMode(), http.getIgnoreSslErrors(),
 					http.getHttpProxy(), body, headers, http.getTimeout(),
-					http.getAuthentication(),
+					http.getAuthentication(), http.getUseSystemProperties(),
 
 					http.getValidResponseCodes(), http.getValidResponseContent(),
 					http.getConsoleLogResponseBody(), outputFile,
@@ -120,7 +121,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		return new HttpRequestExecution(
 				step.getUrl(), step.getHttpMode(), step.isIgnoreSslErrors(),
 				step.getHttpProxy(), step.getRequestBody(), headers, step.getTimeout(),
-				step.getAuthentication(),
+				step.getAuthentication(), step.getUseSystemProperties(),
 
 				step.getValidResponseCodes(), step.getValidResponseContent(),
 				step.getConsoleLogResponseBody(), outputFile,
@@ -131,7 +132,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	private HttpRequestExecution(
 			String url, HttpMode httpMode, boolean ignoreSslErrors,
 			String httpProxy, String body, List<HttpRequestNameValuePair> headers, Integer timeout,
-			String authentication,
+			String authentication, boolean useSystemProperties,
 
 			String validResponseCodes, String validResponseContent,
 			Boolean consoleLogResponseBody, FilePath outputFile,
@@ -171,6 +172,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			authenticator = null;
 		}
 
+		this.useSystemProperties = useSystemProperties;
 		this.validResponseCodes = validResponseCodes;
 		this.validResponseContent = validResponseContent != null ? validResponseContent : "";
 		this.consoleLogResponseBody = Boolean.TRUE.equals(consoleLogResponseBody);
@@ -216,7 +218,12 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		ResponseHandle responseHandle = ResponseHandle.NONE;
 		CloseableHttpClient httpclient = null;
 		try {
-			HttpClientBuilder clientBuilder = HttpClientBuilder.create().useSystemProperties();
+			HttpClientBuilder clientBuilder = HttpClientBuilder.create();
+
+			if (useSystemProperties) {
+				clientBuilder.useSystemProperties();
+			}
+
 			configureTimeoutAndSsl(clientBuilder);
 			if (this.httpProxy != null) {
 				clientBuilder.setProxy(this.httpProxy);
