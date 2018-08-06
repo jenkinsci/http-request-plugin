@@ -633,4 +633,44 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         j.assertBuildStatusSuccess(run);
         j.assertLogContains("Response: " + body, run);
     }
+
+    /**
+     * JENKINS-51741.
+     * You must get a squid proxy running on your local host for this test.
+     */
+    @Test
+    public void testPostBodyWithProxy() throws Exception {
+        //configure server
+		registerHandler("/doPostBody", HttpMode.POST, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+				assertEquals("POST", request.getMethod());
+
+				String body = requestBody(request);
+				body(response, HttpServletResponse.SC_OK, ContentType.TEXT_PLAIN, body);
+			}
+		});
+
+        String body = "send-body-workflow";
+
+        // Configure the build
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "postBody");
+        proj.setDefinition(new CpsFlowDefinition(
+                "node('linux') {\n" +
+                "def response = httpRequest" +
+                        " httpMode: 'POST'," +
+                        " httpProxy: 'http://localhost:3128'," +
+                        " requestBody: '" + body + "'," +
+                        " url: '" + baseURL() + "/doPostBody'\n" +
+                        "println('Response: ' + response.content)\n" +
+                "}",
+                true));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatusSuccess(run);
+        j.assertLogContains("Response: " + body, run);
+    }
 }
