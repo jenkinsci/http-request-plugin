@@ -46,6 +46,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
     private Boolean quiet                     = DescriptorImpl.quiet;
     private String authentication             = DescriptorImpl.authentication;
     private String requestBody                = DescriptorImpl.requestBody;
+    private Boolean useSystemProperties       = DescriptorImpl.useSystemProperties;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 	private String outputFile = DescriptorImpl.outputFile;
 	private ResponseHandle responseHandle = DescriptorImpl.responseHandle;
@@ -167,6 +168,15 @@ public final class HttpRequestStep extends AbstractStepImpl {
         return requestBody;
     }
 
+	@DataBoundSetter
+	public void setUseSystemProperties(Boolean useSystemProperties) {
+		this.useSystemProperties = useSystemProperties;
+	}
+
+	public Boolean getUseSystemProperties() {
+		return useSystemProperties;
+	}
+
     @DataBoundSetter
     public void setCustomHeaders(List<HttpRequestNameValuePair> customHeaders) {
         this.customHeaders = customHeaders;
@@ -233,6 +243,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
         public static final Boolean  quiet                     = HttpRequest.DescriptorImpl.quiet;
         public static final String   authentication            = HttpRequest.DescriptorImpl.authentication;
         public static final String   requestBody               = HttpRequest.DescriptorImpl.requestBody;
+        public static final Boolean  useSystemProperties       = HttpRequest.DescriptorImpl.useSystemProperties;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
         public static final String outputFile = "";
 		public static final ResponseHandle responseHandle = ResponseHandle.STRING;

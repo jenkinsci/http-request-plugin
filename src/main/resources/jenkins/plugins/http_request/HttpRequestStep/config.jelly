@@ -47,6 +47,9 @@
         <f:entry field="authentication" title="Authenticate" help="/plugin/http_request/help-authentication.html">
             <f:select />
         </f:entry>
+        <f:entry field="useSystemProperties" title="Use system properties" help="/plugin/http_request/use-system-properties.html">
+            <f:booleanRadio />
+        </f:entry>
         <f:entry title="Custom headers">
             <f:repeatableProperty field="customHeaders" />
         </f:entry>

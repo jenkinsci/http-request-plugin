@@ -69,6 +69,7 @@ public class HttpRequest extends Builder {
     private Boolean quiet                     = DescriptorImpl.quiet;
     private String authentication             = DescriptorImpl.authentication;
     private String requestBody                = DescriptorImpl.requestBody;
+    private Boolean useSystemProperties       = DescriptorImpl.useSystemProperties;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 
 	@DataBoundConstructor
@@ -206,6 +207,15 @@ public class HttpRequest extends Builder {
 	@DataBoundSetter
 	public void setRequestBody(String requestBody) {
 		this.requestBody = requestBody;
+	}
+
+	public Boolean getUseSystemProperties() {
+		return useSystemProperties;
+	}
+
+	@DataBoundSetter
+	public void setUseSystemProperties(Boolean useSystemProperties) {
+		this.useSystemProperties = useSystemProperties;
 	}
 
 	public List<HttpRequestNameValuePair> getCustomHeaders() {
@@ -346,6 +356,7 @@ public class HttpRequest extends Builder {
         public static final Boolean  quiet                     = false;
         public static final String   authentication            = "";
         public static final String   requestBody               = "";
+        public static final Boolean  useSystemProperties       = true;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
 
         public DescriptorImpl() {
