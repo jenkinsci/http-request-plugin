@@ -246,7 +246,11 @@ public class HttpRequest extends Builder {
 			ignoreSslErrors = true;
 		}
 		if (quiet == null) {
-			quiet = false;
+			quiet = DescriptorImpl.quiet;
+		}
+		if (useSystemProperties == null) {
+			// old jobs use it (for compatibility), new jobs doesn't (jelly was not reading the default)
+			useSystemProperties = !DescriptorImpl.useSystemProperties;
 		}
 		return this;
 	}
@@ -356,7 +360,7 @@ public class HttpRequest extends Builder {
         public static final Boolean  quiet                     = false;
         public static final String   authentication            = "";
         public static final String   requestBody               = "";
-        public static final Boolean  useSystemProperties       = true;
+        public static final Boolean  useSystemProperties       = false;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
 
         public DescriptorImpl() {

@@ -75,7 +75,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	private final String body;
 	private final List<HttpRequestNameValuePair> headers;
 
-	private final Boolean useSystemProperties;
+	private final boolean useSystemProperties;
 	private final String validResponseCodes;
 	private final String validResponseContent;
 	private final FilePath outputFile;
@@ -132,7 +132,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	private HttpRequestExecution(
 			String url, HttpMode httpMode, boolean ignoreSslErrors,
 			String httpProxy, String body, List<HttpRequestNameValuePair> headers, Integer timeout,
-			String authentication, Boolean useSystemProperties,
+			String authentication, boolean useSystemProperties,
 
 			String validResponseCodes, String validResponseContent,
 			Boolean consoleLogResponseBody, FilePath outputFile,
