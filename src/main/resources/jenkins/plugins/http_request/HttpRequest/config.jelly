@@ -6,12 +6,12 @@
     <f:entry field="httpMode" title="HTTP mode" help="/plugin/http_request/help-httpMode.html">
         <f:select />
     </f:entry>
-	<f:entry field="ignoreSslErrors" title="Ignore Ssl errors?" help="/plugin/http_request/help-ignoreSslErrors.html">
-		<f:booleanRadio />
-	</f:entry>
-	<f:entry field="httpProxy" title="Http Proxy" help="/plugin/http_request/help-httpProxy.html">
-		<f:textbox />
-	</f:entry>
+    <f:entry field="ignoreSslErrors" title="Ignore Ssl errors?" help="/plugin/http_request/help-ignoreSslErrors.html">
+        <f:booleanRadio />
+    </f:entry>
+    <f:entry field="httpProxy" title="Http Proxy" help="/plugin/http_request/help-httpProxy.html">
+        <f:textbox />
+    </f:entry>
 
     <f:advanced>
         <f:section title="Authorization">
@@ -36,6 +36,14 @@
             </f:entry>
             <f:entry field="requestBody" title="Request body" help="/plugin/http_request/help-requestBody.html">
                 <f:textarea />
+            </f:entry>
+        </f:section>
+        <f:section title="File Upload ">
+            <f:entry field="uploadFile" title="Upload file path" help="/plugin/http_request/help-uploadFile.html">
+                <f:textbox />
+            </f:entry>
+            <f:entry field="multipartName" title="Multipart entity name" help="/plugin/http_request/help-multipartName.html">
+                <f:textbox />
             </f:entry>
         </f:section>
         <f:section title="Response">

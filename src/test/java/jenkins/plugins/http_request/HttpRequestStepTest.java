@@ -10,9 +10,10 @@ import static jenkins.plugins.http_request.Registers.registerInvalidStatusCode;
 import static jenkins.plugins.http_request.Registers.registerReqAction;
 import static jenkins.plugins.http_request.Registers.registerRequestChecker;
 import static jenkins.plugins.http_request.Registers.registerTimeout;
+import static jenkins.plugins.http_request.Registers.registerFileUpload;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -20,14 +21,15 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.http.entity.ContentType;
 import org.eclipse.jetty.server.Request;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import hudson.model.Result;
 
@@ -40,10 +42,13 @@ import jenkins.plugins.http_request.util.RequestAction;
  */
 public class HttpRequestStepTest extends HttpRequestTestBase {
 
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
+
     @Test
     public void simpleGetTest() throws Exception {
         // Prepare the server
-		registerRequestChecker(HttpMode.GET);
+        registerRequestChecker(HttpMode.GET);
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
@@ -94,7 +99,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         String findMe = ALL_IS_WELL;
 
         // Prepare the server
-		registerRequestChecker(HttpMode.GET);
+        registerRequestChecker(HttpMode.GET);
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
@@ -114,7 +119,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void badContentFailsTheBuild() throws Exception {
         // Prepare the server
-		registerRequestChecker(HttpMode.GET);
+        registerRequestChecker(HttpMode.GET);
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
@@ -132,13 +137,13 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
         String s = FileUtils.readFileToString(run.getLogFile());
-		assertTrue(s.contains("Fail: Response doesn't contain expected content 'bad content'"));
+        assertTrue(s.contains("Fail: Response doesn't contain expected content 'bad content'"));
     }
 
     @Test
     public void responseMatchAcceptedMimeType() throws Exception {
         // Prepare the server
-		registerRequestChecker(HttpMode.GET);
+        registerRequestChecker(HttpMode.GET);
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
@@ -161,7 +166,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void responseDoesNotMatchAcceptedMimeTypeDoesNotFailTheBuild() throws Exception {
         // Prepare the server
-		registerRequestChecker(HttpMode.GET);
+        registerRequestChecker(HttpMode.GET);
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
@@ -184,8 +189,8 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void doAllRequestTypes() throws Exception {
         for (HttpMode mode: HttpMode.values()) {
-			// Prepare the server
-			registerRequestChecker(mode);
+            // Prepare the server
+            registerRequestChecker(mode);
             doRequest(mode);
 
             cleanHandlers();
@@ -217,7 +222,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void invalidResponseCodeFailsTheBuild() throws Exception {
         // Prepare the server
-		registerInvalidStatusCode();
+        registerInvalidStatusCode();
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
@@ -239,7 +244,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void invalidResponseCodeIsAccepted() throws Exception {
         // Prepare the server
-		registerInvalidStatusCode();
+        registerInvalidStatusCode();
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
@@ -262,7 +267,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void reverseRangeFailsTheBuild() throws Exception {
         // Prepare the server
-		registerInvalidStatusCode();
+        registerInvalidStatusCode();
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
@@ -284,7 +289,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void notANumberRangeValueFailsTheBuild() throws Exception {
         // Prepare the server
-		registerInvalidStatusCode();
+        registerInvalidStatusCode();
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
@@ -306,7 +311,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void rangeWithTextFailsTheBuild() throws Exception {
         // Prepare the server
-		registerInvalidStatusCode();
+        registerInvalidStatusCode();
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
@@ -328,7 +333,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void invalidRangeFailsTheBuild() throws Exception {
         // Prepare the server
-		registerInvalidStatusCode();
+        registerInvalidStatusCode();
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
@@ -350,8 +355,8 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void sendAllContentTypes() throws Exception {
         for (MimeType mimeType : MimeType.values()) {
-			// Prepare the server
-			registerContentTypeRequestChecker(mimeType, HttpMode.GET, ALL_IS_WELL);
+            // Prepare the server
+            registerContentTypeRequestChecker(mimeType, HttpMode.GET, ALL_IS_WELL);
 
             sendContentType(mimeType);
             cleanHandlers();
@@ -363,7 +368,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj"+mimeType.toString());
         proj.setDefinition(new CpsFlowDefinition(
             "def response = httpRequest url:'"+baseURL()+"/incoming_"+mimeType.toString()+"',\n" +
-			"    consoleLogResponseBody: true,\n" +
+            "    consoleLogResponseBody: true,\n" +
             "    contentType: '"+mimeType.toString()+"'\n" +
             "println('Status: '+response.getStatus())\n" +
             "println('Response: '+response.getContent())\n",
@@ -380,8 +385,8 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void sendAllAcceptTypes() throws Exception {
         for (MimeType mimeType : MimeType.values()) {
-			// Prepare the server
-			registerAcceptedTypeRequestChecker(mimeType);
+            // Prepare the server
+            registerAcceptedTypeRequestChecker(mimeType);
             sendAcceptType(mimeType);
 
             cleanHandlers();
@@ -476,8 +481,8 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         registerBasicAuth();
 
         // Prepare the authentication
-		registerBasicCredential("keyname1", "username1", "password1");
-		registerBasicCredential("keyname2", "username2", "password2");
+        registerBasicCredential("keyname1", "username1", "password1");
+        registerBasicCredential("keyname2", "username2", "password2");
 
         // Prepare HttpRequest
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
@@ -604,15 +609,15 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void testPostBody() throws Exception {
         //configure server
-		registerHandler("/doPostBody", HttpMode.POST, new SimpleHandler() {
-			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
-				assertEquals("POST", request.getMethod());
+        registerHandler("/doPostBody", HttpMode.POST, new SimpleHandler() {
+            @Override
+            void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+                assertEquals("POST", request.getMethod());
 
-				String body = requestBody(request);
-				body(response, HttpServletResponse.SC_OK, ContentType.TEXT_PLAIN, body);
-			}
-		});
+                String body = requestBody(request);
+                body(response, HttpServletResponse.SC_OK, ContentType.TEXT_PLAIN, body);
+            }
+        });
 
         String body = "send-body-workflow";
 
@@ -632,5 +637,37 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains("Response: " + body, run);
+    }
+
+    @Test
+    public void testFileUpload() throws Exception {
+        // Prepare the server
+        final File testFolder = folder.newFolder();
+        File uploadFile = File.createTempFile("upload", ".zip", testFolder);
+        String responseText = "File upload successful!";
+        registerFileUpload(testFolder, uploadFile, responseText);
+
+        // Prepare HttpRequest
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "uploadFile");
+        proj.setDefinition(new CpsFlowDefinition(
+                "node {\n"+
+                    "def response = httpRequest" +
+                        " httpMode: 'POST'," +
+                        " validReponseCodes: '201'," +
+                        " consoleLogResponseBody: true," +
+                        " acceptType: '" + MimeType.TEXT_PLAIN.toString() + "'," +
+                        " contentType: '" + MimeType.APPLICATION_ZIP.toString() + "'," +
+                        " uploadFile: '" + uploadFile.getAbsolutePath().replace("\\", "\\\\") + "'," +
+                        " multipartName: 'file-name'," +
+                        " url: '" + baseURL() + "/uploadFile'\n" +
+                "}",
+                true));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatusSuccess(run);
+        j.assertLogContains(responseText, run);
     }
 }
