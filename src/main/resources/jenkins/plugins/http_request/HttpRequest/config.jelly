@@ -19,6 +19,9 @@
                 <f:select />
             </f:entry>
         </f:section>
+        <f:entry field="useSystemProperties" title="Use system properties" help="/plugin/http_request/use-system-properties.html">
+            <f:booleanRadio />
+        </f:entry>
         <f:section title="Headers">
             <f:entry field="acceptType" title="Accept" help="/plugin/http_request/help-acceptType.html">
                 <f:select />

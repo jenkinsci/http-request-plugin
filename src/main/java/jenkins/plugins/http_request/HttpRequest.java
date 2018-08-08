@@ -71,6 +71,7 @@ public class HttpRequest extends Builder {
     private String requestBody                = DescriptorImpl.requestBody;
     private String uploadFile                 = DescriptorImpl.uploadFile;
     private String multipartName              = DescriptorImpl.multipartName;
+    private Boolean useSystemProperties       = DescriptorImpl.useSystemProperties;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 
 	@DataBoundConstructor
@@ -210,6 +211,15 @@ public class HttpRequest extends Builder {
 		this.requestBody = requestBody;
 	}
 
+	public Boolean getUseSystemProperties() {
+		return useSystemProperties;
+	}
+
+	@DataBoundSetter
+	public void setUseSystemProperties(Boolean useSystemProperties) {
+		this.useSystemProperties = useSystemProperties;
+	}
+
 	public List<HttpRequestNameValuePair> getCustomHeaders() {
 		return customHeaders;
 	}
@@ -256,7 +266,11 @@ public class HttpRequest extends Builder {
 			ignoreSslErrors = true;
 		}
 		if (quiet == null) {
-			quiet = false;
+			quiet = DescriptorImpl.quiet;
+		}
+		if (useSystemProperties == null) {
+			// old jobs use it (for compatibility), new jobs doesn't (jelly was not reading the default)
+			useSystemProperties = !DescriptorImpl.useSystemProperties;
 		}
 		return this;
 	}
@@ -389,6 +403,7 @@ public class HttpRequest extends Builder {
         public static final String   requestBody               = "";
         public static final String   uploadFile                = "";
         public static final String   multipartName             = "";
+        public static final Boolean  useSystemProperties       = false;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
 
         public DescriptorImpl() {
