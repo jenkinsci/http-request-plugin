@@ -515,7 +515,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void sendUTF8equestBody() throws Exception {
+    public void sendUTF8RequestBody() throws Exception {
         String notAsciiUTF8Message = "ἱερογλύφος";
 		registerContentTypeRequestChecker(MimeType.APPLICATION_JSON_UTF8, HttpMode.POST, null);
         sendContentType(MimeType.APPLICATION_JSON_UTF8, notAsciiUTF8Message, notAsciiUTF8Message);
