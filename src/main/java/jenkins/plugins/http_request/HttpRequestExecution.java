@@ -1,5 +1,6 @@
 package jenkins.plugins.http_request;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -24,12 +25,19 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedTrustManager;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.protocol.BasicHttpContext;
@@ -75,6 +83,9 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	private final String body;
 	private final List<HttpRequestNameValuePair> headers;
 
+	private final FilePath uploadFile;
+	private final String multipartName;
+
 	private final boolean useSystemProperties;
 	private final String validResponseCodes;
 	private final String validResponseContent;
@@ -96,12 +107,14 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			List<HttpRequestNameValuePair> headers = http.resolveHeaders(envVars);
 
 			FilePath outputFile = http.resolveOutputFile(envVars, build);
+			FilePath uploadFile = http.resolveUploadFile(envVars, build);
 			Item project = build.getProject();
 
 			return new HttpRequestExecution(
 					url, http.getHttpMode(), http.getIgnoreSslErrors(),
 					http.getHttpProxy(), body, headers, http.getTimeout(),
-					http.getAuthentication(), http.getUseSystemProperties(),
+					uploadFile, http.getMultipartName(),
+          http.getAuthentication(), http.getUseSystemProperties(),
 
 					http.getValidResponseCodes(), http.getValidResponseContent(),
 					http.getConsoleLogResponseBody(), outputFile,
@@ -117,10 +130,12 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	static HttpRequestExecution from(HttpRequestStep step, TaskListener taskListener, Execution execution) {
 		List<HttpRequestNameValuePair> headers = step.resolveHeaders();
 		FilePath outputFile = execution.resolveOutputFile();
+		FilePath uploadFile = execution.resolveUploadFile();
 		Item project = execution.getProject();
 		return new HttpRequestExecution(
 				step.getUrl(), step.getHttpMode(), step.isIgnoreSslErrors(),
 				step.getHttpProxy(), step.getRequestBody(), headers, step.getTimeout(),
+				uploadFile, step.getMultipartName(),
 				step.getAuthentication(), step.getUseSystemProperties(),
 
 				step.getValidResponseCodes(), step.getValidResponseContent(),
@@ -132,6 +147,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	private HttpRequestExecution(
 			String url, HttpMode httpMode, boolean ignoreSslErrors,
 			String httpProxy, String body, List<HttpRequestNameValuePair> headers, Integer timeout,
+			FilePath uploadFile, String multipartName,
 			String authentication, boolean useSystemProperties,
 
 			String validResponseCodes, String validResponseContent,
@@ -172,6 +188,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			authenticator = null;
 		}
 
+		this.uploadFile = uploadFile;
+		this.multipartName = multipartName;
 		this.useSystemProperties = useSystemProperties;
 		this.validResponseCodes = validResponseCodes;
 		this.validResponseContent = validResponseContent != null ? validResponseContent : "";
@@ -231,8 +249,30 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 			HttpClientUtil clientUtil = new HttpClientUtil();
 			HttpRequestBase httpRequestBase = clientUtil.createRequestBase(new RequestAction(new URL(url), httpMode, body, null, headers));
-			HttpContext context = new BasicHttpContext();
 
+			// set multipart/form-data entity for file upload
+			if (uploadFile != null && httpMode == HttpMode.POST) {
+				MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+				builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+
+				ContentType contentType = ContentType.APPLICATION_OCTET_STREAM;
+				for (HttpRequestNameValuePair header: headers) {
+					if ("Content-type".equalsIgnoreCase(header.getName())) {
+						contentType = ContentType.parse(header.getValue());
+						break;
+					}
+				}
+
+				FileBody fileBody = new FileBody(new File(uploadFile.getRemote()), contentType);
+				builder.addPart(multipartName, fileBody);
+				HttpEntity multiPartEntity = builder.build();
+
+				((HttpEntityEnclosingRequestBase) httpRequestBase).setEntity(multiPartEntity);
+				httpRequestBase.setHeader(multiPartEntity.getContentType());
+				httpRequestBase.setHeader(multiPartEntity.getContentEncoding());
+			}
+
+			HttpContext context = new BasicHttpContext();
 			httpclient = auth(clientBuilder, httpRequestBase, context);
 
 			ResponseContentSupplier response = executeRequest(httpclient, clientUtil, httpRequestBase, context);

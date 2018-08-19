@@ -12,6 +12,7 @@ import jenkins.plugins.http_request.util.RequestAction;
 import org.jenkinsci.plugins.workflow.steps.StepConfigTester;
 import org.junit.Rule;
 import org.junit.Test;
+
 import static org.junit.Assert.assertEquals;
 
 import org.jvnet.hudson.test.JenkinsRule;
@@ -80,6 +81,14 @@ public class HttpRequestStepRoundTripTest {
         configRoundTrip(before);
     }
 
+    @Test
+    public void configRoundtripGroup4() throws Exception {
+        before.setUploadFile("upload.txt");
+        configRoundTrip(before);
+        before.setMultipartName("filename");
+        configRoundTrip(before);
+    }
+
     private void configRoundTrip(HttpRequestStep before) throws Exception {
         HttpRequestStep after  = new StepConfigTester(j).configRoundTrip(before);
         j.assertEqualBeans(before, after, "httpMode");
@@ -88,6 +97,8 @@ public class HttpRequestStepRoundTripTest {
         j.assertEqualBeans(before, after, "validResponseContent");
         j.assertEqualBeans(before, after, "acceptType");
         j.assertEqualBeans(before, after, "contentType");
+        j.assertEqualBeans(before, after, "uploadFile");
+        j.assertEqualBeans(before, after, "multipartName");
         j.assertEqualBeans(before, after, "timeout");
         j.assertEqualBeans(before, after, "consoleLogResponseBody");
         j.assertEqualBeans(before, after, "authentication");

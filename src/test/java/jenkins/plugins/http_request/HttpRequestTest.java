@@ -1,5 +1,7 @@
 package jenkins.plugins.http_request;
 
+import static jenkins.plugins.http_request.Registers.registerFileUpload;
+
 import static jenkins.plugins.http_request.Registers.registerAcceptedTypeRequestChecker;
 import static jenkins.plugins.http_request.Registers.registerBasicAuth;
 import static jenkins.plugins.http_request.Registers.registerCheckBuildParameters;
@@ -16,6 +18,7 @@ import static jenkins.plugins.http_request.Registers.registerRequestChecker;
 import static jenkins.plugins.http_request.Registers.registerTimeout;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -27,7 +30,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
@@ -35,7 +37,9 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHttpResponse;
 import org.eclipse.jetty.server.Request;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import hudson.model.Cause.UserIdCause;
 import hudson.model.FreeStyleBuild;
@@ -52,6 +56,9 @@ import jenkins.plugins.http_request.util.RequestAction;
  * @author Martin d'Anjou
  */
 public class HttpRequestTest extends HttpRequestTestBase {
+
+	@Rule
+    public TemporaryFolder folder = new TemporaryFolder();
 
 	@Test
 	public void simpleGetTest() throws Exception {
@@ -508,7 +515,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void sendUTF8equestBody() throws Exception {
+    public void sendUTF8RequestBody() throws Exception {
         String notAsciiUTF8Message = "ἱερογλύφος";
 		registerContentTypeRequestChecker(MimeType.APPLICATION_JSON_UTF8, HttpMode.POST, null);
         sendContentType(MimeType.APPLICATION_JSON_UTF8, notAsciiUTF8Message, notAsciiUTF8Message);
@@ -908,6 +915,34 @@ public class HttpRequestTest extends HttpRequestTestBase {
 			}
 		}
 		Assert.assertEquals(2, valuesFoundCounter);
+		respSupplier.close();
+	}
 
+	@Test
+	public void testFileUpload() throws Exception {
+		// Prepare the server
+		final File testFolder = folder.newFolder();
+		File uploadFile = File.createTempFile("upload", ".zip", testFolder);
+		String responseText = "File upload successful!";
+		registerFileUpload(testFolder, uploadFile, responseText);
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/uploadFile");
+		httpRequest.setHttpMode(HttpMode.POST);
+		httpRequest.setValidResponseCodes("201");
+		httpRequest.setConsoleLogResponseBody(true);
+		httpRequest.setUploadFile(uploadFile.getAbsolutePath());
+		httpRequest.setMultipartName("file-name");
+		httpRequest.setContentType(MimeType.APPLICATION_ZIP);
+		httpRequest.setAcceptType(MimeType.TEXT_PLAIN);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains(responseText, build);
 	}
 }

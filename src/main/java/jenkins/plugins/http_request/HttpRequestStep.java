@@ -46,6 +46,8 @@ public final class HttpRequestStep extends AbstractStepImpl {
     private Boolean quiet                     = DescriptorImpl.quiet;
     private String authentication             = DescriptorImpl.authentication;
     private String requestBody                = DescriptorImpl.requestBody;
+    private String uploadFile                 = DescriptorImpl.uploadFile;
+    private String multipartName              = DescriptorImpl.multipartName;
     private Boolean useSystemProperties       = DescriptorImpl.useSystemProperties;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 	private String outputFile = DescriptorImpl.outputFile;
@@ -77,7 +79,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
     public HttpMode getHttpMode() {
         return httpMode;
     }
-   
+
     @DataBoundSetter
     public void setHttpProxy(String httpProxy) {
         this.httpProxy = httpProxy;
@@ -205,6 +207,24 @@ public final class HttpRequestStep extends AbstractStepImpl {
 		this.responseHandle = responseHandle;
 	}
 
+	public String getUploadFile() {
+		return uploadFile;
+	}
+
+	@DataBoundSetter
+	public void setUploadFile(String uploadFile) {
+		this.uploadFile = uploadFile;
+	}
+
+	public String getMultipartName() {
+		return multipartName;
+	}
+
+	@DataBoundSetter
+	public void setMultipartName(String multipartName) {
+		this.multipartName = multipartName;
+	}
+
 	@Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) super.getDescriptor();
@@ -243,6 +263,8 @@ public final class HttpRequestStep extends AbstractStepImpl {
         public static final Boolean  quiet                     = HttpRequest.DescriptorImpl.quiet;
         public static final String   authentication            = HttpRequest.DescriptorImpl.authentication;
         public static final String   requestBody               = HttpRequest.DescriptorImpl.requestBody;
+        public static final String   uploadFile                = HttpRequest.DescriptorImpl.uploadFile;
+        public static final String   multipartName             = HttpRequest.DescriptorImpl.multipartName;
         public static final Boolean  useSystemProperties       = HttpRequest.DescriptorImpl.useSystemProperties;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
         public static final String outputFile = "";
@@ -332,6 +354,28 @@ public final class HttpRequestStep extends AbstractStepImpl {
 							". You should use it inside a 'node' block");
 				}
 				return workspace.child(outputFile);
+			} catch (IOException | InterruptedException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		FilePath resolveUploadFile() {
+			String uploadFile = step.getUploadFile();
+			if (uploadFile == null || uploadFile.trim().isEmpty()) {
+				return null;
+			}
+
+			try {
+				FilePath workspace = getContext().get(FilePath.class);
+				if (workspace == null) {
+					throw new IllegalStateException("Could not find workspace to check existence of upload file: " + uploadFile +
+							". You should use it inside a 'node' block");
+				}
+				FilePath uploadFilePath = workspace.child(uploadFile);
+				if (!uploadFilePath.exists()) {
+					throw new IllegalStateException("Could not find upload file: " + uploadFile);
+				}
+				return uploadFilePath;
 			} catch (IOException | InterruptedException e) {
 				throw new IllegalStateException(e);
 			}

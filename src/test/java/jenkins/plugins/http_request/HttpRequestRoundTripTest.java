@@ -89,12 +89,21 @@ public class HttpRequestRoundTripTest {
         configRoundTrip(before);
     }
 
+    @Test
+    public void configRoundtripGroup4() throws Exception {
+        before.setUploadFile("upload.txt");
+        configRoundTrip(before);
+        before.setMultipartName("filename");
+        configRoundTrip(before);
+    }
+
     private void configRoundTrip(HttpRequest before) throws Exception {
         HttpRequest after = j.configRoundtrip(before);
         j.assertEqualBeans(before, after, "httpMode,passBuildParameters");
         j.assertEqualBeans(before, after, "url");
         j.assertEqualBeans(before, after, "validResponseCodes,validResponseContent");
         j.assertEqualBeans(before, after, "acceptType,contentType");
+        j.assertEqualBeans(before, after, "uploadFile,multipartName");
         j.assertEqualBeans(before, after, "outputFile,timeout");
         j.assertEqualBeans(before, after, "consoleLogResponseBody");
         j.assertEqualBeans(before, after, "authentication");

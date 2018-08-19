@@ -69,6 +69,8 @@ public class HttpRequest extends Builder {
     private Boolean quiet                     = DescriptorImpl.quiet;
     private String authentication             = DescriptorImpl.authentication;
     private String requestBody                = DescriptorImpl.requestBody;
+    private String uploadFile                 = DescriptorImpl.uploadFile;
+    private String multipartName              = DescriptorImpl.multipartName;
     private Boolean useSystemProperties       = DescriptorImpl.useSystemProperties;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 
@@ -227,6 +229,24 @@ public class HttpRequest extends Builder {
 		this.customHeaders = customHeaders;
 	}
 
+	public String getUploadFile() {
+		return uploadFile;
+	}
+
+	@DataBoundSetter
+	public void setUploadFile(String uploadFile) {
+		this.uploadFile = uploadFile;
+	}
+
+	public String getMultipartName() {
+		return multipartName;
+	}
+
+	@DataBoundSetter
+	public void setMultipartName(String multipartName) {
+		this.multipartName = multipartName;
+	}
+
 	@Initializer(before = InitMilestone.PLUGINS_STARTED)
 	public static void xStreamCompatibility() {
 		Items.XSTREAM2.aliasField("logResponseBody", HttpRequest.class, "consoleLogResponseBody");
@@ -328,6 +348,27 @@ public class HttpRequest extends Builder {
 		return workspace.child(filePath);
 	}
 
+	FilePath resolveUploadFile(EnvVars envVars, AbstractBuild<?,?> build) {
+		if (uploadFile == null || uploadFile.trim().isEmpty()) {
+			return null;
+		}
+		String filePath = envVars.expand(uploadFile);
+		try {
+			FilePath workspace = build.getWorkspace();
+			if (workspace == null) {
+				throw new IllegalStateException("Could not find workspace to check existence of upload file: " + uploadFile +
+						". You should use it inside a 'node' block");
+			}
+			FilePath uploadFilePath = workspace.child(filePath);
+				if (!uploadFilePath.exists()) {
+					throw new IllegalStateException("Could not find upload file: " + uploadFile);
+				}
+			return uploadFilePath;
+		} catch (IOException | InterruptedException e) {
+			throw new IllegalStateException(e);
+		}
+	}
+
     @Override
     public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener)
     throws InterruptedException, IOException
@@ -360,6 +401,8 @@ public class HttpRequest extends Builder {
         public static final Boolean  quiet                     = false;
         public static final String   authentication            = "";
         public static final String   requestBody               = "";
+        public static final String   uploadFile                = "";
+        public static final String   multipartName             = "";
         public static final Boolean  useSystemProperties       = false;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
 

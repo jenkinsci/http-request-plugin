@@ -1,22 +1,29 @@
 package jenkins.plugins.http_request;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.servlet.MultipartConfigElement;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Part;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.entity.ContentType;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.util.MultiException;
+import org.eclipse.jetty.util.MultiPartInputStreamParser;
 
 import com.google.common.collect.Iterables;
 
@@ -263,6 +270,50 @@ public class Registers {
 				String requestBody = requestBody(request);
 				assertEquals("TestRequestBody", requestBody);
 				okAllIsWell(response);
+			}
+		});
+	}
+
+	static void registerFileUpload(final File testFolder, final File uploadFile, final String responseText) {
+		registerHandler("/uploadFile", HttpMode.POST, new SimpleHandler() {
+
+			private static final String MULTIPART_FORMDATA_TYPE = "multipart/form-data";
+
+			private void enableMultipartSupport(HttpServletRequest request, MultipartConfigElement multipartConfig) {
+				request.setAttribute(Request.__MULTIPART_CONFIG_ELEMENT, multipartConfig);
+			}
+
+			private boolean isMultipartRequest(ServletRequest request) {
+				return request.getContentType() != null && request.getContentType().startsWith(MULTIPART_FORMDATA_TYPE);
+			}
+
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				assertEquals("POST", request.getMethod());
+				assertTrue(isMultipartRequest(request));
+
+				MultipartConfigElement multipartConfig = new MultipartConfigElement(testFolder.getAbsolutePath());
+				enableMultipartSupport(request, multipartConfig);
+
+				try {
+					Part part = request.getPart("file-name");
+					assertNotNull(part);
+					assertEquals(uploadFile.length(), part.getSize());
+					assertEquals(uploadFile.getName(), part.getSubmittedFileName());
+					assertEquals(MimeType.APPLICATION_ZIP.getValue(), part.getContentType());
+
+					body(response, HttpServletResponse.SC_CREATED, ContentType.TEXT_PLAIN, responseText);
+				} finally {
+					MultiPartInputStreamParser multipartInputStream = (MultiPartInputStreamParser) request
+							.getAttribute(Request.__MULTIPART_INPUT_STREAM);
+					if (multipartInputStream != null) {
+						try {
+							multipartInputStream.deleteParts();
+						} catch (MultiException e) {
+							// ignore
+						}
+					}
+				}
 			}
 		});
 	}
