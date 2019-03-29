@@ -29,7 +29,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  *         <p>
  *         A container for the Http Response. The container is returned as is to the Pipeline. For the normal plugin, the container is consumed internally (since it cannot be returned).
  */
-class ResponseContentSupplier implements Serializable, AutoCloseable {
+public class ResponseContentSupplier implements Serializable, AutoCloseable {
 
 	private static final long serialVersionUID = 1L;
 
