@@ -465,6 +465,10 @@ public class HttpRequest extends Builder {
         public static List<Range<Integer>> parseToRange(String value) {
             List<Range<Integer>> validRanges = new ArrayList<Range<Integer>>();
 
+            if (Strings.isNullOrEmpty(value)) {
+                return validRanges;
+            }
+
             String[] codes = value.split(",");
             for (String code : codes) {
                 String[] fromTo = code.trim().split(":");

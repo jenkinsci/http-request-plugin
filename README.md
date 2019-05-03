@@ -77,3 +77,11 @@ in the Pipeline job configuration.
 ### Known limitations
 
 * If Jenkins is restarted before the HTTP response comes back, the build will fail.
+
+## Building
+
+The plugin can be built and tested locally using a Maven Docker container:
+
+```
+docker run -it --rm -v "$(pwd)":/usr/src/mymaven -w /usr/src/mymaven maven:3.3-jdk-8 mvn test
+```
