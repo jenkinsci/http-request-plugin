@@ -95,6 +95,9 @@ class ResponseContentSupplier implements Serializable, AutoCloseable {
 		if (content != null) {
 			return content;
 		}
+		if(contentStream == null) {
+			return null;
+		}
 
 		try (InputStreamReader in = new InputStreamReader(contentStream,
 				Strings.isNullOrEmpty(charset) ? Charset.defaultCharset().name() : charset)) {
