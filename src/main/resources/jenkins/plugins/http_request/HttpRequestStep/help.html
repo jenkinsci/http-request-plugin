@@ -8,6 +8,7 @@
         println("Content: "+response.content)
         </pre>
         <p>If Jenkins restarts after the HTTP request is made, but before the HTTP response is received, the HTTP request fails.</p>
+        <p><tt>validResponseCodes</tt> is a comma-separated string of single values or <tt>from:to</tt> ranges. For example <tt>'200'</tt> to accept only <tt>200</tt> or <tt>'201,301:303'</tt> to accept <tt>201</tt> as well as the range from <tt>301</tt> to <tt>303</tt>.</p>
     </p>
     <p>
         The methods of the response object are:
