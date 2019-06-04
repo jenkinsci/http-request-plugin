@@ -466,7 +466,7 @@ public class HttpRequest extends Builder {
             List<Range<Integer>> validRanges = new ArrayList<Range<Integer>>();
 
             if (Strings.isNullOrEmpty(value)) {
-                return validRanges;
+                value = HttpRequest.DescriptorImpl.validResponseCodes;
             }
 
             String[] codes = value.split(",");
