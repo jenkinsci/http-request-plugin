@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.google.common.collect.Range;
+import com.google.common.collect.Ranges;
 
 import org.junit.Test;
 
@@ -14,17 +15,19 @@ import org.junit.Test;
  */
 public class HttpRequestDescriptorImplTest {
 
+    private static final List<Range<Integer>> DEFAULT_VALID_RESPONSE_CODES_RANGE = Collections.singletonList(Ranges.closed(100, 399));
+
     @Test
     public void parseToRangeShouldHandleEmptyString() {
         String value = "";
         List<Range<Integer>> ranges = HttpRequest.DescriptorImpl.parseToRange(value);
-        assertEquals(ranges, Collections.<Range<Integer>>emptyList());
+        assertEquals(DEFAULT_VALID_RESPONSE_CODES_RANGE, ranges);
     }
 
     @Test
     public void parseToRangeShouldHandleNull() {
         String value = null;
         List<Range<Integer>> ranges = HttpRequest.DescriptorImpl.parseToRange(value);
-        assertEquals(ranges, Collections.<Range<Integer>>emptyList());
+        assertEquals(DEFAULT_VALID_RESPONSE_CODES_RANGE, ranges);
     }
 }
