@@ -251,7 +251,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			HttpRequestBase httpRequestBase = clientUtil.createRequestBase(new RequestAction(new URL(url), httpMode, body, null, headers));
 
 			// set multipart/form-data entity for file upload
-			if (uploadFile != null && httpMode == HttpMode.POST) {
+			if (uploadFile != null && (httpMode == HttpMode.POST || httpMode == HttpMode.PUT)) {
 				MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 				builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
 
