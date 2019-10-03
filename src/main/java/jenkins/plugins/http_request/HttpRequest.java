@@ -404,7 +404,7 @@ public class HttpRequest extends Builder {
         public static final String   uploadFile                = "";
         public static final String   multipartName             = "";
         public static final Boolean  useSystemProperties       = false;
-        public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
+        public static final List <HttpRequestNameValuePair> customHeaders = Collections.emptyList();
 
         public DescriptorImpl() {
             load();

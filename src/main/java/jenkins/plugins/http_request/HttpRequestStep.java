@@ -266,7 +266,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
         public static final String   uploadFile                = HttpRequest.DescriptorImpl.uploadFile;
         public static final String   multipartName             = HttpRequest.DescriptorImpl.multipartName;
         public static final Boolean  useSystemProperties       = HttpRequest.DescriptorImpl.useSystemProperties;
-        public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
+        public static final List <HttpRequestNameValuePair> customHeaders = Collections.emptyList();
         public static final String outputFile = "";
 		public static final ResponseHandle responseHandle = ResponseHandle.STRING;
 
