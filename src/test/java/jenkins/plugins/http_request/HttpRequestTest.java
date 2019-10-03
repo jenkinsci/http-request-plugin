@@ -627,7 +627,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		// Prepare the server
 		registerCustomHeaders();
 
-		List<HttpRequestNameValuePair> customHeaders = new ArrayList<HttpRequestNameValuePair>();
+		List<HttpRequestNameValuePair> customHeaders = new ArrayList<>();
 		customHeaders.add(new HttpRequestNameValuePair("customHeader", "value1"));
 		customHeaders.add(new HttpRequestNameValuePair("customHeader", "value2"));
 		HttpRequest httpRequest = new HttpRequest(baseURL() + "/customHeaders");
@@ -655,7 +655,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		httpRequest.setHttpMode(HttpMode.POST);
 
 		// Add some custom headers
-		List<HttpRequestNameValuePair> customHeaders = new ArrayList<HttpRequestNameValuePair>();
+		List<HttpRequestNameValuePair> customHeaders = new ArrayList<>();
 		customHeaders.add(new HttpRequestNameValuePair("resolveCustomParam", "${Tag}"));
 		customHeaders.add(new HttpRequestNameValuePair("resolveEnvParam", "${WORKSPACE}"));
 		httpRequest.setCustomHeaders(customHeaders);
@@ -764,11 +764,11 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		params.add(new HttpRequestNameValuePair(paramPassword, valuePassword));
 
 		RequestAction action = new RequestAction(new URL(baseURL() + "/form-auth"), HttpMode.POST, null, params);
-		List<RequestAction> actions = new ArrayList<RequestAction>();
+		List<RequestAction> actions = new ArrayList<>();
 		actions.add(action);
 
 		FormAuthentication formAuth = new FormAuthentication("Form", actions);
-		List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
+		List<FormAuthentication> formAuthList = new ArrayList<>();
 		formAuthList.add(formAuth);
 
 		// Prepare HttpRequest
@@ -792,16 +792,16 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		registerReqAction();
 
 		// Prepare the authentication
-		List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
+		List<HttpRequestNameValuePair> params = new ArrayList<>();
 		params.add(new HttpRequestNameValuePair("param1", "value1"));
 		params.add(new HttpRequestNameValuePair("param2", "value2"));
 
 		RequestAction action = new RequestAction(new URL(baseURL() + "/reqAction"), HttpMode.GET, null, params);
-		List<RequestAction> actions = new ArrayList<RequestAction>();
+		List<RequestAction> actions = new ArrayList<>();
 		actions.add(action);
 
 		FormAuthentication formAuth = new FormAuthentication("keyname", actions);
-		List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
+		List<FormAuthentication> formAuthList = new ArrayList<>();
 		formAuthList.add(formAuth);
 
 		// Prepare HttpRequest
@@ -824,16 +824,16 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		registerFormAuthBad();
 
 		// Prepare the authentication
-		List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
+		List<HttpRequestNameValuePair> params = new ArrayList<>();
 		params.add(new HttpRequestNameValuePair("param1", "value1"));
 		params.add(new HttpRequestNameValuePair("param2", "value2"));
 
 		RequestAction action = new RequestAction(new URL(baseURL() + "/formAuthBad"), HttpMode.GET, null, params);
-		List<RequestAction> actions = new ArrayList<RequestAction>();
+		List<RequestAction> actions = new ArrayList<>();
 		actions.add(action);
 
 		FormAuthentication formAuth = new FormAuthentication("keyname", actions);
-		List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
+		List<FormAuthentication> formAuthList = new ArrayList<>();
 		formAuthList.add(formAuth);
 
 		// Prepare HttpRequest
@@ -858,17 +858,17 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 
 		// Prepare the authentication
-		List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
+		List<HttpRequestNameValuePair> params = new ArrayList<>();
 		params.add(new HttpRequestNameValuePair("param1", "value1"));
 		params.add(new HttpRequestNameValuePair("param2", "value2"));
 
 		// The request action won't be sent but we need to prepare it
 		RequestAction action = new RequestAction(new URL(baseURL() + "/non-existent"), HttpMode.GET, null, params);
-		List<RequestAction> actions = new ArrayList<RequestAction>();
+		List<RequestAction> actions = new ArrayList<>();
 		actions.add(action);
 
 		FormAuthentication formAuth = new FormAuthentication("keyname", actions);
-		List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
+		List<FormAuthentication> formAuthList = new ArrayList<>();
 		formAuthList.add(formAuth);
 
 		// Prepare HttpRequest - the actual request won't be sent

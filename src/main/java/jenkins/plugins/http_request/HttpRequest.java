@@ -463,7 +463,7 @@ public class HttpRequest extends Builder {
         }
 
         public static List<Range<Integer>> parseToRange(String value) {
-            List<Range<Integer>> validRanges = new ArrayList<Range<Integer>>();
+            List<Range<Integer>> validRanges = new ArrayList<>();
 
             if (Strings.isNullOrEmpty(value)) {
                 value = HttpRequest.DescriptorImpl.validResponseCodes;
