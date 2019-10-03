@@ -653,7 +653,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
                 "node {\n"+
                     "def response = httpRequest" +
                         " httpMode: 'POST'," +
-                        " validReponseCodes: '201'," +
+                        " validResponseCodes: '201'," +
                         " consoleLogResponseBody: true," +
                         " acceptType: '" + MimeType.TEXT_PLAIN.toString() + "'," +
                         " contentType: '" + MimeType.APPLICATION_ZIP.toString() + "'," +

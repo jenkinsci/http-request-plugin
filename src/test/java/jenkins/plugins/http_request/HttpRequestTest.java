@@ -190,7 +190,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	}
 
 	@Test
-	public void passBuildParametersWhenAskedAndParamtersArePresent() throws Exception {
+	public void passBuildParametersWhenAskedAndParametersArePresent() throws Exception {
 		// Prepare the server
 		registerCheckBuildParameters();
 
@@ -643,7 +643,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	}
 
 	@Test
-	public void replaceParametesInCustomHeaders() throws Exception {
+	public void replaceParametersInCustomHeaders() throws Exception {
 		// Prepare the server
 		registerCustomHeadersResolved();
 
