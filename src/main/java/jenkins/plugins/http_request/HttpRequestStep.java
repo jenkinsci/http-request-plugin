@@ -8,6 +8,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
+import org.apache.http.HttpHeaders;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
@@ -233,15 +234,15 @@ public final class HttpRequestStep extends AbstractStepImpl {
 	List<HttpRequestNameValuePair> resolveHeaders() {
 		final List<HttpRequestNameValuePair> headers = new ArrayList<>();
 		if (contentType != null && contentType != MimeType.NOT_SET) {
-			headers.add(new HttpRequestNameValuePair("Content-type", contentType.getContentType().toString()));
+			headers.add(new HttpRequestNameValuePair(HttpHeaders.CONTENT_TYPE, contentType.getContentType().toString()));
 		}
 		if (acceptType != null && acceptType != MimeType.NOT_SET) {
-			headers.add(new HttpRequestNameValuePair("Accept", acceptType.getValue()));
+			headers.add(new HttpRequestNameValuePair(HttpHeaders.ACCEPT, acceptType.getValue()));
 		}
 		for (HttpRequestNameValuePair header : customHeaders) {
 			String headerName = header.getName();
 			String headerValue = header.getValue();
-			boolean maskValue = headerName.equalsIgnoreCase("Authorization") ||
+			boolean maskValue = headerName.equalsIgnoreCase(HttpHeaders.AUTHORIZATION) ||
 					header.getMaskValue();
 
 			headers.add(new HttpRequestNameValuePair(headerName, headerValue, maskValue));

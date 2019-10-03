@@ -26,6 +26,7 @@ import javax.net.ssl.X509ExtendedTrustManager;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
@@ -256,7 +257,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 				ContentType contentType = ContentType.APPLICATION_OCTET_STREAM;
 				for (HttpRequestNameValuePair header: headers) {
-					if ("Content-type".equalsIgnoreCase(header.getName())) {
+					if (HttpHeaders.CONTENT_TYPE.equalsIgnoreCase(header.getName())) {
 						contentType = ContentType.parse(header.getValue());
 						break;
 					}

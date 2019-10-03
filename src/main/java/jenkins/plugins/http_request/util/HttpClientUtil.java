@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -75,7 +76,7 @@ public class HttpClientUtil {
 		if (!Strings.isNullOrEmpty(requestAction.getRequestBody())) {
 			ContentType contentType = null;
 			for (HttpRequestNameValuePair header : requestAction.getHeaders()) {
-				if ("Content-type".equalsIgnoreCase(header.getName())) {
+				if (HttpHeaders.CONTENT_TYPE.equalsIgnoreCase(header.getName())) {
 					contentType = ContentType.parse(header.getValue());
 					break;
 				}

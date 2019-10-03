@@ -14,7 +14,7 @@ project types:
 * You can specify a string that must be present in the response (if the string is not present, the build fails)
 * You can set a connection timeout limit (build fails if timeout is exceeded)
 * You can set an "Accept" header
-* You can set a "Content-type" header
+* You can set a "Content-Type" header
 * You can set any custom header
 
 ### Basic plugin features

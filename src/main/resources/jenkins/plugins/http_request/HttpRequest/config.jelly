@@ -26,7 +26,7 @@
             <f:entry field="acceptType" title="Accept" help="/plugin/http_request/help-acceptType.html">
                 <f:select />
             </f:entry>
-            <f:entry field="contentType" title="Content-type" help="/plugin/http_request/help-contentType.html">
+            <f:entry field="contentType" title="Content-Type" help="/plugin/http_request/help-contentType.html">
                 <f:select />
             </f:entry>
             <f:entry title="Custom headers">
