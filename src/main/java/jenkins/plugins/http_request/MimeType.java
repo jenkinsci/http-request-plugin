@@ -17,6 +17,7 @@ public enum MimeType {
     APPLICATION_JSON_UTF8(ContentType.APPLICATION_JSON),
     APPLICATION_TAR(ContentType.create("application/x-tar")),
     APPLICATION_ZIP(ContentType.create("application/zip")),
+    APPLICATION_XML(ContentType.create("application/xml")),
     APPLICATION_OCTETSTREAM(ContentType.APPLICATION_OCTET_STREAM);
 
     private final ContentType contentType;
