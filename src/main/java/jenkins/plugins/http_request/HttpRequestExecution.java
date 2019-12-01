@@ -30,7 +30,6 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -45,6 +44,8 @@ import org.apache.http.protocol.HttpContext;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.google.common.collect.Range;
@@ -64,6 +65,7 @@ import jenkins.security.MasterToSlaveCallable;
 import jenkins.plugins.http_request.HttpRequest.DescriptorImpl;
 import jenkins.plugins.http_request.HttpRequestStep.Execution;
 import jenkins.plugins.http_request.auth.Authenticator;
+import jenkins.plugins.http_request.auth.CertificateAuthentication;
 import jenkins.plugins.http_request.auth.CredentialBasicAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
@@ -114,7 +116,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 					url, http.getHttpMode(), http.getIgnoreSslErrors(),
 					http.getHttpProxy(), body, headers, http.getTimeout(),
 					uploadFile, http.getMultipartName(),
-          http.getAuthentication(), http.getUseSystemProperties(),
+					http.getAuthentication(), http.getUseSystemProperties(),
 
 					http.getValidResponseCodes(), http.getValidResponseContent(),
 					http.getConsoleLogResponseBody(), outputFile,
@@ -168,14 +170,19 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			Authenticator auth = HttpRequestGlobalConfig.get().getAuthentication(authentication);
 
 			if (auth == null) {
-				StandardUsernamePasswordCredentials credential = CredentialsMatchers.firstOrNull(
+				StandardCredentials credential = CredentialsMatchers.firstOrNull(
 						CredentialsProvider.lookupCredentials(
-								StandardUsernamePasswordCredentials.class,
+								StandardCredentials.class,
 								project, ACL.SYSTEM,
 								URIRequirementBuilder.fromUri(url).build()),
 						CredentialsMatchers.withId(authentication));
 				if (credential != null) {
-					auth = new CredentialBasicAuthentication(credential);
+					if (credential instanceof StandardUsernamePasswordCredentials) {
+						auth = new CredentialBasicAuthentication((StandardUsernamePasswordCredentials) credential);
+					}
+					if (credential instanceof StandardCertificateCredentials) {
+						auth = new CertificateAuthentication((StandardCertificateCredentials) credential);
+					}
 				}
 			}
 
@@ -256,7 +263,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 				builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
 
 				ContentType contentType = ContentType.APPLICATION_OCTET_STREAM;
-				for (HttpRequestNameValuePair header: headers) {
+				for (HttpRequestNameValuePair header : headers) {
 					if ("Content-type".equalsIgnoreCase(header.getName())) {
 						contentType = ContentType.parse(header.getValue());
 						break;
