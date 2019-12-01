@@ -28,8 +28,8 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 @Extension
 public class HttpRequestGlobalConfig extends GlobalConfiguration {
 
-    private List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<BasicDigestAuthentication>();
-    private List<FormAuthentication> formAuthentications = new ArrayList<FormAuthentication>();
+    private List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<>();
+    private List<FormAuthentication> formAuthentications = new ArrayList<>();
 
     private static final XStream2 XSTREAM2 = new XStream2();
 
@@ -101,7 +101,7 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
     }
 
     public List<Authenticator> getAuthentications() {
-        List<Authenticator> list = new ArrayList<Authenticator>();
+        List<Authenticator> list = new ArrayList<>();
         list.addAll(basicDigestAuthentications);
         list.addAll(formAuthentications);
         return list;

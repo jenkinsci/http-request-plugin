@@ -1,6 +1,6 @@
 # Http Request Plugin for Jenkins
 
-This plugin sends a HTTP/HTTPS request to a user speficied URL.
+This plugin sends a HTTP/HTTPS request to a user specified URL.
 
 ## Features
 
@@ -10,11 +10,11 @@ project types:
 * Programmable HTTP method: GET, POST, PUT, PATCH, DELETE, or HEAD
 * Programmable range of expected response codes (a response code outside the range fails the build)
 * Supports Basic Authentication (see global configuration)
-* Supports From Authentication (see global configuration)
+* Supports Form Authentication (see global configuration)
 * You can specify a string that must be present in the response (if the string is not present, the build fails)
 * You can set a connection timeout limit (build fails if timeout is exceeded)
 * You can set an "Accept" header
-* You can set a "Content-type" header
+* You can set a "Content-Type" header
 * You can set any custom header
 
 ### Basic plugin features
