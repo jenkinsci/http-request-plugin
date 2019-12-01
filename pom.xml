@@ -53,6 +53,7 @@ THE SOFTWARE.
 		<java.level>8</java.level>
 		<workflow.version>1.10</workflow.version>
 		<hpi.compatibleSinceVersion>1.8.17</hpi.compatibleSinceVersion>
+		<forkCount>1C</forkCount>
 	</properties>
 
 	<repositories>
