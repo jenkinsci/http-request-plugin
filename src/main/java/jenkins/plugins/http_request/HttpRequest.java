@@ -11,6 +11,7 @@ import java.util.Map;
 
 import javax.annotation.Nonnull;
 
+import org.apache.http.HttpHeaders;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -308,15 +309,15 @@ public class HttpRequest extends Builder {
 	List<HttpRequestNameValuePair> resolveHeaders(EnvVars envVars) {
 		final List<HttpRequestNameValuePair> headers = new ArrayList<>();
 		if (contentType != null && contentType != MimeType.NOT_SET) {
-			headers.add(new HttpRequestNameValuePair("Content-type", contentType.getContentType().toString()));
+			headers.add(new HttpRequestNameValuePair(HttpHeaders.CONTENT_TYPE, contentType.getContentType().toString()));
 		}
 		if (acceptType != null && acceptType != MimeType.NOT_SET) {
-			headers.add(new HttpRequestNameValuePair("Accept", acceptType.getValue()));
+			headers.add(new HttpRequestNameValuePair(HttpHeaders.ACCEPT, acceptType.getValue()));
 		}
 		for (HttpRequestNameValuePair header : customHeaders) {
 			String headerName = envVars.expand(header.getName());
 			String headerValue = envVars.expand(header.getValue());
-			boolean maskValue = headerName.equalsIgnoreCase("Authorization") ||
+			boolean maskValue = headerName.equalsIgnoreCase(HttpHeaders.AUTHORIZATION) ||
 					header.getMaskValue();
 
 			headers.add(new HttpRequestNameValuePair(headerName, headerValue, maskValue));
@@ -404,7 +405,7 @@ public class HttpRequest extends Builder {
         public static final String   uploadFile                = "";
         public static final String   multipartName             = "";
         public static final Boolean  useSystemProperties       = false;
-        public static final List <HttpRequestNameValuePair> customHeaders = Collections.<HttpRequestNameValuePair>emptyList();
+        public static final List <HttpRequestNameValuePair> customHeaders = Collections.emptyList();
 
         public DescriptorImpl() {
             load();
@@ -463,7 +464,7 @@ public class HttpRequest extends Builder {
         }
 
         public static List<Range<Integer>> parseToRange(String value) {
-            List<Range<Integer>> validRanges = new ArrayList<Range<Integer>>();
+            List<Range<Integer>> validRanges = new ArrayList<>();
 
             if (Strings.isNullOrEmpty(value)) {
                 value = HttpRequest.DescriptorImpl.validResponseCodes;

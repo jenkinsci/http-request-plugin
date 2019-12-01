@@ -62,28 +62,28 @@ public class HttpRequestRoundTripTest {
 
     @Test
     public void configRoundtripGroup3() throws Exception {
-        List<BasicDigestAuthentication> bda = new ArrayList<BasicDigestAuthentication>();
+        List<BasicDigestAuthentication> bda = new ArrayList<>();
         bda.add(new BasicDigestAuthentication("keyname1","username1","password1"));
         bda.add(new BasicDigestAuthentication("keyname2","username2","password2"));
         HttpRequestGlobalConfig.get().setBasicDigestAuthentications(bda);
         configRoundTrip(before);
 
-        List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
+        List<HttpRequestNameValuePair> params = new ArrayList<>();
         params.add(new HttpRequestNameValuePair("param1","value1"));
         params.add(new HttpRequestNameValuePair("param2","value2"));
 
         RequestAction action = new RequestAction(new URL("http://www.domain.com/"),HttpMode.GET,null,params);
-        List<RequestAction> actions = new ArrayList<RequestAction>();
+        List<RequestAction> actions = new ArrayList<>();
         actions.add(action);
 
         FormAuthentication formAuth = new FormAuthentication("keyname",actions);
-        List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
+        List<FormAuthentication> formAuthList = new ArrayList<>();
         formAuthList.add(formAuth);
 
         HttpRequestGlobalConfig.get().setFormAuthentications(formAuthList);
         configRoundTrip(before);
 
-        List<HttpRequestNameValuePair> customHeaders = new ArrayList<HttpRequestNameValuePair>();
+        List<HttpRequestNameValuePair> customHeaders = new ArrayList<>();
         customHeaders.add(new HttpRequestNameValuePair("param1","value1"));
         before.setCustomHeaders(customHeaders);
         configRoundTrip(before);

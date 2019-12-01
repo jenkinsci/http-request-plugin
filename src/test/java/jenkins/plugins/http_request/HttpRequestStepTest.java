@@ -507,16 +507,16 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         registerFormAuth();
 
         // Prepare the authentication
-        List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
+        List<HttpRequestNameValuePair> params = new ArrayList<>();
         params.add(new HttpRequestNameValuePair("param1","value1"));
         params.add(new HttpRequestNameValuePair("param2","value2"));
 
         RequestAction action = new RequestAction(new URL(baseURL()+"/reqAction"),HttpMode.GET,null,params);
-        List<RequestAction> actions = new ArrayList<RequestAction>();
+        List<RequestAction> actions = new ArrayList<>();
         actions.add(action);
 
         FormAuthentication formAuth = new FormAuthentication("keyname",actions);
-        List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
+        List<FormAuthentication> formAuthList = new ArrayList<>();
         formAuthList.add(formAuth);
 
         // Store the configuration
@@ -542,16 +542,16 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         registerFormAuthBad();
 
         // Prepare the authentication
-        List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
+        List<HttpRequestNameValuePair> params = new ArrayList<>();
         params.add(new HttpRequestNameValuePair("param1","value1"));
         params.add(new HttpRequestNameValuePair("param2","value2"));
 
         RequestAction action = new RequestAction(new URL(baseURL()+"/formAuthBad"),HttpMode.GET,null,params);
-        List<RequestAction> actions = new ArrayList<RequestAction>();
+        List<RequestAction> actions = new ArrayList<>();
         actions.add(action);
 
         FormAuthentication formAuth = new FormAuthentication("keyname",actions);
-        List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
+        List<FormAuthentication> formAuthList = new ArrayList<>();
         formAuthList.add(formAuth);
 
         // Store the configuration
@@ -575,17 +575,17 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void invalidKeyFormAuthenticationFailsTheBuild() throws Exception {
         // Prepare the authentication
-        List<HttpRequestNameValuePair> params = new ArrayList<HttpRequestNameValuePair>();
+        List<HttpRequestNameValuePair> params = new ArrayList<>();
         params.add(new HttpRequestNameValuePair("param1","value1"));
         params.add(new HttpRequestNameValuePair("param2","value2"));
 
         // The request action won't be sent but we need to prepare it
         RequestAction action = new RequestAction(new URL(baseURL()+"/non-existent"),HttpMode.GET,null,params);
-        List<RequestAction> actions = new ArrayList<RequestAction>();
+        List<RequestAction> actions = new ArrayList<>();
         actions.add(action);
 
         FormAuthentication formAuth = new FormAuthentication("keyname",actions);
-        List<FormAuthentication> formAuthList = new ArrayList<FormAuthentication>();
+        List<FormAuthentication> formAuthList = new ArrayList<>();
         formAuthList.add(formAuth);
 
         // Store the configuration
@@ -653,7 +653,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
                 "node {\n"+
                     "def response = httpRequest" +
                         " httpMode: 'POST'," +
-                        " validReponseCodes: '201'," +
+                        " validResponseCodes: '201'," +
                         " consoleLogResponseBody: true," +
                         " acceptType: '" + MimeType.TEXT_PLAIN.toString() + "'," +
                         " contentType: '" + MimeType.APPLICATION_ZIP.toString() + "'," +

@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.util.MultiException;
@@ -53,7 +54,7 @@ public class Registers {
 			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 				assertEquals(httpMode.name(), request.getMethod());
 
-				Enumeration<String> headers = request.getHeaders("Content-type");
+				Enumeration<String> headers = request.getHeaders(HttpHeaders.CONTENT_TYPE);
 				if (mimeType == MimeType.NOT_SET) {
 					assertFalse(headers.hasMoreElements());
 				} else {
@@ -78,7 +79,7 @@ public class Registers {
 			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 				assertEquals("GET", request.getMethod());
 
-				Enumeration<String> headers = request.getHeaders("Accept");
+				Enumeration<String> headers = request.getHeaders(HttpHeaders.ACCEPT);
 
 				if (mimeType == MimeType.NOT_SET) {
 					assertFalse(headers.hasMoreElements());
@@ -159,7 +160,7 @@ public class Registers {
 		registerHandler("/basicAuth", HttpMode.GET, new SimpleHandler() {
 			@Override
 			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-				Enumeration<String> headers = request.getHeaders("Authorization");
+				Enumeration<String> headers = request.getHeaders(HttpHeaders.AUTHORIZATION);
 
 				String value = headers.nextElement();
 				assertFalse(headers.hasMoreElements());

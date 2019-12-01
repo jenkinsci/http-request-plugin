@@ -38,12 +38,12 @@ THE SOFTWARE.
 		This plugin sends a http request to an url with some parameters.
 		See the release notes for changes and compatibility https://github.com/jenkinsci/http-request-plugin/releases
 	</description>
-	<url>http://wiki.jenkins-ci.org/display/JENKINS/HTTP+Request+Plugin</url>
+	<url>https://wiki.jenkins.io/display/JENKINS/HTTP+Request+Plugin</url>
 
 	<licenses>
 		<license>
 			<name>The MIT license</name>
-			<url>http://www.opensource.org/licenses/mit-license.php</url>
+			<url>https://opensource.org/licenses/MIT</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
@@ -140,8 +140,7 @@ THE SOFTWARE.
 
 	<scm>
 		<connection>scm:git:ssh://github.com/jenkinsci/http-request-plugin.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/http-request-plugin.git
-		</developerConnection>
+		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/http-request-plugin.git</developerConnection>
 		<url>https://github.com/jenkinsci/http-request-plugin</url>
 		<tag>HEAD</tag>
 	</scm>

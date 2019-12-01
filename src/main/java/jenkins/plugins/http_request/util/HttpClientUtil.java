@@ -1,14 +1,15 @@
 package jenkins.plugins.http_request.util;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -75,7 +76,7 @@ public class HttpClientUtil {
 		if (!Strings.isNullOrEmpty(requestAction.getRequestBody())) {
 			ContentType contentType = null;
 			for (HttpRequestNameValuePair header : requestAction.getHeaders()) {
-				if ("Content-type".equalsIgnoreCase(header.getName())) {
+				if (HttpHeaders.CONTENT_TYPE.equalsIgnoreCase(header.getName())) {
 					contentType = ContentType.parse(header.getValue());
 					break;
 				}
@@ -107,21 +108,8 @@ public class HttpClientUtil {
 	}
 
 	public static String paramsToString(List<HttpRequestNameValuePair> params) throws IOException {
-		StringBuilder sb = new StringBuilder();
-		final HttpEntity entity = toUrlEncoded(params);
-
-		BufferedReader br = null;
-		try {
-			br = new BufferedReader(new InputStreamReader(entity.getContent(), StandardCharsets.UTF_8));
-			String s;
-			while ((s = br.readLine()) != null) {
-				sb.append(s);
-			}
-			return sb.toString();
-		} finally {
-			if (br != null) {
-				br.close();
-			}
+		try (InputStream is = toUrlEncoded(params).getContent()) {
+			return IOUtils.toString(is, StandardCharsets.UTF_8);
 		}
 	}
 

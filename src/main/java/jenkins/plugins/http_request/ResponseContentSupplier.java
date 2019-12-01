@@ -25,9 +25,12 @@ import com.google.common.io.CharStreams;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
+ * A container for the Http Response.
+ *
+ * The container is returned as is to the Pipeline.
+ * For the normal plugin, the container is consumed internally (since it cannot be returned).
+ *
  * @author Martin d'Anjou
- *         <p>
- *         A container for the Http Response. The container is returned as is to the Pipeline. For the normal plugin, the container is consumed internally (since it cannot be returned).
  */
 public class ResponseContentSupplier implements Serializable, AutoCloseable {
 
