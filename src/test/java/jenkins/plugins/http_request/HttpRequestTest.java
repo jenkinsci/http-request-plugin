@@ -45,7 +45,9 @@ import hudson.model.Cause.UserIdCause;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.ParametersAction;
+import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Result;
+import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
 
 import jenkins.plugins.http_request.auth.FormAuthentication;
@@ -203,6 +205,9 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Run build
 		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.addProperty(new ParametersDefinitionProperty(
+				new StringParameterDefinition("foo", "default")
+		));
 		project.getBuildersList().add(httpRequest);
 		FreeStyleBuild build = project.scheduleBuild2(0, new UserIdCause(), new ParametersAction(new StringParameterValue("foo", "value"))).get();
 
@@ -232,6 +237,9 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Run build
 		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.addProperty(new ParametersDefinitionProperty(
+				new StringParameterDefinition("Tag", "default")
+		));
 		project.getBuildersList().add(httpRequest);
 
 		FreeStyleBuild build = project.scheduleBuild2(0, new UserIdCause(), new ParametersAction(new StringParameterValue("Tag", "trunk"))).get();
@@ -665,6 +673,10 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Run build
 		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.addProperty(new ParametersDefinitionProperty(
+				new StringParameterDefinition("Tag", "default"),
+				new StringParameterDefinition("WORKSPACE", "default")
+		));
 		project.getBuildersList().add(httpRequest);
 
 		FreeStyleBuild build = project.scheduleBuild2(0, new UserIdCause(),
