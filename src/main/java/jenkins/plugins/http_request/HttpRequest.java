@@ -72,6 +72,7 @@ public class HttpRequest extends Builder {
     private String requestBody                = DescriptorImpl.requestBody;
     private String uploadFile                 = DescriptorImpl.uploadFile;
     private String multipartName              = DescriptorImpl.multipartName;
+    private Boolean wrapAsMultipart           = DescriptorImpl.wrapAsMultipart;
     private Boolean useSystemProperties       = DescriptorImpl.useSystemProperties;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 
@@ -248,6 +249,15 @@ public class HttpRequest extends Builder {
 		this.multipartName = multipartName;
 	}
 
+	public Boolean getWrapAsMultipart() {
+		return wrapAsMultipart;
+	}
+
+	@DataBoundSetter
+	public void setWrapAsMultipart(Boolean wrapAsMultipart) {
+		this.wrapAsMultipart = wrapAsMultipart;
+	}
+
 	@Initializer(before = InitMilestone.PLUGINS_STARTED)
 	public static void xStreamCompatibility() {
 		Items.XSTREAM2.aliasField("logResponseBody", HttpRequest.class, "consoleLogResponseBody");
@@ -404,6 +414,7 @@ public class HttpRequest extends Builder {
         public static final String   requestBody               = "";
         public static final String   uploadFile                = "";
         public static final String   multipartName             = "";
+        public static final Boolean  wrapAsMultipart           = true;
         public static final Boolean  useSystemProperties       = false;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.emptyList();
 
