@@ -1,7 +1,5 @@
 package jenkins.plugins.http_request;
 
-import static jenkins.plugins.http_request.Registers.registerFileUpload;
-
 import static jenkins.plugins.http_request.Registers.registerAcceptedTypeRequestChecker;
 import static jenkins.plugins.http_request.Registers.registerBasicAuth;
 import static jenkins.plugins.http_request.Registers.registerCheckBuildParameters;
@@ -10,12 +8,14 @@ import static jenkins.plugins.http_request.Registers.registerCheckRequestBodyWit
 import static jenkins.plugins.http_request.Registers.registerContentTypeRequestChecker;
 import static jenkins.plugins.http_request.Registers.registerCustomHeaders;
 import static jenkins.plugins.http_request.Registers.registerCustomHeadersResolved;
+import static jenkins.plugins.http_request.Registers.registerFileUpload;
 import static jenkins.plugins.http_request.Registers.registerFormAuth;
 import static jenkins.plugins.http_request.Registers.registerFormAuthBad;
 import static jenkins.plugins.http_request.Registers.registerInvalidStatusCode;
 import static jenkins.plugins.http_request.Registers.registerReqAction;
 import static jenkins.plugins.http_request.Registers.registerRequestChecker;
 import static jenkins.plugins.http_request.Registers.registerTimeout;
+import static jenkins.plugins.http_request.Registers.registerUnwrappedPutFileUpload;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -945,6 +945,34 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		httpRequest.setConsoleLogResponseBody(true);
 		httpRequest.setUploadFile(uploadFile.getAbsolutePath());
 		httpRequest.setMultipartName("file-name");
+		httpRequest.setContentType(MimeType.APPLICATION_ZIP);
+		httpRequest.setAcceptType(MimeType.TEXT_PLAIN);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains(responseText, build);
+	}
+
+	@Test
+	public void testUnwrappedPutFileUpload() throws Exception {
+		// Prepare the server
+		final File testFolder = folder.newFolder();
+		File uploadFile = File.createTempFile("upload", ".zip", testFolder);
+		String responseText = "File upload successful!";
+		registerUnwrappedPutFileUpload(uploadFile, responseText);
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/uploadFile/" + uploadFile.getName());
+		httpRequest.setHttpMode(HttpMode.PUT);
+		httpRequest.setValidResponseCodes("201");
+		httpRequest.setConsoleLogResponseBody(true);
+		httpRequest.setUploadFile(uploadFile.getAbsolutePath());
+		httpRequest.setWrapAsMultipart(false);
 		httpRequest.setContentType(MimeType.APPLICATION_ZIP);
 		httpRequest.setAcceptType(MimeType.TEXT_PLAIN);
 

@@ -319,6 +319,26 @@ public class Registers {
 		});
 	}
 
+	static void registerUnwrappedPutFileUpload(final File uploadFile, final String responseText) {
+		registerHandler("/uploadFile/" + uploadFile.getName(), HttpMode.PUT, new SimpleHandler() {
+
+			private static final String MULTIPART_FORMDATA_TYPE = "multipart/form-data";
+
+			private boolean isMultipartRequest(ServletRequest request) {
+				return request.getContentType() != null && request.getContentType().startsWith(MULTIPART_FORMDATA_TYPE);
+			}
+
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+				assertEquals("PUT", request.getMethod());
+				assertFalse(isMultipartRequest(request));
+				assertEquals(uploadFile.length(), request.getContentLength());
+				assertEquals(MimeType.APPLICATION_ZIP.getValue(), request.getContentType());
+				body(response, HttpServletResponse.SC_CREATED, ContentType.TEXT_PLAIN, responseText);
+			}
+		});
+	}
+
 	private static void registerHandler(String target, HttpMode method, SimpleHandler handler) {
 		HttpRequestTestBase.registerHandler(target, method, handler);
 	}
