@@ -35,6 +35,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
@@ -88,6 +89,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 	private final FilePath uploadFile;
 	private final String multipartName;
+	private final boolean wrapAsMultipart;
 
 	private final boolean useSystemProperties;
 	private final String validResponseCodes;
@@ -116,7 +118,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			return new HttpRequestExecution(
 					url, http.getHttpMode(), http.getIgnoreSslErrors(),
 					http.getHttpProxy(), body, headers, http.getTimeout(),
-					uploadFile, http.getMultipartName(),
+					uploadFile, http.getMultipartName(), http.getWrapAsMultipart(),
 					http.getAuthentication(), http.getUseSystemProperties(),
 
 					http.getValidResponseCodes(), http.getValidResponseContent(),
@@ -138,7 +140,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		return new HttpRequestExecution(
 				step.getUrl(), step.getHttpMode(), step.isIgnoreSslErrors(),
 				step.getHttpProxy(), step.getRequestBody(), headers, step.getTimeout(),
-				uploadFile, step.getMultipartName(),
+				uploadFile, step.getMultipartName(), step.getWrapAsMultipart(),
 				step.getAuthentication(), step.getUseSystemProperties(),
 
 				step.getValidResponseCodes(), step.getValidResponseContent(),
@@ -150,7 +152,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	private HttpRequestExecution(
 			String url, HttpMode httpMode, boolean ignoreSslErrors,
 			String httpProxy, String body, List<HttpRequestNameValuePair> headers, Integer timeout,
-			FilePath uploadFile, String multipartName,
+			FilePath uploadFile, String multipartName, boolean wrapAsMultipart,
 			String authentication, boolean useSystemProperties,
 
 			String validResponseCodes, String validResponseContent,
@@ -198,6 +200,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 		this.uploadFile = uploadFile;
 		this.multipartName = multipartName;
+		this.wrapAsMultipart = wrapAsMultipart;
 		this.useSystemProperties = useSystemProperties;
 		this.validResponseCodes = validResponseCodes;
 		this.validResponseContent = validResponseContent != null ? validResponseContent : "";
@@ -258,11 +261,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			HttpClientUtil clientUtil = new HttpClientUtil();
 			HttpRequestBase httpRequestBase = clientUtil.createRequestBase(new RequestAction(new URL(url), httpMode, body, null, headers));
 
-			// set multipart/form-data entity for file upload
 			if (uploadFile != null && (httpMode == HttpMode.POST || httpMode == HttpMode.PUT)) {
-				MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-				builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
-
 				ContentType contentType = ContentType.APPLICATION_OCTET_STREAM;
 				for (HttpRequestNameValuePair header : headers) {
 					if (HttpHeaders.CONTENT_TYPE.equalsIgnoreCase(header.getName())) {
@@ -271,13 +270,22 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 					}
 				}
 
-				FileBody fileBody = new FileBody(new File(uploadFile.getRemote()), contentType);
-				builder.addPart(multipartName, fileBody);
-				HttpEntity multiPartEntity = builder.build();
+				HttpEntity entity;
+				if (wrapAsMultipart) {
+					// set as multipart/form-data entity for file upload
+					MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+					builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
 
-				((HttpEntityEnclosingRequestBase) httpRequestBase).setEntity(multiPartEntity);
-				httpRequestBase.setHeader(multiPartEntity.getContentType());
-				httpRequestBase.setHeader(multiPartEntity.getContentEncoding());
+					FileBody fileBody = new FileBody(new File(uploadFile.getRemote()), contentType);
+					entity = builder.addPart(multipartName, fileBody).build();
+				} else {
+					// set as direct entity for file upload
+					entity = new FileEntity(new File(uploadFile.getRemote()), contentType);
+				}
+
+				((HttpEntityEnclosingRequestBase) httpRequestBase).setEntity(entity);
+				httpRequestBase.setHeader(entity.getContentType());
+				httpRequestBase.setHeader(entity.getContentEncoding());
 			}
 
 			HttpContext context = new BasicHttpContext();
