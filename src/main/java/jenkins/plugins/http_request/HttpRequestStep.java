@@ -49,7 +49,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
     private String requestBody                = DescriptorImpl.requestBody;
     private String uploadFile                 = DescriptorImpl.uploadFile;
     private String multipartName              = DescriptorImpl.multipartName;
-    private Boolean wrapAsMultipart           = DescriptorImpl.wrapAsMultipart;
+    private boolean wrapAsMultipart           = DescriptorImpl.wrapAsMultipart;
     private Boolean useSystemProperties       = DescriptorImpl.useSystemProperties;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 	private String outputFile = DescriptorImpl.outputFile;
@@ -227,12 +227,12 @@ public final class HttpRequestStep extends AbstractStepImpl {
 		this.multipartName = multipartName;
 	}
 
-	public Boolean getWrapAsMultipart() {
+	public boolean isWrapAsMultipart() {
 		return wrapAsMultipart;
 	}
 
 	@DataBoundSetter
-	public void setWrapAsMultipart(Boolean wrapAsMultipart) {
+	public void setWrapAsMultipart(boolean wrapAsMultipart) {
 		this.wrapAsMultipart = wrapAsMultipart;
 	}
 
@@ -276,7 +276,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
         public static final String   requestBody               = HttpRequest.DescriptorImpl.requestBody;
         public static final String   uploadFile                = HttpRequest.DescriptorImpl.uploadFile;
         public static final String   multipartName             = HttpRequest.DescriptorImpl.multipartName;
-        public static final Boolean  wrapAsMultipart           = HttpRequest.DescriptorImpl.wrapAsMultipart;
+        public static final boolean  wrapAsMultipart           = HttpRequest.DescriptorImpl.wrapAsMultipart;
         public static final Boolean  useSystemProperties       = HttpRequest.DescriptorImpl.useSystemProperties;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.emptyList();
         public static final String outputFile = "";

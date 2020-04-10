@@ -283,6 +283,10 @@ public class HttpRequest extends Builder {
 			// old jobs use it (for compatibility), new jobs doesn't (jelly was not reading the default)
 			useSystemProperties = !DescriptorImpl.useSystemProperties;
 		}
+
+		if(wrapAsMultipart == null) {
+			wrapAsMultipart = DescriptorImpl.wrapAsMultipart;
+		}
 		return this;
 	}
 
@@ -414,7 +418,7 @@ public class HttpRequest extends Builder {
         public static final String   requestBody               = "";
         public static final String   uploadFile                = "";
         public static final String   multipartName             = "";
-        public static final Boolean  wrapAsMultipart           = true;
+        public static final boolean  wrapAsMultipart           = true;
         public static final Boolean  useSystemProperties       = false;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.emptyList();
 

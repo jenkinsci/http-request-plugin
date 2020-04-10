@@ -140,7 +140,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		return new HttpRequestExecution(
 				step.getUrl(), step.getHttpMode(), step.isIgnoreSslErrors(),
 				step.getHttpProxy(), step.getRequestBody(), headers, step.getTimeout(),
-				uploadFile, step.getMultipartName(), step.getWrapAsMultipart(),
+				uploadFile, step.getMultipartName(), step.isWrapAsMultipart(),
 				step.getAuthentication(), step.getUseSystemProperties(),
 
 				step.getValidResponseCodes(), step.getValidResponseContent(),
