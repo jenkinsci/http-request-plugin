@@ -42,6 +42,9 @@
             </f:entry>
         </f:section>
         <f:section title="File Upload ">
+        	<f:entry field="wrapAsMultipart" title="Wrap as Multipart request?" help="/plugin/http_request/help-wrapAsMultipart.html">
+				<f:booleanRadio />
+			</f:entry>
             <f:entry field="uploadFile" title="Upload file path" help="/plugin/http_request/help-uploadFile.html">
                 <f:textbox />
             </f:entry>

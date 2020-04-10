@@ -41,6 +41,9 @@
         <f:entry field="requestBody" title="Request body" help="/plugin/http_request/help-requestBody.html">
             <f:textarea />
         </f:entry>
+        <f:entry field="wrapAsMultipart" title="Wrap as Multipart request?" help="/plugin/http_request/help-wrapAsMultipart.html">
+			<f:booleanRadio />
+		</f:entry>
         <f:entry field="uploadFile" title="Upload file path" help="/plugin/http_request/help-uploadFile.html">
             <f:textbox />
         </f:entry>
