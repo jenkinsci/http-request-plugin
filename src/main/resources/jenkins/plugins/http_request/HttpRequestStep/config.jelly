@@ -14,6 +14,9 @@
         <f:entry field="httpProxy" title="Http Proxy" help="/plugin/http_request/help-httpProxy.html">
             <f:textbox />
         </f:entry>
+        <f:entry field="proxyAuthentication" title="Proxy authenticate" help="/plugin/http_request/help-proxyAuthentication.html">
+            <f:select />
+        </f:entry>
         <f:entry field="validResponseCodes" title="Response codes expected" help="/plugin/http_request/help-validResponseCodes.html">
             <f:textbox default="${descriptor.validResponseCodes}"/>
         </f:entry>
