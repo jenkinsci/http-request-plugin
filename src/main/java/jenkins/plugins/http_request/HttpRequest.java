@@ -59,6 +59,7 @@ public class HttpRequest extends Builder {
 	private Boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
 	private HttpMode httpMode                 = DescriptorImpl.httpMode;
 	private String httpProxy                  = DescriptorImpl.httpProxy;
+	private String proxyAuthentication        = DescriptorImpl.proxyAuthentication;
     private Boolean passBuildParameters       = DescriptorImpl.passBuildParameters;
     private String validResponseCodes         = DescriptorImpl.validResponseCodes;
     private String validResponseContent       = DescriptorImpl.validResponseContent;
@@ -202,6 +203,15 @@ public class HttpRequest extends Builder {
 	@DataBoundSetter
 	public void setAuthentication(String authentication) {
 		this.authentication = authentication;
+	}
+
+	public String getProxyAuthentication() {
+		return proxyAuthentication;
+	}
+
+	@DataBoundSetter
+	public void setProxyAuthentication(String proxyAuthentication) {
+		this.proxyAuthentication = proxyAuthentication;
 	}
 
 	public String getRequestBody() {
@@ -405,6 +415,7 @@ public class HttpRequest extends Builder {
 		public static final boolean ignoreSslErrors = false;
 		public static final HttpMode httpMode                  = HttpMode.GET;
 		public static final String   httpProxy                 = "";
+		public static final String proxyAuthentication         = "";
         public static final Boolean  passBuildParameters       = false;
         public static final String   validResponseCodes        = "100:399";
         public static final String   validResponseContent      = "";
@@ -453,6 +464,19 @@ public class HttpRequest extends Builder {
 													  @QueryParameter String url) {
             return fillAuthenticationItems(project, url);
         }
+
+        public ListBoxModel doFillProxyAuthenticationItems(@AncestorInPath Item project,
+														   @QueryParameter String url) {
+			if (project == null || !project.hasPermission(Item.CONFIGURE)) {
+				return new StandardListBoxModel();
+			} else {
+				return new StandardListBoxModel()
+						.includeEmptyValue()
+						.includeAs(ACL.SYSTEM,
+								project, StandardUsernamePasswordCredentials.class,
+								URIRequirementBuilder.fromUri(url).build());
+			}
+		}
 
         public static ListBoxModel fillAuthenticationItems(Item project, String url) {
 			if (project == null || !project.hasPermission(Item.CONFIGURE)) {

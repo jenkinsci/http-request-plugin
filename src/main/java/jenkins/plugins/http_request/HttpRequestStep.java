@@ -38,6 +38,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
 	private boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
 	private HttpMode httpMode                 = DescriptorImpl.httpMode;
     private String httpProxy                  = DescriptorImpl.httpProxy;
+    private String proxyAuthentication        = DescriptorImpl.proxyAuthentication;
     private String validResponseCodes         = DescriptorImpl.validResponseCodes;
     private String validResponseContent       = DescriptorImpl.validResponseContent;
     private MimeType acceptType               = DescriptorImpl.acceptType;
@@ -163,7 +164,16 @@ public final class HttpRequestStep extends AbstractStepImpl {
         return authentication;
     }
 
-    @DataBoundSetter
+	@DataBoundSetter
+	public void setProxyAuthentication(String proxyAuthentication) {
+		this.proxyAuthentication = proxyAuthentication;
+	}
+
+	public String getProxyAuthentication() {
+		return proxyAuthentication;
+	}
+
+	@DataBoundSetter
     public void setRequestBody(String requestBody) {
         this.requestBody = requestBody;
     }
@@ -265,6 +275,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
         public static final boolean ignoreSslErrors = HttpRequest.DescriptorImpl.ignoreSslErrors;
         public static final HttpMode httpMode                  = HttpRequest.DescriptorImpl.httpMode;
         public static final String   httpProxy                 = HttpRequest.DescriptorImpl.httpProxy;
+        public static final String   proxyAuthentication       = HttpRequest.DescriptorImpl.proxyAuthentication;
         public static final String   validResponseCodes        = HttpRequest.DescriptorImpl.validResponseCodes;
         public static final String   validResponseContent      = HttpRequest.DescriptorImpl.validResponseContent;
         public static final MimeType acceptType                = HttpRequest.DescriptorImpl.acceptType;
@@ -321,7 +332,12 @@ public final class HttpRequestStep extends AbstractStepImpl {
             return HttpRequest.DescriptorImpl.fillAuthenticationItems(project, url);
         }
 
-        public FormValidation doCheckValidResponseCodes(@QueryParameter String value) {
+		public ListBoxModel doFillProxyAuthenticationItems(@AncestorInPath Item project,
+														   @QueryParameter String url) {
+			return HttpRequest.DescriptorImpl.fillAuthenticationItems(project, url);
+		}
+
+		public FormValidation doCheckValidResponseCodes(@QueryParameter String value) {
             return HttpRequest.DescriptorImpl.checkValidResponseCodes(value);
         }
 

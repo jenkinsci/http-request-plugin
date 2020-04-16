@@ -83,6 +83,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	private final HttpMode httpMode;
 	private final boolean ignoreSslErrors;
 	private final HttpHost httpProxy;
+	private final StandardUsernamePasswordCredentials proxyCredentials;
 
 	private final String body;
 	private final List<HttpRequestNameValuePair> headers;
@@ -117,7 +118,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 			return new HttpRequestExecution(
 					url, http.getHttpMode(), http.getIgnoreSslErrors(),
-					http.getHttpProxy(), body, headers, http.getTimeout(),
+					http.getHttpProxy(), http.getProxyAuthentication(),
+					body, headers, http.getTimeout(),
 					uploadFile, http.getMultipartName(), http.getWrapAsMultipart(),
 					http.getAuthentication(), http.getUseSystemProperties(),
 
@@ -139,7 +141,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		Item project = execution.getProject();
 		return new HttpRequestExecution(
 				step.getUrl(), step.getHttpMode(), step.isIgnoreSslErrors(),
-				step.getHttpProxy(), step.getRequestBody(), headers, step.getTimeout(),
+				step.getHttpProxy(), step.getProxyAuthentication(),
+				step.getRequestBody(), headers, step.getTimeout(),
 				uploadFile, step.getMultipartName(), step.isWrapAsMultipart(),
 				step.getAuthentication(), step.getUseSystemProperties(),
 
@@ -151,7 +154,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 	private HttpRequestExecution(
 			String url, HttpMode httpMode, boolean ignoreSslErrors,
-			String httpProxy, String body, List<HttpRequestNameValuePair> headers, Integer timeout,
+			String httpProxy, String proxyAuthentication, String body,
+			List<HttpRequestNameValuePair> headers, Integer timeout,
 			FilePath uploadFile, String multipartName, boolean wrapAsMultipart,
 			String authentication, boolean useSystemProperties,
 
@@ -164,7 +168,30 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		this.url = url;
 		this.httpMode = httpMode;
 		this.ignoreSslErrors = ignoreSslErrors;
-		this.httpProxy = StringUtils.isNotBlank(httpProxy) ? HttpHost.create(httpProxy) : null;
+
+		if (StringUtils.isNotBlank(httpProxy)) {
+			this.httpProxy = HttpHost.create(httpProxy);
+			if (StringUtils.isNotBlank(proxyAuthentication)) {
+
+				StandardCredentials credential = CredentialsMatchers.firstOrNull(
+						CredentialsProvider.lookupCredentials(
+								StandardCredentials.class,
+								project, ACL.SYSTEM,
+								URIRequirementBuilder.fromUri(url).build()),
+						CredentialsMatchers.withId(proxyAuthentication));
+				if (credential instanceof StandardUsernamePasswordCredentials) {
+					this.proxyCredentials = (StandardUsernamePasswordCredentials) credential;
+				} else {
+					this.proxyCredentials = null;
+					throw new IllegalStateException("Proxy authentication '" + proxyAuthentication + "' doesn't exist anymore or is not a username/password credential type");
+				}
+			} else {
+				this.proxyCredentials = null;
+			}
+		} else {
+			this.httpProxy = null;
+			this.proxyCredentials = null;
+		}
 
 		this.body = body;
 		this.headers = headers;
@@ -331,6 +358,17 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	private CloseableHttpClient auth(
 			HttpClientBuilder clientBuilder, HttpRequestBase httpRequestBase,
 			HttpContext context) throws IOException, InterruptedException {
+
+		if (proxyCredentials != null) {
+			logger().println("Using proxy authentication: " + proxyCredentials.getId());
+			if (authenticator instanceof CredentialBasicAuthentication) {
+				((CredentialBasicAuthentication) authenticator).addCredentials(httpProxy, proxyCredentials);
+			} else {
+				new CredentialBasicAuthentication((StandardUsernamePasswordCredentials) proxyCredentials)
+						.prepare(clientBuilder, context, httpProxy);
+			}
+		}
+
 		if (authenticator == null) {
 			return clientBuilder.build();
 		}
