@@ -2,6 +2,15 @@
 
 This plugin sends a HTTP/HTTPS request to a user specified URL.
 
+The request is made as a job execution in Jenkins and depending of the
+HTTP response the job could be marked as failed (configurable). For
+example, responses such as 404 and 500 could make the job fail. When a
+job fails it will log the response to help identify the problem.
+
+The request may be as an HTTP GET or POST mode, by choosing the HTTP
+mode. If it was not informed, it will use the default from global
+settings whose default is POST.  
+
 ## Features
 
 The following features are available in both Pipeline and traditional
@@ -85,3 +94,24 @@ The plugin can be built and tested locally using a Maven Docker container:
 ```
 docker run -it --rm -v "$(pwd)":/usr/src/mymaven -w /usr/src/mymaven maven:3.3-jdk-8 mvn test
 ```
+
+## Configure Global Settings
+
+![](https://wiki.jenkins.io/download/attachments/65667525/configure-http-request-global.png?version=1&modificationDate=1382778186000&api=v2)
+
+## Configure Build Step in your Jenkins job
+
+![](https://wiki.jenkins.io/download/attachments/65667525/configure-http-request-build-step.png?version=1&modificationDate=1382778170000&api=v2)
+
+## HTTP Request Parameters
+
+Parameters are escaped which means if you try to pass another value
+inside a value, it will not happen.
+
+In the example below, the key "name" will be passed with a value of
+"jenkins&os=linux". Note that "os" is not a parameter - it is part of
+the value). At the HTTP server-side no parameter named "os" will exist. 
+
+Every execution will log all parameters. Be careful to not pass private
+information such as passwords or personal information.  
+![](https://wiki.jenkins.io/download/attachments/65667525/log.png?version=1&modificationDate=1353008425000&api=v2)
