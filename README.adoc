@@ -14,7 +14,7 @@ link:https://ci.jenkins.io/job/Plugins/job/http-request-plugin/job/master/[image
 link:https://github.com/jenkinsci/http-request-plugin/graphs/contributors[image:https://img.shields.io/github/contributors/jenkinsci/http-request-plugin.svg?color=blue[Contributors]]
 link:https://plugins.jenkins.io/http_request/[image:https://img.shields.io/jenkins/plugin/i/http_request.svg?color=blue&label=installations[Jenkins Plugin Installs]]
 link:https://plugins.jenkins.io/http_request/[image:https://img.shields.io/jenkins/plugin/v/http_request.svg[Plugin]]
-link:https://github.com/jenkinsci/pipeline-maven-plugin/releases/latest[image:https://img.shields.io/github/release/jenkinsci/http-request-plugin.svg?label=changelog[GitHub release]]
+link:https://github.com/jenkinsci/http-request-plugin/releases/latest[image:https://img.shields.io/github/release/jenkinsci/http-request-plugin.svg?label=changelog[GitHub release]]
 
 toc::[]
 
