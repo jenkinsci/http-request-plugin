@@ -69,6 +69,7 @@ import jenkins.plugins.http_request.HttpRequestStep.Execution;
 import jenkins.plugins.http_request.auth.Authenticator;
 import jenkins.plugins.http_request.auth.CertificateAuthentication;
 import jenkins.plugins.http_request.auth.CredentialBasicAuthentication;
+import jenkins.plugins.http_request.auth.CredentialNtlmAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
@@ -91,6 +92,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	private final String multipartName;
 	private final boolean wrapAsMultipart;
 
+	private final boolean useNtlm;
 	private final boolean useSystemProperties;
 	private final String validResponseCodes;
 	private final String validResponseContent;
@@ -119,7 +121,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 					url, http.getHttpMode(), http.getIgnoreSslErrors(),
 					http.getHttpProxy(), body, headers, http.getTimeout(),
 					uploadFile, http.getMultipartName(), http.getWrapAsMultipart(),
-					http.getAuthentication(), http.getUseSystemProperties(),
+					http.getAuthentication(), http.isUseNtlm(), http.getUseSystemProperties(),
 
 					http.getValidResponseCodes(), http.getValidResponseContent(),
 					http.getConsoleLogResponseBody(), outputFile,
@@ -141,7 +143,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 				step.getUrl(), step.getHttpMode(), step.isIgnoreSslErrors(),
 				step.getHttpProxy(), step.getRequestBody(), headers, step.getTimeout(),
 				uploadFile, step.getMultipartName(), step.isWrapAsMultipart(),
-				step.getAuthentication(), step.getUseSystemProperties(),
+				step.getAuthentication(), step.isUseNtlm(), step.getUseSystemProperties(),
 
 				step.getValidResponseCodes(), step.getValidResponseContent(),
 				step.getConsoleLogResponseBody(), outputFile,
@@ -153,7 +155,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			String url, HttpMode httpMode, boolean ignoreSslErrors,
 			String httpProxy, String body, List<HttpRequestNameValuePair> headers, Integer timeout,
 			FilePath uploadFile, String multipartName, boolean wrapAsMultipart,
-			String authentication, boolean useSystemProperties,
+			String authentication, boolean useNtlm, boolean useSystemProperties,
 
 			String validResponseCodes, String validResponseContent,
 			Boolean consoleLogResponseBody, FilePath outputFile,
@@ -169,6 +171,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		this.body = body;
 		this.headers = headers;
 		this.timeout = timeout != null ? timeout : -1;
+		this.useNtlm = useNtlm;
 		if (authentication != null && !authentication.isEmpty()) {
 			Authenticator auth = HttpRequestGlobalConfig.get().getAuthentication(authentication);
 
@@ -181,7 +184,11 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 						CredentialsMatchers.withId(authentication));
 				if (credential != null) {
 					if (credential instanceof StandardUsernamePasswordCredentials) {
-						auth = new CredentialBasicAuthentication((StandardUsernamePasswordCredentials) credential);
+						if (this.useNtlm) {
+							auth = new CredentialNtlmAuthentication((StandardUsernamePasswordCredentials) credential);
+						} else {
+							auth = new CredentialBasicAuthentication((StandardUsernamePasswordCredentials) credential);
+						}
 					}
 					if (credential instanceof StandardCertificateCredentials) {
 						auth = new CertificateAuthentication((StandardCertificateCredentials) credential);
