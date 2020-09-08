@@ -29,13 +29,20 @@ public class CredentialNtlmAuthentication implements Authenticator {
 		String[] split = credential.getUsername().split("\\\\");
 		Integer pieces = split.length;
 		
-		if (!pieces.equals(2))
+		if (pieces.equals(2))
 		{
-			throw new IllegalStateException("Username does not contain any domain or is not well formed");
+			this.username = split[1];
+			this.domain = split[0];
+		} 
+		else if (pieces.equals(1))
+		{
+			this.username = split[0];
+			this.domain = null;	
 		}
-		
-		this.username = split[1];
-		this.domain = split[0];
+		else {
+			throw new IllegalStateException("Username contains more than one \\");
+		}
+
 	}
 
 	@Override
