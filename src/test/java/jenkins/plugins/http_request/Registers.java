@@ -22,9 +22,8 @@ import javax.servlet.http.Part;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
+import org.eclipse.jetty.http.MultiPartFormInputStream;
 import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.util.MultiException;
-import org.eclipse.jetty.util.MultiPartInputStreamParser;
 
 import com.google.common.collect.Iterables;
 
@@ -281,7 +280,7 @@ public class Registers {
 			private static final String MULTIPART_FORMDATA_TYPE = "multipart/form-data";
 
 			private void enableMultipartSupport(HttpServletRequest request, MultipartConfigElement multipartConfig) {
-				request.setAttribute(Request.__MULTIPART_CONFIG_ELEMENT, multipartConfig);
+				request.setAttribute(Request.MULTIPART_CONFIG_ELEMENT, multipartConfig);
 			}
 
 			private boolean isMultipartRequest(ServletRequest request) {
@@ -305,14 +304,10 @@ public class Registers {
 
 					body(response, HttpServletResponse.SC_CREATED, ContentType.TEXT_PLAIN, responseText);
 				} finally {
-					MultiPartInputStreamParser multipartInputStream = (MultiPartInputStreamParser) request
-							.getAttribute(Request.__MULTIPART_INPUT_STREAM);
+					String MULTIPART = "org.eclipse.jetty.servlet.MultiPartFile.multiPartInputStream";
+					MultiPartFormInputStream multipartInputStream = (MultiPartFormInputStream) request.getAttribute(MULTIPART);
 					if (multipartInputStream != null) {
-						try {
-							multipartInputStream.deleteParts();
-						} catch (MultiException e) {
-							// ignore
-						}
+						multipartInputStream.deleteParts();
 					}
 				}
 			}

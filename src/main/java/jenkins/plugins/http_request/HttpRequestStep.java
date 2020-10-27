@@ -24,6 +24,7 @@ import hudson.Launcher;
 import hudson.model.Item;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.remoting.VirtualChannel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
@@ -345,7 +346,11 @@ public final class HttpRequestStep extends AbstractStepImpl {
 
 			Launcher launcher = getContext().get(Launcher.class);
 			if (launcher != null) {
-				return launcher.getChannel().call(exec);
+				VirtualChannel channel = launcher.getChannel();
+				if (channel == null) {
+					throw new IllegalStateException("Launcher doesn't support remoting but it is required");
+				}
+				return channel.call(exec);
 			}
 
 			return exec.call();

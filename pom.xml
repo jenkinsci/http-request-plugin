@@ -27,11 +27,11 @@ THE SOFTWARE.
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>3.54</version>
+		<version>4.12</version>
 	</parent>
 
 	<artifactId>http_request</artifactId>
-	<version>1.8.27-SNAPSHOT</version>
+	<version>${revision}${changelist}</version>
 	<packaging>hpi</packaging>
 	<name>HTTP Request Plugin</name>
 	<description>
@@ -49,9 +49,11 @@ THE SOFTWARE.
 	</licenses>
 
 	<properties>
-		<jenkins.version>2.60.3</jenkins.version>
+		<revision>1.8.27</revision>
+		<changelist>-SNAPSHOT</changelist>
+		<gitHubRepo>jenkinsci/http-request-plugin</gitHubRepo>
+		<jenkins.version>2.204.6</jenkins.version>
 		<java.level>8</java.level>
-		<workflow.version>1.10</workflow.version>
 		<hpi.compatibleSinceVersion>1.8.17</hpi.compatibleSinceVersion>
 		<forkCount>1C</forkCount>
 	</properties>
@@ -90,27 +92,35 @@ THE SOFTWARE.
 		</plugins>
 	</build>
 
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>io.jenkins.tools.bom</groupId>
+				<artifactId>bom-2.204.x</artifactId>
+				<version>16</version>
+				<scope>import</scope>
+				<type>pom</type>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.jenkins-ci.plugins</groupId>
 			<artifactId>apache-httpcomponents-client-4-api</artifactId>
-			<version>4.5.3-2.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.jenkins-ci.plugins</groupId>
 			<artifactId>credentials</artifactId>
-			<version>2.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jenkins-ci.plugins</groupId>
 			<artifactId>script-security</artifactId>
-			<version>1.17</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jenkins-ci.plugins.workflow</groupId>
 			<artifactId>workflow-step-api</artifactId>
-			<version>${workflow.version}</version>
 			<optional>true</optional>
 		</dependency>
 
@@ -118,23 +128,34 @@ THE SOFTWARE.
 		<dependency>
 			<groupId>org.jenkins-ci.plugins.workflow</groupId>
 			<artifactId>workflow-step-api</artifactId>
-			<version>${workflow.version}</version>
 			<classifier>tests</classifier>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.jenkins-ci.plugins.workflow</groupId>
-			<artifactId>workflow-aggregator</artifactId>
-			<version>${workflow.version}</version>
+			<artifactId>workflow-basic-steps</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.jenkins-ci.plugins.workflow</groupId>
+			<artifactId>workflow-cps</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.jenkins-ci.plugins.workflow</groupId>
+			<artifactId>workflow-durable-task-step</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.jenkins-ci.plugins.workflow</groupId>
+			<artifactId>workflow-job</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
 	<scm>
-		<connection>scm:git:ssh://github.com/jenkinsci/http-request-plugin.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/http-request-plugin.git</developerConnection>
-		<url>https://github.com/jenkinsci/http-request-plugin</url>
-		<tag>HEAD</tag>
+		<connection>scm:git:ssh://github.com/${gitHubRepo}.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/${gitHubRepo}.git</developerConnection>
+		<url>https://github.com/${gitHubRepo}</url>
+		<tag>${scmTag}</tag>
 	</scm>
 	<developers>
 		<developer>
