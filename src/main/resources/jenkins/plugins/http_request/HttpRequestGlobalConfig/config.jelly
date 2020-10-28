@@ -1,6 +1,7 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:d="jelly:define" xmlns:local="local">
 	<d:taglib uri="local">
+		<!-- TODO remove and use div instead after baseline is 2.264 or newer -->
 		<d:tag name="blockWrapper">
 			<j:choose>
 				<j:when test="${divBasedFormLayout}">
