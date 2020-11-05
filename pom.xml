@@ -31,7 +31,7 @@ THE SOFTWARE.
 	</parent>
 
 	<artifactId>http_request</artifactId>
-	<version>1.8.27</version>
+	<version>${revision}${changelist}</version>
 	<packaging>hpi</packaging>
 	<name>HTTP Request Plugin</name>
 	<description>
@@ -49,7 +49,7 @@ THE SOFTWARE.
 	</licenses>
 
 	<properties>
-		<revision>1.8.27</revision>
+		<revision>1.8.28</revision>
 		<changelist>-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/http-request-plugin</gitHubRepo>
 		<jenkins.version>2.204.6</jenkins.version>
@@ -155,7 +155,7 @@ THE SOFTWARE.
 		<connection>scm:git:ssh://github.com/${gitHubRepo}.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/${gitHubRepo}.git</developerConnection>
 		<url>https://github.com/${gitHubRepo}</url>
-		<tag>http_request-1.8.27</tag>
+		<tag>${scmTag}</tag>
 	</scm>
 	<developers>
 		<developer>
