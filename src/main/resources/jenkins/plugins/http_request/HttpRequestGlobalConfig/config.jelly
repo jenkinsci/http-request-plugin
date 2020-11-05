@@ -1,9 +1,26 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:d="jelly:define" xmlns:local="local">
+	<d:taglib uri="local">
+		<!-- TODO remove and use div instead after baseline is 2.264 or newer -->
+		<d:tag name="blockWrapper">
+			<j:choose>
+				<j:when test="${divBasedFormLayout}">
+					<div>
+						<d:invokeBody/>
+					</div>
+				</j:when>
+				<j:otherwise>
+					<table style="width:100%">
+						<d:invokeBody/>
+					</table>
+				</j:otherwise>
+			</j:choose>
+		</d:tag>
+	</d:taglib>
     <f:section title="HTTP Request">
     	<f:entry title="DEPRECATED (use Jenkins credentials) Basic/Digest Authentication">
             <f:repeatable field="basicDigestAuthentications">
-                <table width="100%">
+				<local:blockWrapper>
                     <f:entry title="Key Name" field="keyName" help="/plugin/http_request/help-keyName.html">
                         <f:textbox />
                     </f:entry>
@@ -18,20 +35,20 @@
                             <f:repeatableDeleteButton />
                         </div>
                     </f:entry>
-                </table>
+				</local:blockWrapper>
             </f:repeatable>
         </f:entry>
 
         <f:entry title="Form Authentication">
             <f:repeatable field="formAuthentications">
-                <table width="100%">
+                <local:blockWrapper>
                     <f:entry title="Key Name" field="keyName" help="/plugin/http_request/help-keyName.html">
                         <f:textbox name="formAuthentication.keyName" />
                     </f:entry>
 
                     <f:entry title="Actions">
                         <f:repeatable field="actions" help="/plugin/http_request/help-authentication-actions.html">
-                            <table width="100%">
+                            <local:blockWrapper>
                                 <f:entry title="URL" field="url" help="/plugin/http_request/help-url.html">
                                     <f:textbox name="actionFormAuthentication.url" />
                                 </f:entry>
@@ -40,7 +57,7 @@
                                 </f:entry>
                                 <f:entry title="Parameters" help="/plugin/http_request/help-authentication-parameters.html">
                                     <f:repeatable field="params">
-                                        <table width="100%">
+                                        <local:blockWrapper width="100%">
                                             <f:entry title="Name" field="name" help="/plugin/http_request/help-authentication-parameter-name.html">
                                                 <f:textbox name="httpRequestNameValuePair.name" />
                                             </f:entry>
@@ -52,7 +69,7 @@
                                                     <f:repeatableDeleteButton />
                                                 </div>
                                             </f:entry>
-                                        </table>
+                                        </local:blockWrapper>
                                     </f:repeatable>
                                 </f:entry>
                                 <f:entry>
@@ -60,7 +77,7 @@
                                         <f:repeatableDeleteButton />
                                     </div>
                                 </f:entry>
-                            </table>
+                            </local:blockWrapper>
                         </f:repeatable>
                     </f:entry>
 
@@ -69,7 +86,7 @@
                             <f:repeatableDeleteButton />
                         </div>
                     </f:entry>
-                </table>
+                </local:blockWrapper>
             </f:repeatable>
         </f:entry>
     </f:section>
