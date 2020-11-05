@@ -38,6 +38,7 @@ import hudson.model.BuildListener;
 import hudson.model.Item;
 import hudson.model.Items;
 import hudson.model.TaskListener;
+import hudson.remoting.VirtualChannel;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
@@ -395,7 +396,11 @@ public class HttpRequest extends Builder {
 
 		HttpRequestExecution exec = HttpRequestExecution.from(this, envVars, build,
 				this.getQuiet() ? TaskListener.NULL : listener);
-		launcher.getChannel().call(exec);
+		VirtualChannel channel = launcher.getChannel();
+		if (channel == null) {
+			throw new IllegalStateException("Launcher doesn't support remoting but it is required");
+		}
+		channel.call(exec);
 
         return true;
     }
