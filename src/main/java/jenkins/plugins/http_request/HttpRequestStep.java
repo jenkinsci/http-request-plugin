@@ -253,8 +253,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
 		for (HttpRequestNameValuePair header : customHeaders) {
 			String headerName = header.getName();
 			String headerValue = header.getValue();
-			boolean maskValue = headerName.equalsIgnoreCase(HttpHeaders.AUTHORIZATION) ||
-					header.getMaskValue();
+			boolean maskValue = header.getMaskValue();
 
 			headers.add(new HttpRequestNameValuePair(headerName, headerValue, maskValue));
 		}
