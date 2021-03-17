@@ -16,10 +16,10 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -47,15 +47,16 @@ public class HttpClientUtil {
         //without entity
     	if (requestAction.getMode() == HttpMode.HEAD) {
 			return new HttpHead(getUrlWithParams(requestAction));
-        } else if (requestAction.getMode() == HttpMode.GET) {
+		} else if (requestAction.getMode() == HttpMode.GET && (requestAction.getRequestBody() == null || requestAction.getRequestBody().isEmpty())) {
 			return new HttpGet(getUrlWithParams(requestAction));
         }
 
 		//with entity
 		final String uri = requestAction.getUrl().toString();
 		HttpEntityEnclosingRequestBase http;
-
-		if (requestAction.getMode() == HttpMode.DELETE) {
+		if (requestAction.getMode() == HttpMode.GET) {
+			http = new HttpBodyGet(getUrlWithParams(requestAction));
+		} else if (requestAction.getMode() == HttpMode.DELETE) {
 			http = new HttpBodyDelete(uri);
 		} else if (requestAction.getMode() == HttpMode.PUT) {
 			http = new HttpPut(uri);
@@ -116,10 +117,10 @@ public class HttpClientUtil {
     public HttpResponse execute(HttpClient client, HttpContext context, HttpRequestBase method,
 								PrintStream logger) throws IOException, InterruptedException {
         logger.println("Sending request to url: " + method.getURI());
-        
+
         final HttpResponse httpResponse = client.execute(method, context);
         logger.println("Response Code: " + httpResponse.getStatusLine());
-        
+
         return httpResponse;
     }
 }
