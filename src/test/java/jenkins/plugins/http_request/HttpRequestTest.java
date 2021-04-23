@@ -931,6 +931,22 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	}
 
 	@Test
+	public void responseContentSupplierHeadersCaseInsensitivity() throws Exception {
+		// Prepare test context
+		HttpResponse response = new BasicHttpResponse(new ProtocolVersion("HTTP", 1, 1), 200, "OK");
+		response.setEntity(new StringEntity("TEST"));
+		response.setHeader("Server", "Jenkins");
+		// Run test
+		ResponseContentSupplier respSupplier = new ResponseContentSupplier(ResponseHandle.STRING, response);
+		// Check expectations
+		Assert.assertEquals(1, respSupplier.getHeaders().size());
+		Assert.assertTrue(respSupplier.getHeaders().containsKey("Server"));
+		Assert.assertTrue(respSupplier.getHeaders().containsKey("SERVER"));
+		Assert.assertTrue(respSupplier.getHeaders().containsKey("server"));
+		respSupplier.close();
+	}
+
+	@Test
 	public void testFileUpload() throws Exception {
 		// Prepare the server
 		final File testFolder = folder.newFolder();
