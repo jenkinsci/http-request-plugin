@@ -52,6 +52,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
     private String multipartName              = DescriptorImpl.multipartName;
     private boolean wrapAsMultipart           = DescriptorImpl.wrapAsMultipart;
     private Boolean useSystemProperties       = DescriptorImpl.useSystemProperties;
+    private boolean useNtlm                   = DescriptorImpl.useNtlm;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 	private String outputFile = DescriptorImpl.outputFile;
 	private ResponseHandle responseHandle = DescriptorImpl.responseHandle;
@@ -236,6 +237,15 @@ public final class HttpRequestStep extends AbstractStepImpl {
 	public void setWrapAsMultipart(boolean wrapAsMultipart) {
 		this.wrapAsMultipart = wrapAsMultipart;
 	}
+	
+	@DataBoundSetter
+	public void setUseNtlm(boolean useNtlm) {
+		this.useNtlm = useNtlm;
+	}
+
+	public boolean isUseNtlm() {
+		return useNtlm;
+	}
 
 	@Override
     public DescriptorImpl getDescriptor() {
@@ -279,6 +289,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
         public static final String   multipartName             = HttpRequest.DescriptorImpl.multipartName;
         public static final boolean  wrapAsMultipart           = HttpRequest.DescriptorImpl.wrapAsMultipart;
         public static final Boolean  useSystemProperties       = HttpRequest.DescriptorImpl.useSystemProperties;
+        public static final boolean  useNtlm                   = HttpRequest.DescriptorImpl.useNtlm;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.emptyList();
         public static final String outputFile = "";
 		public static final ResponseHandle responseHandle = ResponseHandle.STRING;

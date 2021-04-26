@@ -75,6 +75,7 @@ public class HttpRequest extends Builder {
     private String multipartName              = DescriptorImpl.multipartName;
     private Boolean wrapAsMultipart           = DescriptorImpl.wrapAsMultipart;
     private Boolean useSystemProperties       = DescriptorImpl.useSystemProperties;
+    private boolean useNtlm                   = DescriptorImpl.useNtlm;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 
 	@DataBoundConstructor
@@ -405,6 +406,14 @@ public class HttpRequest extends Builder {
         return true;
     }
 
+	public boolean isUseNtlm() {
+		return useNtlm;
+	}
+
+	public void setUseNtlm(boolean useNtlm) {
+		this.useNtlm = useNtlm;
+	}
+
 	@Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 		public static final boolean ignoreSslErrors = false;
@@ -425,6 +434,7 @@ public class HttpRequest extends Builder {
         public static final String   multipartName             = "";
         public static final boolean  wrapAsMultipart           = true;
         public static final Boolean  useSystemProperties       = false;
+        public static final boolean  useNtlm                   = false;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.emptyList();
 
         public DescriptorImpl() {
