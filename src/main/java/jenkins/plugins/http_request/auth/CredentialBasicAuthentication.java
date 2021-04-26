@@ -2,7 +2,11 @@ package jenkins.plugins.http_request.auth;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
+import java.util.*;
 
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
@@ -22,38 +26,71 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
  * @author Janario Oliveira
  */
 public class CredentialBasicAuthentication implements Authenticator {
-	private static final long serialVersionUID = 8034231374732499786L;
+    private static final long serialVersionUID = 8034231374732499786L;
 
-	private final StandardUsernamePasswordCredentials credential;
+    private final StandardUsernamePasswordCredentials credential;
+    private final Map<HttpHost, StandardUsernamePasswordCredentials> extraCredentials = new Hashtable<>();
 
-	public CredentialBasicAuthentication(StandardUsernamePasswordCredentials credential) {
-		this.credential = credential;
-	}
+    public CredentialBasicAuthentication(StandardUsernamePasswordCredentials credential) {
+        this.credential = credential;
+    }
 
-	@Override
-	public String getKeyName() {
-		return credential.getId();
-	}
+    public void addCredentials(HttpHost host, StandardUsernamePasswordCredentials credentials) {
+        if (host == null || credentials == null) {
+            throw new IllegalArgumentException("Null target host or credentials");
+        }
+        extraCredentials.put(host, credential);
+    }
 
-	@Override
-	public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpContext context, HttpRequestBase requestBase, PrintStream logger)
-			throws IOException, InterruptedException {
-		return auth(clientBuilder, context, requestBase,
-				credential.getUsername(), credential.getPassword().getPlainText());
-	}
+    @Override
+    public String getKeyName() {
+        return credential.getId();
+    }
 
-	static CloseableHttpClient auth(HttpClientBuilder clientBuilder, HttpContext context, HttpRequestBase requestBase,
-									 String username, String password) {
-		CredentialsProvider provider = new BasicCredentialsProvider();
-		provider.setCredentials(
-				new AuthScope(requestBase.getURI().getHost(), requestBase.getURI().getPort()),
-				new org.apache.http.auth.UsernamePasswordCredentials(username, password));
-		clientBuilder.setDefaultCredentialsProvider(provider);
+    @Override
+    public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpContext context, HttpRequestBase requestBase, PrintStream logger)
+            throws IOException, InterruptedException {
+        prepare(clientBuilder, context, requestBase);
+        return clientBuilder.build();
+    }
 
-		AuthCache authCache = new BasicAuthCache();
-		authCache.put(URIUtils.extractHost(requestBase.getURI()), new BasicScheme());
-		context.setAttribute(HttpClientContext.AUTH_CACHE, authCache);
+    public void prepare(HttpClientBuilder clientBuilder, HttpContext context, HttpRequestBase requestBase) {
+        prepare(clientBuilder, context, URIUtils.extractHost(requestBase.getURI()));
+    }
 
-		return clientBuilder.build();
-	}
+    public void prepare(HttpClientBuilder clientBuilder, HttpContext context, HttpHost targetHost) {
+        auth(clientBuilder, context, targetHost,
+                credential.getUsername(), credential.getPassword().getPlainText(), extraCredentials);
+    }
+
+    static void auth(HttpClientBuilder clientBuilder, HttpContext context, HttpHost targetHost,
+                     String username, String password) {
+        auth(clientBuilder, context, targetHost, username, password, null);
+    }
+
+    static void auth(HttpClientBuilder clientBuilder, HttpContext context, HttpHost targetHost,
+                     String username, String password, Map<HttpHost, StandardUsernamePasswordCredentials> extraCreds) {
+        CredentialsProvider provider = new BasicCredentialsProvider();
+        AuthCache authCache = new BasicAuthCache();
+
+        provider.setCredentials(new AuthScope(targetHost.getHostName(), targetHost.getPort()),
+                new org.apache.http.auth.UsernamePasswordCredentials(username, password));
+        authCache.put(targetHost, new BasicScheme());
+
+        if (extraCreds != null && !extraCreds.isEmpty()) {
+            for (Map.Entry<HttpHost, StandardUsernamePasswordCredentials> creds : extraCreds.entrySet()) {
+                provider.setCredentials(
+                        new AuthScope(creds.getKey().getHostName(), creds.getKey().getPort()),
+                        new org.apache.http.auth.UsernamePasswordCredentials(
+                                creds.getValue().getUsername(),
+                                creds.getValue().getPassword().getPlainText()
+                        )
+                );
+                authCache.put(creds.getKey(), new BasicScheme());
+            }
+        }
+
+        clientBuilder.setDefaultCredentialsProvider(provider);
+        context.setAttribute(HttpClientContext.AUTH_CACHE, authCache);
+    }
 }

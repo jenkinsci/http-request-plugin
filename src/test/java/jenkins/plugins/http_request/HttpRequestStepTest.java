@@ -1,16 +1,6 @@
 package jenkins.plugins.http_request;
 
-import static jenkins.plugins.http_request.Registers.registerAcceptedTypeRequestChecker;
-import static jenkins.plugins.http_request.Registers.registerBasicAuth;
-import static jenkins.plugins.http_request.Registers.registerContentTypeRequestChecker;
-import static jenkins.plugins.http_request.Registers.registerCustomHeaders;
-import static jenkins.plugins.http_request.Registers.registerFormAuth;
-import static jenkins.plugins.http_request.Registers.registerFormAuthBad;
-import static jenkins.plugins.http_request.Registers.registerInvalidStatusCode;
-import static jenkins.plugins.http_request.Registers.registerReqAction;
-import static jenkins.plugins.http_request.Registers.registerRequestChecker;
-import static jenkins.plugins.http_request.Registers.registerTimeout;
-import static jenkins.plugins.http_request.Registers.registerFileUpload;
+import static jenkins.plugins.http_request.Registers.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import java.io.File;
@@ -669,5 +659,27 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains(responseText, run);
+    }
+
+    @Test
+    public void nonExistentProxyAuthFailsTheBuild() throws Exception {
+        // Prepare the server
+        registerBasicAuth();
+
+        // Configure the build
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        proj.setDefinition(new CpsFlowDefinition(
+                "def response = httpRequest url:'"+baseURL()+"/proxyAuth',\n" +
+                        "    proxy: 'http://proxy.example.com:8080',\n" +
+                        "    proxyAuthentication: 'invalid'\n" +
+                        "println('Status: '+response.getStatus())\n" +
+                        "println('Response: '+response.getContent())\n",
+                true));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.FAILURE, run);
     }
 }

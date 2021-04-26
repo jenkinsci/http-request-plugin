@@ -1001,4 +1001,24 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		this.j.assertBuildStatusSuccess(build);
 		this.j.assertLogContains(responseText, build);
 	}
+
+	@Test
+	public void nonExistentProxyAuthFailsTheBuild() throws Exception {
+		// Prepare the server
+		registerBasicAuth();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/basicAuth");
+		httpRequest.setHttpProxy("http://proxy.example.com:8888");
+		httpRequest.setProxyAuthentication("non-existent-key");
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		// Check expectations
+		this.j.assertBuildStatus(Result.FAILURE, build);
+	}
+
 }
