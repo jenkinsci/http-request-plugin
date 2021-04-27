@@ -3,6 +3,7 @@ package jenkins.plugins.http_request.util;
 import java.io.Serializable;
 
 import org.apache.http.NameValuePair;
+import org.apache.http.HttpHeaders;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -30,7 +31,11 @@ public class HttpRequestNameValuePair extends AbstractDescribableImpl<HttpReques
     }
 
     public HttpRequestNameValuePair(String name, String value) {
-        this(name, value, false);
+        if (name.equalsIgnoreCase(HttpHeaders.AUTHORIZATION)) {
+            this(name, value, true);
+        } else {
+            this(name, value, false);
+        }
     }
 
     public String getName() {
