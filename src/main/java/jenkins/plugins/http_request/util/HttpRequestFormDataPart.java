@@ -3,10 +3,17 @@ package jenkins.plugins.http_request.util;
 import java.io.Serializable;
 
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
+import hudson.Extension;
 import hudson.FilePath;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
+import hudson.util.FormValidation;
+import hudson.util.FormValidation.CheckMethod;
 
-public class HttpRequestFormDataPart implements Serializable {
+public class HttpRequestFormDataPart extends AbstractDescribableImpl<HttpRequestFormDataPart>
+		implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	private final String contentType;
@@ -52,5 +59,17 @@ public class HttpRequestFormDataPart implements Serializable {
 
 	public void setResolvedUploadFile(FilePath resolvedUploadFile) {
 		this.resolvedUploadFile = resolvedUploadFile;
+	}
+
+	@Extension
+	public static class FormDataDescriptor extends Descriptor<HttpRequestFormDataPart> {
+		@Override
+		public String getDisplayName() {
+			return "Multipart Form Data Entry";
+		}
+
+		public FormValidation doCheckName(@QueryParameter String value) {
+			return FormValidation.validateRequired(value);
+		}
 	}
 }

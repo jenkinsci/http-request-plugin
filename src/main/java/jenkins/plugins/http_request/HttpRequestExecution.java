@@ -55,6 +55,7 @@ import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
+import com.google.common.base.Strings;
 import com.google.common.collect.Range;
 import com.google.common.io.ByteStreams;
 
@@ -318,7 +319,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 				MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 
 				for (HttpRequestFormDataPart part : formData) {
-					if (part.getFileName() == null) {
+					if (Strings.isNullOrEmpty(part.getFileName())) {
 						builder.addTextBody(part.getName(), part.getBody(),
 								ContentType.create(part.getContentType()));
 					} else {
