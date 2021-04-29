@@ -6,12 +6,14 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.http.entity.ContentType;
 import org.eclipse.jetty.server.Request;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
@@ -660,6 +662,39 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         j.assertBuildStatusSuccess(run);
         j.assertLogContains(responseText, run);
     }
+
+	@Test
+	public void testFormData() throws Exception {
+		final File testFolder = folder.newFolder();
+		File projectRoot = Paths.get("").toAbsolutePath().toFile();
+		String responseText = "File upload successful!";
+		String json = "{\"foo\": \"bar\"}";
+		File file1 = new File(projectRoot, "src/test/resources/testdata/readme.txt");
+		File file2 = new File(projectRoot, "src/test/resources/testdata/small.zip");
+		registerFormData(testFolder, json, file1, file2, responseText);
+
+		// Let's upload these files and a JSON
+		String script = "node {\n"
+				+ "def response = httpRequest httpMode: 'POST', validResponseCodes: '201', "
+				+ "consoleLogResponseBody: true, acceptType: '" + MimeType.TEXT_PLAIN.toString()
+				+ "', url: '" + baseURL() + "/formData', "
+				+ "formData: [[contentType: 'application/json', body: '" + json
+				+ "', name: 'model'], [contentType: 'text/plain', name: 'file1', fileName: 'readme.txt', uploadFile: '"
+				+ FilenameUtils.separatorsToUnix(file1.getPath()) // Developing on windows is a	joyride
+				+ "'], [contentType: 'application/zip', name: 'file2', fileName: 'small.zip', uploadFile: '"
+				+ FilenameUtils.separatorsToUnix(file2.getPath()) + "']]\n}";
+
+		// Prepare HttpRequest
+		WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "formData");
+		proj.setDefinition(new CpsFlowDefinition(script, true));
+
+		// Execute the build
+		WorkflowRun run = proj.scheduleBuild2(0).get();
+
+		// Check expectations
+		j.assertBuildStatusSuccess(run);
+		j.assertLogContains(responseText, run);
+	}
 
     @Test
     public void nonExistentProxyAuthFailsTheBuild() throws Exception {
