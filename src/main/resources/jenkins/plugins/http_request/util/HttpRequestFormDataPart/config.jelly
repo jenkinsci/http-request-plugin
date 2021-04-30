@@ -15,4 +15,9 @@
     <f:entry title="Uploaded File's path" field="uploadFile" help="/plugin/http_request/help-partUploadFile.html">
         <f:textbox />
     </f:entry>
+    <f:entry>
+        <div align="right">
+            <f:repeatableDeleteButton/>
+        </div>
+    </f:entry>
 </j:jelly>
