@@ -320,12 +320,18 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 				for (HttpRequestFormDataPart part : formData) {
 					if (Strings.isNullOrEmpty(part.getFileName())) {
+						ContentType textContentType = Strings.isNullOrEmpty(part.getContentType())
+								? ContentType.TEXT_PLAIN
+								: ContentType.create(part.getContentType());
 						builder.addTextBody(part.getName(), part.getBody(),
-								ContentType.create(part.getContentType()));
+								textContentType);
 					} else {
+						ContentType fileContentType = Strings.isNullOrEmpty(part.getContentType())
+								? ContentType.APPLICATION_OCTET_STREAM
+								: ContentType.create(part.getContentType());
 						builder.addBinaryBody(part.getName(),
 								new File(part.getResolvedUploadFile().getRemote()),
-								ContentType.create(part.getContentType()), part.getFileName());
+								fileContentType, part.getFileName());
 					}
 				}
 

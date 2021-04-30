@@ -53,7 +53,7 @@
             </f:entry>
         </f:section>
         <f:section title="Form Data">
-            <f:entry field="formData" title="Post form-data entries" help="/plugin/http_request/help-formData.html">
+            <f:entry title="Form Entries" help="/plugin/http_request/help-formData.html">
                 <f:repeatableProperty field="formData" />
             </f:entry>
         </f:section>
