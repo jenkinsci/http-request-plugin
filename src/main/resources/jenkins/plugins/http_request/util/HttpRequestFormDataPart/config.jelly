@@ -1,0 +1,23 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:d="jelly:define">
+    <f:entry title="Content Type" field="contentType" help="/plugin/http_request/help-partContentType.html">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Part Name" field="name" help="/plugin/http_request/help-partName.html">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Body" field="body" help="/plugin/http_request/help-partBody.html">
+        <f:textarea />
+    </f:entry>
+    <f:entry title="Filename" field="fileName" help="/plugin/http_request/help-partFileName.html">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Uploaded File's path" field="uploadFile" help="/plugin/http_request/help-partUploadFile.html">
+        <f:textbox />
+    </f:entry>
+    <f:entry>
+        <div align="right">
+            <f:repeatableDeleteButton/>
+        </div>
+    </f:entry>
+</j:jelly>

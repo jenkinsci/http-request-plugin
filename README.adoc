@@ -38,8 +38,8 @@ The following features are available in both Pipeline and traditional project ty
 * You can specify a string that must be present in the response (if the string is not present, the 
   build fails)
 * You can set a connection timeout limit (build fails if timeout is exceeded)
-* You can set an "Accept" header
-* You can set a "Content-Type" header
+* You can set an "Accept" header directly
+* You can set a "Content-Type" header directly
 * You can set any custom header
 
 === Basic plugin features
@@ -100,6 +100,13 @@ You can also set custom headers:
 [source,groovy]
 ----
 def response = httpRequest customHeaders: [[name: 'foo', value: 'bar']]
+----
+
+You can send ``multipart/form-data`` forms:
+
+[source,groovy]
+----
+def response = httpRequest httpMode: 'POST', formData: [[contentType: 'application/json', name: 'model', body: '{"foo": "bar"}'], [contentType: 'text/plain', name: 'file', fileName: 'readme.txt', uploadFile: 'data/lipsum.txt']]
 ----
 
 For details on the Pipeline features, use the Pipeline snippet generator in the Pipeline job 

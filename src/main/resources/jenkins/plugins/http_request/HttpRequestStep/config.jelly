@@ -45,10 +45,13 @@
             <f:textarea />
         </f:entry>
         <f:entry field="wrapAsMultipart" title="Wrap as Multipart request?" help="/plugin/http_request/help-wrapAsMultipart.html">
-			<f:booleanRadio />
-		</f:entry>
+            <f:booleanRadio />
+        </f:entry>
         <f:entry field="uploadFile" title="Upload file path" help="/plugin/http_request/help-uploadFile.html">
             <f:textbox />
+        </f:entry>
+        <f:entry field="formData" title="Post form-data entries" help="/plugin/http_request/help-formData.html">
+            <f:repeatableProperty field="formData" />
         </f:entry>
         <f:entry field="multipartName" title="Multipart entity name" help="/plugin/http_request/help-multipartName.html">
             <f:textbox />

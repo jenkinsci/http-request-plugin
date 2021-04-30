@@ -28,6 +28,7 @@ import hudson.remoting.VirtualChannel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
+import jenkins.plugins.http_request.util.HttpRequestFormDataPart;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 
 /**
@@ -55,6 +56,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
     private Boolean useSystemProperties       = DescriptorImpl.useSystemProperties;
     private boolean useNtlm                   = DescriptorImpl.useNtlm;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
+	private List<HttpRequestFormDataPart> formData = DescriptorImpl.formData;
 	private String outputFile = DescriptorImpl.outputFile;
 	private ResponseHandle responseHandle = DescriptorImpl.responseHandle;
 
@@ -202,6 +204,15 @@ public final class HttpRequestStep extends AbstractStepImpl {
         return customHeaders;
     }
 
+	public List<HttpRequestFormDataPart> getFormData() {
+		return formData;
+	}
+
+	@DataBoundSetter
+	public void setFormData(List<HttpRequestFormDataPart> formData) {
+		this.formData = Collections.unmodifiableList(formData);
+	}
+
 	public String getOutputFile() {
 		return outputFile;
 	}
@@ -302,6 +313,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
         public static final Boolean  useSystemProperties       = HttpRequest.DescriptorImpl.useSystemProperties;
         public static final boolean  useNtlm                   = HttpRequest.DescriptorImpl.useNtlm;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.emptyList();
+        public static final List <HttpRequestFormDataPart> formData = Collections.emptyList();
         public static final String outputFile = "";
 		public static final ResponseHandle responseHandle = ResponseHandle.STRING;
 
@@ -404,20 +416,27 @@ public final class HttpRequestStep extends AbstractStepImpl {
 		}
 
 		FilePath resolveUploadFile() {
-			String uploadFile = step.getUploadFile();
-			if (uploadFile == null || uploadFile.trim().isEmpty()) {
+			return resolveUploadFileInternal(step.getUploadFile());
+		}
+
+		public Item getProject() {
+			return run.getParent();
+		}
+
+		private FilePath resolveUploadFileInternal(String path) {
+			if (path == null || path.trim().isEmpty()) {
 				return null;
 			}
 
 			try {
 				FilePath workspace = getContext().get(FilePath.class);
 				if (workspace == null) {
-					throw new IllegalStateException("Could not find workspace to check existence of upload file: " + uploadFile +
+					throw new IllegalStateException("Could not find workspace to check existence of upload file: " + path +
 							". You should use it inside a 'node' block");
 				}
-				FilePath uploadFilePath = workspace.child(uploadFile);
+				FilePath uploadFilePath = workspace.child(path);
 				if (!uploadFilePath.exists()) {
-					throw new IllegalStateException("Could not find upload file: " + uploadFile);
+					throw new IllegalStateException("Could not find upload file: " + path);
 				}
 				return uploadFilePath;
 			} catch (IOException | InterruptedException e) {
@@ -425,8 +444,22 @@ public final class HttpRequestStep extends AbstractStepImpl {
 			}
 		}
 
-		public Item getProject() {
-			return run.getParent();
+		List<HttpRequestFormDataPart> resolveFormDataParts() {
+			List<HttpRequestFormDataPart> formData = step.getFormData();
+			if (formData == null || formData.isEmpty()) {
+				return Collections.emptyList();
+			}
+
+			List<HttpRequestFormDataPart> resolved = new ArrayList<>(formData.size());
+
+			for (HttpRequestFormDataPart part : formData) {
+				HttpRequestFormDataPart newPart = new HttpRequestFormDataPart(part.getUploadFile(),
+						part.getName(), part.getFileName(), part.getContentType(), part.getBody());
+				newPart.setResolvedUploadFile(resolveUploadFileInternal(part.getUploadFile()));
+				resolved.add(newPart);
+			}
+
+			return resolved;
 		}
 	}
 }
