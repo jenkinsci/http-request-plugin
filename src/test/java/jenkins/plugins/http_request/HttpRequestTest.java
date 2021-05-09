@@ -387,6 +387,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		// Check expectations
 		this.j.assertBuildStatus(Result.FAILURE, build);
 		this.j.assertLogContains("Throwing status 400 for test", build);
+		this.j.assertLogContains("Fail: the returned code 400 is not in the accepted range: 100:399", build);
 	}
 
 	@Test
@@ -426,6 +427,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatus(Result.FAILURE, build);
+		this.j.assertLogContains("Interval 599:100 should be FROM less than TO", build);
 	}
 
 	@Test
@@ -445,6 +447,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatus(Result.FAILURE, build);
+		this.j.assertLogContains("Invalid number text", build);
 	}
 
 	@Test
@@ -464,6 +467,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatus(Result.FAILURE, build);
+		this.j.assertLogContains("Invalid number text", build);
 	}
 
 	@Test
@@ -483,6 +487,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatus(Result.FAILURE, build);
+		this.j.assertLogContains("Code 1:2:3 should be an interval from:to or a single value", build);
 	}
 
 	@Test
@@ -628,6 +633,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatus(Result.FAILURE, build);
+		this.j.assertLogContains("Fail: the returned code 408 is not in the accepted range: 100:399", build);
 	}
 
 	@Test
@@ -704,6 +710,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatus(Result.FAILURE, build);
+		this.j.assertLogContains("Authentication 'non-existent-key' doesn't exist anymore", build);
 	}
 
 	@Test
@@ -1019,6 +1026,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		// Check expectations
 		this.j.assertBuildStatus(Result.FAILURE, build);
+		this.j.assertLogContains("Proxy authentication 'non-existent-key' doesn't exist anymore or is not a username/password credential type", build);
 	}
 
 }

@@ -18,6 +18,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -50,7 +51,6 @@ import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
-import com.google.common.collect.Range;
 import com.google.common.io.ByteStreams;
 
 import hudson.AbortException;
@@ -404,14 +404,14 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	}
 
 	private void responseCodeIsValid(ResponseContentSupplier response) throws AbortException {
-		List<Range<Integer>> ranges = DescriptorImpl.parseToRange(validResponseCodes);
-		for (Range<Integer> range : ranges) {
-			if (range.contains(response.getStatus())) {
+		List<IntStream> ranges = DescriptorImpl.parseToRange(validResponseCodes);
+		for (IntStream range : ranges) {
+			if (range.anyMatch(status -> status == response.getStatus())) {
 				logger().println("Success code from " + range);
 				return;
 			}
 		}
-		throw new AbortException("Fail: the returned code " + response.getStatus() + " is not in the accepted range: " + ranges);
+		throw new AbortException("Fail: the returned code " + response.getStatus() + " is not in the accepted range: " + validResponseCodes);
 	}
 
 	private void processResponse(ResponseContentSupplier response) throws IOException, InterruptedException {
