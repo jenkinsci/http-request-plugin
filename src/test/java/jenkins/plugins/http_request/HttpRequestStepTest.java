@@ -229,7 +229,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
         j.assertLogContains("Throwing status 400 for test",run);
-        j.assertLogContains("Fail: the returned code 400 is not in the accepted range: [[100‥399]]", run);
+        j.assertLogContains("Fail: the returned code 400 is not in the accepted range: 100:399", run);
     }
 
     @Test
@@ -426,7 +426,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
-        j.assertLogContains("Fail: the returned code 408 is not in the accepted range: [[100‥399]]", run);
+        j.assertLogContains("Fail: the returned code 408 is not in the accepted range: 100:399", run);
     }
 
     @Test
