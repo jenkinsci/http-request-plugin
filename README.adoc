@@ -145,3 +145,16 @@ passwords or personal information.
 ====
 
 image:docs/images/log.png[]
+
+== Issues
+
+Report issues and enhancements in the https://issues.jenkins.io/[Jenkins issue tracker].
+Use the `http-request-plugin` component in the `JENKINS` project.
+
+== Contributing
+
+Refer to our https://github.com/jenkinsci/.github/blob/master/CONTRIBUTING.md[contribution guidelines].
+
+== License
+
+Licensed under link:LICENSE[the MIT License].
