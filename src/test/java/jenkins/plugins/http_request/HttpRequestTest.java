@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -490,13 +489,13 @@ public class HttpRequestTest extends HttpRequestTestBase {
 	}
 
 	@Test
-	public void sendAllContentTypes() throws Exception {
+	public void sendAllContentTypes() {
 		for (MimeType mimeType : MimeType.values()) {
 			sendContentType(mimeType);
 		}
 	}
 
-	public void sendContentType(final MimeType mimeType) throws Exception {
+	public void sendContentType(final MimeType mimeType) {
 		registerContentTypeRequestChecker(mimeType, HttpMode.GET, ALL_IS_WELL);
 	}
 
@@ -744,7 +743,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		registerHandler("/form-auth", HttpMode.POST, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 				String username = request.getParameter(paramUsername);
 				String password = request.getParameter(paramPassword);
 				if (!username.equals(valueUsername) || !password.equals(valuePassword)) {
@@ -757,7 +756,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		});
 		registerHandler("/test-auth", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 				String jsessionValue = "";
 				Cookie[] cookies = request.getCookies();
 				for (Cookie cookie : cookies) {
