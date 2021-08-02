@@ -31,7 +31,7 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-import com.google.common.io.CharStreams;
+import org.apache.commons.io.IOUtils;
 
 /**
  * @author Martin d'Anjou
@@ -98,7 +98,7 @@ public class HttpRequestTestBase {
 
 		String requestBody(HttpServletRequest request) throws IOException {
 			try (BufferedReader reader = request.getReader()) {
-				return CharStreams.toString(reader);
+				return IOUtils.toString(reader);
 			}
 		}
 

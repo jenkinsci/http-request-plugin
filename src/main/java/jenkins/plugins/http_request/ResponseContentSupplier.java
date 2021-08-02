@@ -19,7 +19,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.Whitelisted;
 
 import com.google.common.io.ByteStreams;
-import com.google.common.io.CharStreams;
+import org.apache.commons.io.IOUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -103,7 +103,7 @@ public class ResponseContentSupplier implements Serializable, AutoCloseable {
 
 		try (InputStreamReader in = new InputStreamReader(contentStream,
 				charset == null || charset.isEmpty() ? Charset.defaultCharset().name() : charset)) {
-			content = CharStreams.toString(in);
+			content = IOUtils.toString(in);
 			return content;
 		} catch (IOException e) {
 			throw new IllegalStateException("Error reading response. " +
