@@ -36,7 +36,7 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
     @DataBoundConstructor
     public FormAuthentication(String keyName, List<RequestAction> actions) {
         this.keyName = keyName;
-        this.actions = actions == null ? new ArrayList<RequestAction>() : actions;
+        this.actions = actions == null ? new ArrayList<>() : actions;
     }
 
     public String getKeyName() {

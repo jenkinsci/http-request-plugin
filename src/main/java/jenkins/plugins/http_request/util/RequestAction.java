@@ -38,8 +38,8 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> implem
         this.url = url;
         this.mode = mode;
         this.requestBody = requestBody;
-        this.params = params == null ? new ArrayList<HttpRequestNameValuePair>() : params;
-        this.headers = headers  == null ? new ArrayList<HttpRequestNameValuePair>() : headers;
+        this.params = params == null ? new ArrayList<>() : params;
+        this.headers = headers  == null ? new ArrayList<>() : headers;
     }
 
     public URL getUrl() {

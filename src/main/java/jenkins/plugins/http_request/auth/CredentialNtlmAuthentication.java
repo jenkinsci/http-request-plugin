@@ -1,6 +1,5 @@
 package jenkins.plugins.http_request.auth;
 
-import java.io.IOException;
 import java.io.PrintStream;
 
 import org.apache.http.auth.AuthScope;

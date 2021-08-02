@@ -1,7 +1,5 @@
 package jenkins.plugins.http_request;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -10,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import org.apache.http.HttpHeaders;
 import org.kohsuke.stapler.AncestorInPath;
@@ -23,7 +21,6 @@ import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
-import com.google.common.base.Strings;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -55,7 +52,7 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
  */
 public class HttpRequest extends Builder {
 
-    private @Nonnull String url;
+    private @NonNull String url;
 	private Boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
 	private HttpMode httpMode                 = DescriptorImpl.httpMode;
 	private String httpProxy                  = DescriptorImpl.httpProxy;
@@ -79,11 +76,11 @@ public class HttpRequest extends Builder {
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 
 	@DataBoundConstructor
-	public HttpRequest(@Nonnull String url) {
+	public HttpRequest(@NonNull String url) {
 		this.url = url;
 	}
 
-	@Nonnull
+	@NonNull
 	public String getUrl() {
 		return url;
 	}
@@ -124,7 +121,7 @@ public class HttpRequest extends Builder {
 		this.passBuildParameters = passBuildParameters;
 	}
 
-	@Nonnull
+	@NonNull
 	public String getValidResponseCodes() {
 		return validResponseCodes;
 	}
@@ -353,7 +350,7 @@ public class HttpRequest extends Builder {
 	String resolveBody(EnvVars envVars,
 					  AbstractBuild<?, ?> build, TaskListener listener) throws IOException {
 		String body = envVars.expand(getRequestBody());
-		if (Strings.isNullOrEmpty(body) && Boolean.TRUE.equals(getPassBuildParameters())) {
+		if ((body == null || body.isEmpty()) && Boolean.TRUE.equals(getPassBuildParameters())) {
 			List<HttpRequestNameValuePair> params = createParams(envVars, build, listener);
 			if (!params.isEmpty()) {
 				body = HttpClientUtil.paramsToString(params);
@@ -519,23 +516,25 @@ public class HttpRequest extends Builder {
         public static List<IntStream> parseToRange(String value) {
             List<IntStream> validRanges = new ArrayList<>();
 
-            if (Strings.isNullOrEmpty(value)) {
+            if (value == null || value.isEmpty()) {
                 value = HttpRequest.DescriptorImpl.validResponseCodes;
             }
 
             String[] codes = value.split(",");
             for (String code : codes) {
                 String[] fromTo = code.trim().split(":");
-                checkArgument(fromTo.length <= 2, "Code %s should be an interval from:to or a single value", code);
+                if (fromTo.length > 2) {
+                    throw new IllegalArgumentException(String.format("Code %s should be an interval from:to or a single value", code));
+                }
 
-                Integer from;
+                int from;
                 try {
                     from = Integer.parseInt(fromTo[0]);
                 } catch (NumberFormatException nfe) {
                     throw new IllegalArgumentException("Invalid number "+fromTo[0]);
                 }
 
-                Integer to = from;
+                int to = from;
                 if (fromTo.length != 1) {
                     try {
                         to = Integer.parseInt(fromTo[1]);
@@ -544,7 +543,9 @@ public class HttpRequest extends Builder {
                     }
                 }
 
-                checkArgument(from <= to, "Interval %s should be FROM less than TO", code);
+                if (from > to) {
+                    throw new IllegalArgumentException(String.format("Interval %s should be FROM less than TO", code));
+                }
                 validRanges.add(IntStream.rangeClosed(from, to));
             }
 

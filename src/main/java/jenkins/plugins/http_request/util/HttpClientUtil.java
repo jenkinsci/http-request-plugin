@@ -25,8 +25,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HttpContext;
 
-import com.google.common.base.Strings;
-
 import jenkins.plugins.http_request.HttpMode;
 
 /**
@@ -74,7 +72,7 @@ public class HttpClientUtil {
 
 	private HttpEntity makeEntity(RequestAction requestAction) throws
 			UnsupportedEncodingException {
-		if (!Strings.isNullOrEmpty(requestAction.getRequestBody())) {
+		if (requestAction.getRequestBody() != null && !requestAction.getRequestBody().isEmpty()) {
 			ContentType contentType = null;
 			for (HttpRequestNameValuePair header : requestAction.getHeaders()) {
 				if (HttpHeaders.CONTENT_TYPE.equalsIgnoreCase(header.getName())) {

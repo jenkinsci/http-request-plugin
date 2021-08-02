@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.inject.Inject;
 
 import org.apache.http.HttpHeaders;
@@ -35,7 +35,7 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
  */
 public final class HttpRequestStep extends AbstractStepImpl {
 
-    private @Nonnull String url;
+    private @NonNull String url;
 	private boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
 	private HttpMode httpMode                 = DescriptorImpl.httpMode;
     private String httpProxy                  = DescriptorImpl.httpProxy;
