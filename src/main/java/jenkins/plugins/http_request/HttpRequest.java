@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import javax.annotation.Nonnull;
 
@@ -23,8 +24,6 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.google.common.base.Strings;
-import com.google.common.collect.Range;
-import com.google.common.collect.Ranges;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -517,8 +516,8 @@ public class HttpRequest extends Builder {
             return items;
         }
 
-        public static List<Range<Integer>> parseToRange(String value) {
-            List<Range<Integer>> validRanges = new ArrayList<>();
+        public static List<IntStream> parseToRange(String value) {
+            List<IntStream> validRanges = new ArrayList<>();
 
             if (Strings.isNullOrEmpty(value)) {
                 value = HttpRequest.DescriptorImpl.validResponseCodes;
@@ -546,7 +545,7 @@ public class HttpRequest extends Builder {
                 }
 
                 checkArgument(from <= to, "Interval %s should be FROM less than TO", code);
-                validRanges.add(Ranges.closed(from, to));
+                validRanges.add(IntStream.rangeClosed(from, to));
             }
 
             return validRanges;

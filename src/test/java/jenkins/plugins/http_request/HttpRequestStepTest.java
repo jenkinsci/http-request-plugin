@@ -229,6 +229,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
         j.assertLogContains("Throwing status 400 for test",run);
+        j.assertLogContains("Fail: the returned code 400 is not in the accepted range: 100:399", run);
     }
 
     @Test
@@ -274,6 +275,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
+        j.assertLogContains("Interval 599:100 should be FROM less than TO", run);
     }
 
     @Test
@@ -296,6 +298,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
+        j.assertLogContains("Invalid number text", run);
     }
 
     @Test
@@ -318,6 +321,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
+        j.assertLogContains("Invalid number text", run);
     }
 
     @Test
@@ -340,6 +344,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
+        j.assertLogContains("Code 1:2:3 should be an interval from:to or a single value", run);
     }
 
     @Test
@@ -421,6 +426,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
+        j.assertLogContains("Fail: the returned code 408 is not in the accepted range: 100:399", run);
     }
 
     @Test
@@ -463,6 +469,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
+        j.assertLogContains("Authentication 'invalid' doesn't exist anymore", run);
     }
 
     @Test
@@ -670,7 +677,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
                 "def response = httpRequest url:'"+baseURL()+"/proxyAuth',\n" +
-                        "    proxy: 'http://proxy.example.com:8080',\n" +
+                        "    httpProxy: 'http://proxy.example.com:8080',\n" +
                         "    proxyAuthentication: 'invalid'\n" +
                         "println('Status: '+response.getStatus())\n" +
                         "println('Response: '+response.getContent())\n",
@@ -681,5 +688,6 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
+        j.assertLogContains("Proxy authentication 'invalid' doesn't exist anymore or is not a username/password credential type", run);
     }
 }
