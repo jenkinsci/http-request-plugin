@@ -10,7 +10,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.servlet.MultipartConfigElement;
 import javax.servlet.ServletException;
@@ -24,8 +23,6 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
 import org.eclipse.jetty.http.MultiPartFormInputStream;
 import org.eclipse.jetty.server.Request;
-
-import com.google.common.collect.Iterables;
 
 import jenkins.plugins.http_request.HttpRequestTestBase.SimpleHandler;
 
@@ -120,15 +117,15 @@ public class Registers {
 				Map<String, String[]> parameters = request.getParameterMap();
 
 				assertEquals(2, parameters.size());
-				Entry<String, String[]> e = Iterables.getFirst(parameters.entrySet(), null);
-				assertEquals("param1", e.getKey());
-				assertEquals(1, e.getValue().length);
-				assertEquals("value1", e.getValue()[0]);
+				assertTrue(parameters.containsKey("param1"));
+				String[] value = parameters.get("param1");
+				assertEquals(1, value.length);
+				assertEquals("value1", value[0]);
 
-				e = Iterables.get(parameters.entrySet(), 1);
-				assertEquals("param2", e.getKey());
-				assertEquals(1, e.getValue().length);
-				assertEquals("value2", e.getValue()[0]);
+				assertTrue(parameters.containsKey("param2"));
+				value = parameters.get("param2");
+				assertEquals(1, value.length);
+				assertEquals("value2", value[0]);
 				okAllIsWell(response);
 			}
 		});
@@ -251,10 +248,10 @@ public class Registers {
 
 				Map<String, String[]> parameters = request.getParameterMap();
 				assertEquals(1, parameters.size());
-				Entry<String, String[]> parameter = Iterables.getFirst(parameters.entrySet(), null);
-				assertEquals("foo", parameter.getKey());
-				assertEquals(1, parameter.getValue().length);
-				assertEquals("value", parameter.getValue()[0]);
+				assertTrue(parameters.containsKey("foo"));
+				String[] value = parameters.get("foo");
+				assertEquals(1, value.length);
+				assertEquals("value", value[0]);
 
 				okAllIsWell(response);
 			}
