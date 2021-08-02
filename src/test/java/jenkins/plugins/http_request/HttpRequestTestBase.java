@@ -82,7 +82,7 @@ public class HttpRequestTestBase {
 	@Before
 	public void init() {
 		credentials = new HashMap<>();
-		credentials.put(Domain.global(), new ArrayList<Credentials>());
+		credentials.put(Domain.global(), new ArrayList<>());
 	}
 
 	@After
