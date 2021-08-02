@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import org.apache.http.HttpHeaders;
 import org.kohsuke.stapler.AncestorInPath;
@@ -52,7 +52,7 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
  */
 public class HttpRequest extends Builder {
 
-    private @Nonnull String url;
+    private @NonNull String url;
 	private Boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
 	private HttpMode httpMode                 = DescriptorImpl.httpMode;
 	private String httpProxy                  = DescriptorImpl.httpProxy;
@@ -76,11 +76,11 @@ public class HttpRequest extends Builder {
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 
 	@DataBoundConstructor
-	public HttpRequest(@Nonnull String url) {
+	public HttpRequest(@NonNull String url) {
 		this.url = url;
 	}
 
-	@Nonnull
+	@NonNull
 	public String getUrl() {
 		return url;
 	}
@@ -121,7 +121,7 @@ public class HttpRequest extends Builder {
 		this.passBuildParameters = passBuildParameters;
 	}
 
-	@Nonnull
+	@NonNull
 	public String getValidResponseCodes() {
 		return validResponseCodes;
 	}
