@@ -371,7 +371,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			if (authenticator instanceof CredentialBasicAuthentication) {
 				((CredentialBasicAuthentication) authenticator).addCredentials(httpProxy, proxyCredentials);
 			} else {
-				new CredentialBasicAuthentication((StandardUsernamePasswordCredentials) proxyCredentials)
+				new CredentialBasicAuthentication(proxyCredentials)
 						.prepare(clientBuilder, context, httpProxy);
 			}
 		}
