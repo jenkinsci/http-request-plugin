@@ -23,7 +23,6 @@ import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
-import com.google.common.base.Strings;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -353,7 +352,7 @@ public class HttpRequest extends Builder {
 	String resolveBody(EnvVars envVars,
 					  AbstractBuild<?, ?> build, TaskListener listener) throws IOException {
 		String body = envVars.expand(getRequestBody());
-		if (Strings.isNullOrEmpty(body) && Boolean.TRUE.equals(getPassBuildParameters())) {
+		if ((body == null || body.isEmpty()) && Boolean.TRUE.equals(getPassBuildParameters())) {
 			List<HttpRequestNameValuePair> params = createParams(envVars, build, listener);
 			if (!params.isEmpty()) {
 				body = HttpClientUtil.paramsToString(params);
@@ -519,7 +518,7 @@ public class HttpRequest extends Builder {
         public static List<IntStream> parseToRange(String value) {
             List<IntStream> validRanges = new ArrayList<>();
 
-            if (Strings.isNullOrEmpty(value)) {
+            if (value == null || value.isEmpty()) {
                 value = HttpRequest.DescriptorImpl.validResponseCodes;
             }
 

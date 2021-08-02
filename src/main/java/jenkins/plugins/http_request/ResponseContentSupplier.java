@@ -18,7 +18,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.Whitelisted;
 
-import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 
@@ -65,7 +64,7 @@ public class ResponseContentSupplier implements Serializable, AutoCloseable {
 			if (responseHandle == ResponseHandle.STRING && entityContent != null) {
 				byte[] bytes = ByteStreams.toByteArray(entityContent);
 				contentStream = new ByteArrayInputStream(bytes);
-				content = new String(bytes, Strings.isNullOrEmpty(charset) ?
+				content = new String(bytes, charset == null || charset.isEmpty() ?
 						Charset.defaultCharset().name() : charset);
 			} else {
 				contentStream = entityContent;
@@ -103,7 +102,7 @@ public class ResponseContentSupplier implements Serializable, AutoCloseable {
 		}
 
 		try (InputStreamReader in = new InputStreamReader(contentStream,
-				Strings.isNullOrEmpty(charset) ? Charset.defaultCharset().name() : charset)) {
+				charset == null || charset.isEmpty() ? Charset.defaultCharset().name() : charset)) {
 			content = CharStreams.toString(in);
 			return content;
 		} catch (IOException e) {
