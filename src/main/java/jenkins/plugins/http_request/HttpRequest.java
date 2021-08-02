@@ -528,14 +528,14 @@ public class HttpRequest extends Builder {
                 String[] fromTo = code.trim().split(":");
                 checkArgument(fromTo.length <= 2, "Code %s should be an interval from:to or a single value", code);
 
-                Integer from;
+                int from;
                 try {
                     from = Integer.parseInt(fromTo[0]);
                 } catch (NumberFormatException nfe) {
                     throw new IllegalArgumentException("Invalid number "+fromTo[0]);
                 }
 
-                Integer to = from;
+                int to = from;
                 if (fromTo.length != 1) {
                     try {
                         to = Integer.parseInt(fromTo[1]);
