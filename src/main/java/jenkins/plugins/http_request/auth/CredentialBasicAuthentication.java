@@ -2,10 +2,8 @@ package jenkins.plugins.http_request.auth;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.URI;
 import java.util.*;
 
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.client.AuthCache;

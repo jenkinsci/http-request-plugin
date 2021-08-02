@@ -2,7 +2,7 @@ package jenkins.plugins.http_request;
 
 import static jenkins.plugins.http_request.Registers.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -11,7 +11,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.io.FileUtils;
+
 import org.apache.http.entity.ContentType;
 import org.eclipse.jetty.server.Request;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
