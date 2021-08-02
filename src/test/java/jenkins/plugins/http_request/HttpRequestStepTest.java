@@ -126,8 +126,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
-        String s = FileUtils.readFileToString(run.getLogFile());
-        assertTrue(s.contains("Fail: Response doesn't contain expected content 'bad content'"));
+        j.assertLogContains("Fail: Response doesn't contain expected content 'bad content'", run);
     }
 
     @Test

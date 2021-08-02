@@ -45,7 +45,7 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
 
     @Override
     protected XmlFile getConfigFile() {
-        File rootDir = Jenkins.getInstance().getRootDir();
+        File rootDir = Jenkins.get().getRootDir();
         File xmlFile = new File(rootDir, "jenkins.plugins.http_request.HttpRequest.xml");
         return new XmlFile(XSTREAM2, xmlFile);
     }
