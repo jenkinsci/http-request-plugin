@@ -2,7 +2,8 @@ package jenkins.plugins.http_request.auth;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Hashtable;
+import java.util.Map;
 
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;

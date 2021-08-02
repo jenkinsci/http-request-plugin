@@ -1,6 +1,16 @@
 package jenkins.plugins.http_request;
 
-import static jenkins.plugins.http_request.Registers.*;
+import static jenkins.plugins.http_request.Registers.registerAcceptedTypeRequestChecker;
+import static jenkins.plugins.http_request.Registers.registerBasicAuth;
+import static jenkins.plugins.http_request.Registers.registerContentTypeRequestChecker;
+import static jenkins.plugins.http_request.Registers.registerCustomHeaders;
+import static jenkins.plugins.http_request.Registers.registerFileUpload;
+import static jenkins.plugins.http_request.Registers.registerFormAuth;
+import static jenkins.plugins.http_request.Registers.registerFormAuthBad;
+import static jenkins.plugins.http_request.Registers.registerInvalidStatusCode;
+import static jenkins.plugins.http_request.Registers.registerReqAction;
+import static jenkins.plugins.http_request.Registers.registerRequestChecker;
+import static jenkins.plugins.http_request.Registers.registerTimeout;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
