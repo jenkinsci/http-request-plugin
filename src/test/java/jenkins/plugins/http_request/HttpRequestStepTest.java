@@ -200,9 +200,9 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj"+mode.toString());
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL()+"/do"+mode.toString()+"',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/do"+ mode +"',\n" +
             "    consoleLogResponseBody: true,\n" +
-            "    httpMode: '"+mode.toString()+"'\n" +
+            "    httpMode: '"+ mode +"'\n" +
             "println('Status: '+response.getStatus())\n" +
             "println('Response: '+response.getContent())\n",
             true));
@@ -371,9 +371,9 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj"+mimeType.toString());
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL()+"/incoming_"+mimeType.toString()+"',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/incoming_"+ mimeType +"',\n" +
             "    consoleLogResponseBody: true,\n" +
-            "    contentType: '"+mimeType.toString()+"'\n" +
+            "    contentType: '"+ mimeType +"'\n" +
             "println('Status: '+response.getStatus())\n" +
             "println('Response: '+response.getContent())\n",
             true));
@@ -401,9 +401,9 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj"+mimeType.toString());
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL()+"/accept_"+mimeType.toString()+"',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/accept_"+ mimeType +"',\n" +
             "    consoleLogResponseBody: true,\n" +
-            "    acceptType: '"+mimeType.toString()+"'\n" +
+            "    acceptType: '"+ mimeType +"'\n" +
             "println('Status: '+response.getStatus())\n" +
             "println('Response: '+response.getContent())\n",
             true));
@@ -661,8 +661,8 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
                         " httpMode: 'POST'," +
                         " validResponseCodes: '201'," +
                         " consoleLogResponseBody: true," +
-                        " acceptType: '" + MimeType.TEXT_PLAIN.toString() + "'," +
-                        " contentType: '" + MimeType.APPLICATION_ZIP.toString() + "'," +
+                        " acceptType: '" + MimeType.TEXT_PLAIN + "'," +
+                        " contentType: '" + MimeType.APPLICATION_ZIP + "'," +
                         " uploadFile: '" + uploadFile.getAbsolutePath().replace("\\", "\\\\") + "'," +
                         " multipartName: 'file-name'," +
                         " url: '" + baseURL() + "/uploadFile'\n" +
