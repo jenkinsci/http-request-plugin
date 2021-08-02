@@ -51,7 +51,7 @@ import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
-import com.google.common.io.ByteStreams;
+import org.apache.commons.io.IOUtils;
 
 import hudson.AbortException;
 import hudson.CloseProofOutputStream;
@@ -443,7 +443,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		OutputStream out = null;
 		try {
 			out = outputFile.write();
-			ByteStreams.copy(in, out);
+			IOUtils.copy(in, out);
 		} finally {
 			if (out != null) {
 				out.close();

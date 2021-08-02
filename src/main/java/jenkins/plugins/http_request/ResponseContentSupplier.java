@@ -18,7 +18,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.Whitelisted;
 
-import com.google.common.io.ByteStreams;
 import org.apache.commons.io.IOUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -62,7 +61,7 @@ public class ResponseContentSupplier implements Serializable, AutoCloseable {
 			InputStream entityContent = entity != null ? entity.getContent() : null;
 
 			if (responseHandle == ResponseHandle.STRING && entityContent != null) {
-				byte[] bytes = ByteStreams.toByteArray(entityContent);
+				byte[] bytes = IOUtils.toByteArray(entityContent);
 				contentStream = new ByteArrayInputStream(bytes);
 				content = new String(bytes, charset == null || charset.isEmpty() ?
 						Charset.defaultCharset().name() : charset);
