@@ -139,10 +139,7 @@ public class ResponseContentSupplier implements Serializable, AutoCloseable {
 	private void readHeaders(HttpResponse response) {
 		Header[] respHeaders = response.getAllHeaders();
 		for (Header respHeader : respHeaders) {
-			List<String> hs = headers.get(respHeader.getName());
-			if (hs == null) {
-				headers.put(respHeader.getName(), hs = new ArrayList<>());
-			}
+			List<String> hs = headers.computeIfAbsent(respHeader.getName(), k -> new ArrayList<>());
 			hs.add(respHeader.getValue());
 		}
 	}

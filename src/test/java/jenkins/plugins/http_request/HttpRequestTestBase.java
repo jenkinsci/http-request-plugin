@@ -56,10 +56,7 @@ public class HttpRequestTestBase {
 	}
 
 	static void registerHandler(String target, HttpMode method, SimpleHandler handler) {
-		Map<HttpMode, Handler> handlerByMethod = SERVER.handlersByMethodByTarget.get(target);
-		if (handlerByMethod == null) {
-			SERVER.handlersByMethodByTarget.put(target, handlerByMethod = new HashMap<>());
-		}
+		Map<HttpMode, Handler> handlerByMethod = SERVER.handlersByMethodByTarget.computeIfAbsent(target, k -> new HashMap<>());
 		handlerByMethod.put(method, handler);
 	}
 
