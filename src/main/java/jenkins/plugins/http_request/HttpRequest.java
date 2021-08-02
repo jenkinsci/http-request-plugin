@@ -1,7 +1,5 @@
 package jenkins.plugins.http_request;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -525,7 +523,9 @@ public class HttpRequest extends Builder {
             String[] codes = value.split(",");
             for (String code : codes) {
                 String[] fromTo = code.trim().split(":");
-                checkArgument(fromTo.length <= 2, "Code %s should be an interval from:to or a single value", code);
+                if (fromTo.length > 2) {
+                    throw new IllegalArgumentException(String.format("Code %s should be an interval from:to or a single value", code));
+                }
 
                 int from;
                 try {
@@ -543,7 +543,9 @@ public class HttpRequest extends Builder {
                     }
                 }
 
-                checkArgument(from <= to, "Interval %s should be FROM less than TO", code);
+                if (from > to) {
+                    throw new IllegalArgumentException(String.format("Interval %s should be FROM less than TO", code));
+                }
                 validRanges.add(IntStream.rangeClosed(from, to));
             }
 
