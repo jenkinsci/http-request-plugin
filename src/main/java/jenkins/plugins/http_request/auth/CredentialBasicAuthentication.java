@@ -1,6 +1,5 @@
 package jenkins.plugins.http_request.auth;
 
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Hashtable;
 import java.util.Map;
@@ -47,8 +46,7 @@ public class CredentialBasicAuthentication implements Authenticator {
     }
 
     @Override
-    public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpContext context, HttpRequestBase requestBase, PrintStream logger)
-            throws IOException, InterruptedException {
+    public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpContext context, HttpRequestBase requestBase, PrintStream logger) {
         prepare(clientBuilder, context, requestBase);
         return clientBuilder.build();
     }

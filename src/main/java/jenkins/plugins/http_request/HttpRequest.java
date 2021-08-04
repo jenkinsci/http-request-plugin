@@ -298,7 +298,7 @@ public class HttpRequest extends Builder {
 		return this;
 	}
 
-	private List<HttpRequestNameValuePair> createParams(EnvVars envVars, AbstractBuild<?, ?> build, TaskListener listener) throws IOException {
+	private List<HttpRequestNameValuePair> createParams(EnvVars envVars, AbstractBuild<?, ?> build, TaskListener listener) {
 		Map<String, String> buildVariables = build.getBuildVariables();
 		if (buildVariables.isEmpty()) {
 			return Collections.emptyList();
@@ -397,9 +397,7 @@ public class HttpRequest extends Builder {
     throws InterruptedException, IOException
     {
 		EnvVars envVars = build.getEnvironment(listener);
-		for (Map.Entry<String, String> e : build.getBuildVariables().entrySet()) {
-			envVars.put(e.getKey(), e.getValue());
-		}
+		envVars.putAll(build.getBuildVariables());
 
 		HttpRequestExecution exec = HttpRequestExecution.from(this, envVars, build,
 				this.getQuiet() ? TaskListener.NULL : listener);
@@ -448,12 +446,12 @@ public class HttpRequest extends Builder {
             load();
         }
 
-        @SuppressWarnings("rawtypes")
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             return true;
         }
 
+        @NonNull
         @Override
         public String getDisplayName() {
             return "HTTP Request";

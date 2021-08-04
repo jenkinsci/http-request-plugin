@@ -6,6 +6,7 @@ import org.apache.http.NameValuePair;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -48,6 +49,7 @@ public class HttpRequestNameValuePair extends AbstractDescribableImpl<HttpReques
     @Extension
     public static class NameValueParamDescriptor extends Descriptor<HttpRequestNameValuePair> {
 
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Name Value Param";

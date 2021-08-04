@@ -97,7 +97,7 @@ public class Registers {
 		// Timeout, do not respond!
 		registerHandler("/timeout", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) {
 				try {
 					Thread.sleep(10000);
 				} catch (InterruptedException ex) {
@@ -111,7 +111,7 @@ public class Registers {
 		// Accept the form authentication
 		registerHandler("/reqAction", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 				assertEquals("GET", request.getMethod());
 
 				Map<String, String[]> parameters = request.getParameterMap();
@@ -135,7 +135,7 @@ public class Registers {
 		// Check the form authentication
 		registerHandler("/formAuth", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 				okAllIsWell(response);
 			}
 		});
@@ -145,7 +145,7 @@ public class Registers {
 		// Check the form authentication header
 		registerHandler("/formAuthBad", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 				body(response, HttpServletResponse.SC_BAD_REQUEST, ContentType.TEXT_PLAIN, "Not allowed");
 			}
 		});
@@ -155,7 +155,7 @@ public class Registers {
 		// Check the basic authentication header
 		registerHandler("/basicAuth", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 				Enumeration<String> headers = request.getHeaders(HttpHeaders.AUTHORIZATION);
 
 				String value = headers.nextElement();
@@ -176,7 +176,7 @@ public class Registers {
 		// Check that request body is present and that the containing parameter ${Tag} has been resolved to "trunk"
 		registerHandler("/checkRequestBodyWithTag", HttpMode.POST, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 				assertEquals("POST", request.getMethod());
 				String requestBody = requestBody(request);
 
@@ -190,7 +190,7 @@ public class Registers {
 		// Check the custom headers
 		registerHandler("/customHeaders", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 				Enumeration<String> headers = request.getHeaders("customHeader");
 
 				String value1 = headers.nextElement();
@@ -209,7 +209,7 @@ public class Registers {
 		// Return an invalid status code
 		registerHandler("/invalidStatusCode", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 				assertEquals("GET", request.getMethod());
 				String query = request.getQueryString();
 				assertNull(query);
@@ -223,7 +223,7 @@ public class Registers {
 		// Check if the parameters in custom headers have been resolved
 		registerHandler("/customHeadersResolved", HttpMode.POST, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 				Enumeration<String> headers = request.getHeaders("resolveCustomParam");
 				String value = headers.nextElement();
 				assertFalse(headers.hasMoreElements());
@@ -243,7 +243,7 @@ public class Registers {
 		// Check that exactly one build parameter is passed
 		registerHandler("/checkBuildParameters", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 				assertEquals("GET", request.getMethod());
 
 				Map<String, String[]> parameters = request.getParameterMap();
@@ -262,7 +262,7 @@ public class Registers {
 		// Check that request body is present and equals to TestRequestBody
 		registerHandler("/checkRequestBody", HttpMode.POST, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 				assertEquals("POST", request.getMethod());
 				String requestBody = requestBody(request);
 				assertEquals("TestRequestBody", requestBody);
