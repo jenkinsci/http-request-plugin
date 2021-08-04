@@ -113,7 +113,7 @@ public class HttpClientUtil {
 	}
 
     public HttpResponse execute(HttpClient client, HttpContext context, HttpRequestBase method,
-								PrintStream logger) throws IOException, InterruptedException {
+								PrintStream logger) throws IOException {
         logger.println("Sending request to url: " + method.getURI());
 
         final HttpResponse httpResponse = client.execute(method, context);

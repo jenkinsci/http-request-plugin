@@ -49,7 +49,7 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
 
 	@Override
 	public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpContext context,
-								   HttpRequestBase requestBase, PrintStream logger) throws IOException, InterruptedException {
+								   HttpRequestBase requestBase, PrintStream logger) throws IOException {
 		CloseableHttpClient client = clientBuilder.build();
 		final HttpClientUtil clientUtil = new HttpClientUtil();
 		for (RequestAction requestAction : actions) {

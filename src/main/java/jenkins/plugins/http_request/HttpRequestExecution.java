@@ -15,7 +15,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -25,6 +24,7 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedTrustManager;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
@@ -51,7 +51,6 @@ import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
-import org.apache.commons.io.IOUtils;
 
 import hudson.AbortException;
 import hudson.CloseProofOutputStream;
@@ -342,7 +341,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		}
 	}
 
-	private void configureTimeoutAndSsl(HttpClientBuilder clientBuilder) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+	private void configureTimeoutAndSsl(HttpClientBuilder clientBuilder) throws NoSuchAlgorithmException, KeyManagementException {
 		//timeout
 		if (timeout > 0) {
 			int t = timeout * 1000;
@@ -386,7 +385,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 	private ResponseContentSupplier executeRequest(
 			CloseableHttpClient httpclient, HttpClientUtil clientUtil, HttpRequestBase httpRequestBase,
-			HttpContext context) throws IOException, InterruptedException {
+			HttpContext context) throws IOException {
 		ResponseContentSupplier responseContentSupplier;
 		try {
 			final HttpResponse response = clientUtil.execute(httpclient, context, httpRequestBase, logger());
@@ -455,14 +454,11 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	private static class NoopTrustManager extends X509ExtendedTrustManager {
 
 		@Override
-		public void checkClientTrusted(X509Certificate[] arg0, String arg1)
-				throws CertificateException {
+		public void checkClientTrusted(X509Certificate[] arg0, String arg1) {
 		}
 
 		@Override
-		public void checkServerTrusted(X509Certificate[] chain, String authType)
-				throws CertificateException {
-
+		public void checkServerTrusted(X509Certificate[] chain, String authType) {
 		}
 
 		@Override
@@ -471,23 +467,19 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		}
 
 		@Override
-		public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket)
-				throws CertificateException {
+		public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) {
 		}
 
 		@Override
-		public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine)
-				throws CertificateException {
+		public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {
 		}
 
 		@Override
-		public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket)
-				throws CertificateException {
+		public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) {
 		}
 
 		@Override
-		public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine)
-				throws CertificateException {
+		public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {
 		}
 	}
 }

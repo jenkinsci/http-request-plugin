@@ -298,7 +298,7 @@ public class HttpRequest extends Builder {
 		return this;
 	}
 
-	private List<HttpRequestNameValuePair> createParams(EnvVars envVars, AbstractBuild<?, ?> build, TaskListener listener) throws IOException {
+	private List<HttpRequestNameValuePair> createParams(EnvVars envVars, AbstractBuild<?, ?> build, TaskListener listener) {
 		Map<String, String> buildVariables = build.getBuildVariables();
 		if (buildVariables.isEmpty()) {
 			return Collections.emptyList();
