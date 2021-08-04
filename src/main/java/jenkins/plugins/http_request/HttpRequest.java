@@ -397,9 +397,7 @@ public class HttpRequest extends Builder {
     throws InterruptedException, IOException
     {
 		EnvVars envVars = build.getEnvironment(listener);
-		for (Map.Entry<String, String> e : build.getBuildVariables().entrySet()) {
-			envVars.put(e.getKey(), e.getValue());
-		}
+		envVars.putAll(build.getBuildVariables());
 
 		HttpRequestExecution exec = HttpRequestExecution.from(this, envVars, build,
 				this.getQuiet() ? TaskListener.NULL : listener);
