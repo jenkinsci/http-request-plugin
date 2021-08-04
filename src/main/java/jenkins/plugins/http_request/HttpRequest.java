@@ -454,6 +454,7 @@ public class HttpRequest extends Builder {
             return true;
         }
 
+        @NonNull
         @Override
         public String getDisplayName() {
             return "HTTP Request";
