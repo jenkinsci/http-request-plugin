@@ -135,7 +135,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		}
 	}
 
-	static HttpRequestExecution from(HttpRequestStep step, TaskListener taskListener, Execution execution) {
+	static HttpRequestExecution from(HttpRequestStep step, TaskListener taskListener, Execution execution)
+			throws IOException, InterruptedException {
 		List<HttpRequestNameValuePair> headers = step.resolveHeaders();
 		FilePath outputFile = execution.resolveOutputFile();
 		FilePath uploadFile = execution.resolveUploadFile();

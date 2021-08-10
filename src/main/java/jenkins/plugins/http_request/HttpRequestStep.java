@@ -432,12 +432,8 @@ public final class HttpRequestStep extends Step {
 			}
 		}
 
-		public Item getProject() {
-			try {
-				return Objects.requireNonNull(getContext().get(Run.class)).getParent();
-			} catch (IOException | InterruptedException e) {
-				throw new IllegalStateException(e);
-			}
+		public Item getProject() throws IOException, InterruptedException {
+			return Objects.requireNonNull(getContext().get(Run.class)).getParent();
 		}
 	}
 }
