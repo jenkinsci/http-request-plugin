@@ -52,7 +52,7 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
  */
 public class HttpRequest extends Builder {
 
-    private @NonNull String url;
+	private final @NonNull String url;
 	private Boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
 	private HttpMode httpMode                 = DescriptorImpl.httpMode;
 	private String httpProxy                  = DescriptorImpl.httpProxy;

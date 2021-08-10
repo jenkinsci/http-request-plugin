@@ -34,8 +34,8 @@ public class ResponseContentSupplier implements Serializable, AutoCloseable {
 
 	private static final long serialVersionUID = 1L;
 
-	private int status;
-	private Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+	private final int status;
+	private final Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 	private String charset;
 
 	private ResponseHandle responseHandle;

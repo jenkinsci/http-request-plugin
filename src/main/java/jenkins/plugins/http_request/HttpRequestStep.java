@@ -35,7 +35,7 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
  */
 public final class HttpRequestStep extends AbstractStepImpl {
 
-    private @NonNull String url;
+    private final @NonNull String url;
 	private boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
 	private HttpMode httpMode                 = DescriptorImpl.httpMode;
     private String httpProxy                  = DescriptorImpl.httpProxy;
