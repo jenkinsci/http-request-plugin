@@ -14,6 +14,7 @@ import org.apache.http.protocol.HttpContext;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -72,6 +73,7 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
             return HttpRequestGlobalConfig.validateKeyName(value);
         }
 
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Form Authentication";
