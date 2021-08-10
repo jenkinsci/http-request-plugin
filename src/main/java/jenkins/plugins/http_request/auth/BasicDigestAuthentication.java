@@ -10,6 +10,7 @@ import org.apache.http.protocol.HttpContext;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -72,6 +73,7 @@ public class BasicDigestAuthentication extends AbstractDescribableImpl<BasicDige
             return FormValidation.validateRequired(value);
         }
 
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Basic/Digest Authentication";

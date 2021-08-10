@@ -314,6 +314,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
             return "httpRequest";
         }
 
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Perform an HTTP Request and return a response object";
