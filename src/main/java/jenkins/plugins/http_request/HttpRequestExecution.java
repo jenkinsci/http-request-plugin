@@ -407,11 +407,11 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		List<IntStream> ranges = DescriptorImpl.parseToRange(validResponseCodes);
 		for (IntStream range : ranges) {
 			if (range.anyMatch(status -> status == response.getStatus())) {
-				logger().println("Success code from " + range);
+				logger().println("Success: Status code " + response.getStatus() + " is in the accepted range: " + validResponseCodes);
 				return;
 			}
 		}
-		throw new AbortException("Fail: the returned code " + response.getStatus() + " is not in the accepted range: " + validResponseCodes);
+		throw new AbortException("Fail: Status code " + response.getStatus() + " is not in the accepted range: " + validResponseCodes);
 	}
 
 	private void processResponse(ResponseContentSupplier response) throws IOException, InterruptedException {

@@ -65,6 +65,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         j.assertBuildStatusSuccess(run);
         j.assertLogContains("Status: 200",run);
         j.assertLogContains("Response: "+ ALL_IS_WELL,run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -114,6 +115,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains(findMe,run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -137,6 +139,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
         j.assertLogContains("Fail: Response doesn't contain expected content 'bad content'", run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -160,6 +163,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains(ALL_IS_WELL,run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -183,6 +187,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains(ALL_IS_WELL,run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -216,6 +221,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         if (mode == HttpMode.HEAD) return;
 
         j.assertLogContains(ALL_IS_WELL,run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -238,7 +244,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
         j.assertLogContains("Throwing status 400 for test",run);
-        j.assertLogContains("Fail: the returned code 400 is not in the accepted range: 100:399", run);
+        j.assertLogContains("Fail: Status code 400 is not in the accepted range: 100:399", run);
     }
 
     @Test
@@ -262,6 +268,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains("Throwing status 400 for test",run);
+        j.assertLogContains("Success: Status code 400 is in the accepted range: 100:599", run);
     }
 
     @Test
@@ -384,6 +391,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains(ALL_IS_WELL,run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -414,6 +422,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains(ALL_IS_WELL,run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -435,7 +444,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
-        j.assertLogContains("Fail: the returned code 408 is not in the accepted range: 100:399", run);
+        j.assertLogContains("Fail: Status code 408 is not in the accepted range: 100:399", run);
     }
 
     @Test
@@ -456,7 +465,8 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         WorkflowRun run = proj.scheduleBuild2(0).get();
 
         // Check expectations
-        j.assertBuildStatus(Result.SUCCESS, run);
+        j.assertBuildStatusSuccess(run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -503,7 +513,8 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         WorkflowRun run = proj.scheduleBuild2(0).get();
 
         // Check expectations
-        j.assertBuildStatus(Result.SUCCESS, run);
+        j.assertBuildStatusSuccess(run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -539,7 +550,8 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         WorkflowRun run = proj.scheduleBuild2(0).get();
 
         // Check expectations
-        j.assertBuildStatus(Result.SUCCESS, run);
+        j.assertBuildStatusSuccess(run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -643,6 +655,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains("Response: " + body, run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -675,6 +688,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains(responseText, run);
+        j.assertLogContains("Success: Status code 201 is in the accepted range: 201", run);
     }
 
     @Test
