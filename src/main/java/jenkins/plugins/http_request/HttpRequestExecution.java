@@ -411,7 +411,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 				return;
 			}
 		}
-		throw new AbortException("Fail: Status code " + response.getStatus() + " is not in the accepted range: " + validResponseCodes);
+		throw new AbortException("Fail: Status code " + response.getStatus() + " is not in the accepted range: " + validResponseCodes + " while calling " + url);
 	}
 
 	private void processResponse(ResponseContentSupplier response) throws IOException, InterruptedException {
@@ -426,7 +426,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		//validate content
 		if (!validResponseContent.isEmpty()) {
 			if (!response.getContent().contains(validResponseContent)) {
-				throw new AbortException("Fail: Response doesn't contain expected content '" + validResponseContent + "'");
+				throw new AbortException("Fail: Response doesn't contain expected content '" + validResponseContent + "'" + " while calling " + url);
 			}
 		}
 
