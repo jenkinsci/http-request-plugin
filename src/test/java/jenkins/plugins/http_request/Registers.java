@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Enumeration;
 import java.util.Map;
 
@@ -18,7 +19,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
 import org.eclipse.jetty.http.MultiPartFormInputStream;
@@ -161,7 +161,7 @@ public class Registers {
 				String value = headers.nextElement();
 				assertFalse(headers.hasMoreElements());
 
-				byte[] bytes = Base64.decodeBase64(value.substring(6));
+				byte[] bytes = Base64.getDecoder().decode(value.substring(6));
 				String usernamePasswordPair = new String(bytes);
 				String[] usernamePassword = usernamePasswordPair.split(":");
 				assertEquals("username1", usernamePassword[0]);
