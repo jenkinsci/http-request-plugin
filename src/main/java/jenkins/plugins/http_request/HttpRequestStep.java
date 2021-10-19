@@ -3,15 +3,17 @@ package jenkins.plugins.http_request;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 import org.apache.http.HttpHeaders;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.steps.SynchronousNonBlockingStepExecution;
 import org.kohsuke.stapler.AncestorInPath;
@@ -289,7 +291,7 @@ public final class HttpRequestStep extends Step {
 	}
 
 	@Extension
-    public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
+    public static final class DescriptorImpl extends StepDescriptor {
         public static final boolean ignoreSslErrors = HttpRequest.DescriptorImpl.ignoreSslErrors;
         public static final HttpMode httpMode                  = HttpRequest.DescriptorImpl.httpMode;
         public static final String   httpProxy                 = HttpRequest.DescriptorImpl.httpProxy;
@@ -312,8 +314,11 @@ public final class HttpRequestStep extends Step {
         public static final String outputFile = "";
 		public static final ResponseHandle responseHandle = ResponseHandle.STRING;
 
-        public DescriptorImpl() {
-            super(Execution.class);
+        @Override
+        public Set<? extends Class<?>> getRequiredContext() {
+            Set<Class<?>> context = new HashSet<>();
+            Collections.addAll(context, Run.class, TaskListener.class);
+            return Collections.unmodifiableSet(context);
         }
 
 		@Override
