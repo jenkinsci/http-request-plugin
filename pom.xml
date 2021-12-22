@@ -37,7 +37,6 @@ THE SOFTWARE.
 	<name>HTTP Request Plugin</name>
 	<description>
 		This plugin sends a http request to an url with some parameters.
-		See the release notes for changes and compatibility https://github.com/jenkinsci/http-request-plugin/releases
 	</description>
 	<url>https://github.com/jenkinsci/http-request-plugin</url>
 
