@@ -1,8 +1,19 @@
 package jenkins.plugins.http_request;
 
-import static jenkins.plugins.http_request.Registers.*;
+import static jenkins.plugins.http_request.Registers.registerAcceptedTypeRequestChecker;
+import static jenkins.plugins.http_request.Registers.registerBasicAuth;
+import static jenkins.plugins.http_request.Registers.registerContentTypeRequestChecker;
+import static jenkins.plugins.http_request.Registers.registerCustomHeaders;
+import static jenkins.plugins.http_request.Registers.registerFileUpload;
+import static jenkins.plugins.http_request.Registers.registerFormAuth;
+import static jenkins.plugins.http_request.Registers.registerFormAuthBad;
+import static jenkins.plugins.http_request.Registers.registerFormData;
+import static jenkins.plugins.http_request.Registers.registerInvalidStatusCode;
+import static jenkins.plugins.http_request.Registers.registerReqAction;
+import static jenkins.plugins.http_request.Registers.registerRequestChecker;
+import static jenkins.plugins.http_request.Registers.registerTimeout;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -12,7 +23,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.io.FileUtils;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.entity.ContentType;
 import org.eclipse.jetty.server.Request;
@@ -57,6 +68,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         j.assertBuildStatusSuccess(run);
         j.assertLogContains("Status: 200",run);
         j.assertLogContains("Response: "+ ALL_IS_WELL,run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -106,6 +118,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains(findMe,run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -128,8 +141,8 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
-        String s = FileUtils.readFileToString(run.getLogFile());
-        assertTrue(s.contains("Fail: Response doesn't contain expected content 'bad content'"));
+        j.assertLogContains("Fail: Response doesn't contain expected content 'bad content'", run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -153,6 +166,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains(ALL_IS_WELL,run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -176,6 +190,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains(ALL_IS_WELL,run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -193,9 +208,9 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj"+mode.toString());
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL()+"/do"+mode.toString()+"',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/do"+ mode +"',\n" +
             "    consoleLogResponseBody: true,\n" +
-            "    httpMode: '"+mode.toString()+"'\n" +
+            "    httpMode: '"+ mode +"'\n" +
             "println('Status: '+response.getStatus())\n" +
             "println('Response: '+response.getContent())\n",
             true));
@@ -209,6 +224,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         if (mode == HttpMode.HEAD) return;
 
         j.assertLogContains(ALL_IS_WELL,run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -231,6 +247,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
         j.assertLogContains("Throwing status 400 for test",run);
+        j.assertLogContains("Fail: Status code 400 is not in the accepted range: 100:399", run);
     }
 
     @Test
@@ -254,6 +271,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains("Throwing status 400 for test",run);
+        j.assertLogContains("Success: Status code 400 is in the accepted range: 100:599", run);
     }
 
     @Test
@@ -276,6 +294,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
+        j.assertLogContains("Interval 599:100 should be FROM less than TO", run);
     }
 
     @Test
@@ -298,6 +317,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
+        j.assertLogContains("Invalid number text", run);
     }
 
     @Test
@@ -320,6 +340,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
+        j.assertLogContains("Invalid number text", run);
     }
 
     @Test
@@ -342,6 +363,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
+        j.assertLogContains("Code 1:2:3 should be an interval from:to or a single value", run);
     }
 
     @Test
@@ -359,9 +381,9 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj"+mimeType.toString());
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL()+"/incoming_"+mimeType.toString()+"',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/incoming_"+ mimeType +"',\n" +
             "    consoleLogResponseBody: true,\n" +
-            "    contentType: '"+mimeType.toString()+"'\n" +
+            "    contentType: '"+ mimeType +"'\n" +
             "println('Status: '+response.getStatus())\n" +
             "println('Response: '+response.getContent())\n",
             true));
@@ -372,6 +394,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains(ALL_IS_WELL,run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -389,9 +412,9 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj"+mimeType.toString());
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'"+baseURL()+"/accept_"+mimeType.toString()+"',\n" +
+            "def response = httpRequest url:'"+baseURL()+"/accept_"+ mimeType +"',\n" +
             "    consoleLogResponseBody: true,\n" +
-            "    acceptType: '"+mimeType.toString()+"'\n" +
+            "    acceptType: '"+ mimeType +"'\n" +
             "println('Status: '+response.getStatus())\n" +
             "println('Response: '+response.getContent())\n",
             true));
@@ -402,6 +425,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains(ALL_IS_WELL,run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -423,6 +447,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
+        j.assertLogContains("Fail: Status code 408 is not in the accepted range: 100:399", run);
     }
 
     @Test
@@ -443,7 +468,8 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         WorkflowRun run = proj.scheduleBuild2(0).get();
 
         // Check expectations
-        j.assertBuildStatus(Result.SUCCESS, run);
+        j.assertBuildStatusSuccess(run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -465,6 +491,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
+        j.assertLogContains("Authentication 'invalid' doesn't exist anymore", run);
     }
 
     @Test
@@ -489,7 +516,8 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         WorkflowRun run = proj.scheduleBuild2(0).get();
 
         // Check expectations
-        j.assertBuildStatus(Result.SUCCESS, run);
+        j.assertBuildStatusSuccess(run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -525,7 +553,8 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         WorkflowRun run = proj.scheduleBuild2(0).get();
 
         // Check expectations
-        j.assertBuildStatus(Result.SUCCESS, run);
+        j.assertBuildStatusSuccess(run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -629,6 +658,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains("Response: " + body, run);
+        j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
@@ -647,8 +677,8 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
                         " httpMode: 'POST'," +
                         " validResponseCodes: '201'," +
                         " consoleLogResponseBody: true," +
-                        " acceptType: '" + MimeType.TEXT_PLAIN.toString() + "'," +
-                        " contentType: '" + MimeType.APPLICATION_ZIP.toString() + "'," +
+                        " acceptType: '" + MimeType.TEXT_PLAIN + "'," +
+                        " contentType: '" + MimeType.APPLICATION_ZIP + "'," +
                         " uploadFile: '" + uploadFile.getAbsolutePath().replace("\\", "\\\\") + "'," +
                         " multipartName: 'file-name'," +
                         " url: '" + baseURL() + "/uploadFile'\n" +
@@ -661,6 +691,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatusSuccess(run);
         j.assertLogContains(responseText, run);
+        j.assertLogContains("Success: Status code 201 is in the accepted range: 201", run);
     }
 
 	@Test
@@ -705,7 +736,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
                 "def response = httpRequest url:'"+baseURL()+"/proxyAuth',\n" +
-                        "    proxy: 'http://proxy.example.com:8080',\n" +
+                        "    httpProxy: 'http://proxy.example.com:8080',\n" +
                         "    proxyAuthentication: 'invalid'\n" +
                         "println('Status: '+response.getStatus())\n" +
                         "println('Response: '+response.getContent())\n",
@@ -716,5 +747,6 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
+        j.assertLogContains("Proxy authentication 'invalid' doesn't exist anymore or is not a username/password credential type", run);
     }
 }

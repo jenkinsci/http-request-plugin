@@ -7,7 +7,6 @@ import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -19,9 +18,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.Whitelisted;
 
-import com.google.common.base.Strings;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.CharStreams;
+import org.apache.commons.io.IOUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -37,8 +34,8 @@ public class ResponseContentSupplier implements Serializable, AutoCloseable {
 
 	private static final long serialVersionUID = 1L;
 
-	private int status;
-	private Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+	private final int status;
+	private final Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 	private String charset;
 
 	private ResponseHandle responseHandle;
@@ -64,9 +61,9 @@ public class ResponseContentSupplier implements Serializable, AutoCloseable {
 			InputStream entityContent = entity != null ? entity.getContent() : null;
 
 			if (responseHandle == ResponseHandle.STRING && entityContent != null) {
-				byte[] bytes = ByteStreams.toByteArray(entityContent);
+				byte[] bytes = IOUtils.toByteArray(entityContent);
 				contentStream = new ByteArrayInputStream(bytes);
-				content = new String(bytes, Strings.isNullOrEmpty(charset) ?
+				content = new String(bytes, charset == null || charset.isEmpty() ?
 						Charset.defaultCharset().name() : charset);
 			} else {
 				contentStream = entityContent;
@@ -104,8 +101,8 @@ public class ResponseContentSupplier implements Serializable, AutoCloseable {
 		}
 
 		try (InputStreamReader in = new InputStreamReader(contentStream,
-				Strings.isNullOrEmpty(charset) ? Charset.defaultCharset().name() : charset)) {
-			content = CharStreams.toString(in);
+				charset == null || charset.isEmpty() ? Charset.defaultCharset().name() : charset)) {
+			content = IOUtils.toString(in);
 			return content;
 		} catch (IOException e) {
 			throw new IllegalStateException("Error reading response. " +
@@ -139,10 +136,7 @@ public class ResponseContentSupplier implements Serializable, AutoCloseable {
 	private void readHeaders(HttpResponse response) {
 		Header[] respHeaders = response.getAllHeaders();
 		for (Header respHeader : respHeaders) {
-			List<String> hs = headers.get(respHeader.getName());
-			if (hs == null) {
-				headers.put(respHeader.getName(), hs = new ArrayList<>());
-			}
+			List<String> hs = headers.computeIfAbsent(respHeader.getName(), k -> new ArrayList<>());
 			hs.add(respHeader.getValue());
 		}
 	}

@@ -9,6 +9,7 @@ import java.util.List;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -38,8 +39,8 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> implem
         this.url = url;
         this.mode = mode;
         this.requestBody = requestBody;
-        this.params = params == null ? new ArrayList<HttpRequestNameValuePair>() : params;
-        this.headers = headers  == null ? new ArrayList<HttpRequestNameValuePair>() : headers;
+        this.params = params == null ? new ArrayList<>() : params;
+        this.headers = headers  == null ? new ArrayList<>() : headers;
     }
 
     public URL getUrl() {
@@ -65,6 +66,7 @@ public class RequestAction extends AbstractDescribableImpl<RequestAction> implem
     @Extension
     public static class ActionFormAuthenticationDescriptor extends Descriptor<RequestAction> {
 
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Action Form Authentication";

@@ -27,7 +27,8 @@ THE SOFTWARE.
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>4.12</version>
+		<version>4.33</version>
+		<relativePath />
 	</parent>
 
 	<artifactId>http_request</artifactId>
@@ -36,26 +37,23 @@ THE SOFTWARE.
 	<name>HTTP Request Plugin</name>
 	<description>
 		This plugin sends a http request to an url with some parameters.
-		See the release notes for changes and compatibility https://github.com/jenkinsci/http-request-plugin/releases
 	</description>
 	<url>https://github.com/jenkinsci/http-request-plugin</url>
 
 	<licenses>
 		<license>
-			<name>The MIT license</name>
+			<name>MIT License</name>
 			<url>https://opensource.org/licenses/MIT</url>
-			<distribution>repo</distribution>
 		</license>
 	</licenses>
 
 	<properties>
-		<revision>1.9.1</revision>
+		<revision>1.14</revision>
 		<changelist>-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/http-request-plugin</gitHubRepo>
-		<jenkins.version>2.204.6</jenkins.version>
+		<jenkins.version>2.249.1</jenkins.version>
 		<java.level>8</java.level>
 		<hpi.compatibleSinceVersion>1.8.17</hpi.compatibleSinceVersion>
-		<forkCount>1C</forkCount>
 	</properties>
 
 	<repositories>
@@ -72,32 +70,12 @@ THE SOFTWARE.
 		</pluginRepository>
 	</pluginRepositories>
 
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<compilerArgs>
-						<compilerArg>-Xlint:all,-serial,-processing</compilerArg>
-					</compilerArgs>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<argLine>@{argLine} -Dfile.encoding=${project.build.sourceEncoding}</argLine>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
 				<groupId>io.jenkins.tools.bom</groupId>
-				<artifactId>bom-2.204.x</artifactId>
-				<version>18</version>
+				<artifactId>bom-2.249.x</artifactId>
+				<version>984.vb5eaac999a7e</version>
 				<scope>import</scope>
 				<type>pom</type>
 			</dependency>
@@ -152,8 +130,8 @@ THE SOFTWARE.
 	</dependencies>
 
 	<scm>
-		<connection>scm:git:ssh://github.com/${gitHubRepo}.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com/${gitHubRepo}.git</developerConnection>
+		<connection>scm:git:git://github.com/${gitHubRepo}.git</connection>
+		<developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
 		<url>https://github.com/${gitHubRepo}</url>
 		<tag>${scmTag}</tag>
 	</scm>

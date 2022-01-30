@@ -14,6 +14,7 @@ import org.apache.http.protocol.HttpContext;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -36,7 +37,7 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
     @DataBoundConstructor
     public FormAuthentication(String keyName, List<RequestAction> actions) {
         this.keyName = keyName;
-        this.actions = actions == null ? new ArrayList<RequestAction>() : actions;
+        this.actions = actions == null ? new ArrayList<>() : actions;
     }
 
     public String getKeyName() {
@@ -49,7 +50,7 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
 
 	@Override
 	public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpContext context,
-								   HttpRequestBase requestBase, PrintStream logger) throws IOException, InterruptedException {
+								   HttpRequestBase requestBase, PrintStream logger) throws IOException {
 		CloseableHttpClient client = clientBuilder.build();
 		final HttpClientUtil clientUtil = new HttpClientUtil();
 		for (RequestAction requestAction : actions) {
@@ -72,6 +73,7 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
             return HttpRequestGlobalConfig.validateKeyName(value);
         }
 
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Form Authentication";

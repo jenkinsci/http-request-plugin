@@ -45,15 +45,13 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
 
     @Override
     protected XmlFile getConfigFile() {
-        File rootDir = Jenkins.getInstance().getRootDir();
+        File rootDir = Jenkins.get().getRootDir();
         File xmlFile = new File(rootDir, "jenkins.plugins.http_request.HttpRequest.xml");
         return new XmlFile(XSTREAM2, xmlFile);
     }
 
     @Override
-    public boolean configure(StaplerRequest req, JSONObject json)
-    throws FormException
-    {
+    public boolean configure(StaplerRequest req, JSONObject json) {
         req.bindJSON(this, json);
         save();
         return true;

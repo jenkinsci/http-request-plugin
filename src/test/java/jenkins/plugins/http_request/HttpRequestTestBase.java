@@ -31,7 +31,7 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-import com.google.common.io.CharStreams;
+import org.apache.commons.io.IOUtils;
 
 /**
  * @author Martin d'Anjou
@@ -56,10 +56,7 @@ public class HttpRequestTestBase {
 	}
 
 	static void registerHandler(String target, HttpMode method, SimpleHandler handler) {
-		Map<HttpMode, Handler> handlerByMethod = SERVER.handlersByMethodByTarget.get(target);
-		if (handlerByMethod == null) {
-			SERVER.handlersByMethodByTarget.put(target, handlerByMethod = new HashMap<>());
-		}
+		Map<HttpMode, Handler> handlerByMethod = SERVER.handlersByMethodByTarget.computeIfAbsent(target, k -> new HashMap<>());
 		handlerByMethod.put(method, handler);
 	}
 
@@ -82,7 +79,7 @@ public class HttpRequestTestBase {
 	@Before
 	public void init() {
 		credentials = new HashMap<>();
-		credentials.put(Domain.global(), new ArrayList<Credentials>());
+		credentials.put(Domain.global(), new ArrayList<>());
 	}
 
 	@After
@@ -101,7 +98,7 @@ public class HttpRequestTestBase {
 
 		String requestBody(HttpServletRequest request) throws IOException {
 			try (BufferedReader reader = request.getReader()) {
-				return CharStreams.toString(reader);
+				return IOUtils.toString(reader);
 			}
 		}
 

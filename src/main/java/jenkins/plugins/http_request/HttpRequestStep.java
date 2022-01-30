@@ -3,16 +3,19 @@ package jenkins.plugins.http_request;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import org.apache.http.HttpHeaders;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
-import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
-import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
+import org.jenkinsci.plugins.workflow.steps.Step;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.jenkinsci.plugins.workflow.steps.SynchronousNonBlockingStepExecution;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -34,9 +37,9 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 /**
  * @author Martin d'Anjou
  */
-public final class HttpRequestStep extends AbstractStepImpl {
+public final class HttpRequestStep extends Step {
 
-    private @Nonnull String url;
+    private final @NonNull String url;
 	private boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
 	private HttpMode httpMode                 = DescriptorImpl.httpMode;
     private String httpProxy                  = DescriptorImpl.httpProxy;
@@ -61,13 +64,14 @@ public final class HttpRequestStep extends AbstractStepImpl {
 	private ResponseHandle responseHandle = DescriptorImpl.responseHandle;
 
     @DataBoundConstructor
-    public HttpRequestStep(String url) {
+    public HttpRequestStep(@NonNull String url) {
         this.url = url;
     }
 
-    public String getUrl() {
-        return url;
-    }
+	@NonNull
+	public String getUrl() {
+		return url;
+	}
 
 	public boolean isIgnoreSslErrors() {
 		return ignoreSslErrors;
@@ -269,6 +273,11 @@ public final class HttpRequestStep extends AbstractStepImpl {
 	}
 
 	@Override
+	public StepExecution start(StepContext context) {
+		return new Execution(context, this);
+	}
+
+	@Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) super.getDescriptor();
     }
@@ -293,7 +302,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
 	}
 
 	@Extension
-    public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
+    public static final class DescriptorImpl extends StepDescriptor {
         public static final boolean ignoreSslErrors = HttpRequest.DescriptorImpl.ignoreSslErrors;
         public static final HttpMode httpMode                  = HttpRequest.DescriptorImpl.httpMode;
         public static final String   httpProxy                 = HttpRequest.DescriptorImpl.httpProxy;
@@ -317,8 +326,11 @@ public final class HttpRequestStep extends AbstractStepImpl {
         public static final String outputFile = "";
 		public static final ResponseHandle responseHandle = ResponseHandle.STRING;
 
-        public DescriptorImpl() {
-            super(Execution.class);
+        @Override
+        public Set<? extends Class<?>> getRequiredContext() {
+            Set<Class<?>> context = new HashSet<>();
+            Collections.addAll(context, Run.class, TaskListener.class);
+            return Collections.unmodifiableSet(context);
         }
 
 		@Override
@@ -326,6 +338,7 @@ public final class HttpRequestStep extends AbstractStepImpl {
             return "httpRequest";
         }
 
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Perform an HTTP Request and return a response object";
@@ -367,20 +380,19 @@ public final class HttpRequestStep extends AbstractStepImpl {
 
     }
 
-    public static final class Execution extends AbstractSynchronousNonBlockingStepExecution<ResponseContentSupplier> {
+    public static final class Execution extends SynchronousNonBlockingStepExecution<ResponseContentSupplier> {
 
-        @Inject
-        private transient HttpRequestStep step;
+        private final transient HttpRequestStep step;
 
-		@StepContextParameter
-		private transient Run<?, ?> run;
-		@StepContextParameter
-		private transient TaskListener listener;
+		Execution(@NonNull StepContext context, HttpRequestStep step) {
+			super(context);
+			this.step = step;
+		}
 
 		@Override
 		protected ResponseContentSupplier run() throws Exception {
 			HttpRequestExecution exec = HttpRequestExecution.from(step,
-					step.getQuiet() ? TaskListener.NULL : listener,
+					step.getQuiet() ? TaskListener.NULL : Objects.requireNonNull(getContext().get(TaskListener.class)),
 					this);
 
 			Launcher launcher = getContext().get(Launcher.class);
@@ -419,8 +431,8 @@ public final class HttpRequestStep extends AbstractStepImpl {
 			return resolveUploadFileInternal(step.getUploadFile());
 		}
 
-		public Item getProject() {
-			return run.getParent();
+		public Item getProject() throws IOException, InterruptedException {
+			return Objects.requireNonNull(getContext().get(Run.class)).getParent();
 		}
 
 		private FilePath resolveUploadFileInternal(String path) {
