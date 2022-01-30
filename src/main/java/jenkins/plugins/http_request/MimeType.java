@@ -13,6 +13,7 @@ public enum MimeType {
     TEXT_HTML(ContentType.TEXT_HTML),
     TEXT_PLAIN(ContentType.TEXT_PLAIN),
     APPLICATION_FORM(ContentType.APPLICATION_FORM_URLENCODED),
+    APPLICATION_FORM_DATA(ContentType.MULTIPART_FORM_DATA),
     APPLICATION_JSON(ContentType.create("application/json")),
     APPLICATION_JSON_UTF8(ContentType.APPLICATION_JSON),
     APPLICATION_TAR(ContentType.create("application/x-tar")),

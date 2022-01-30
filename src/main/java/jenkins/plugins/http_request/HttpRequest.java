@@ -45,6 +45,7 @@ import hudson.util.ListBoxModel.Option;
 import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
+import jenkins.plugins.http_request.util.HttpRequestFormDataPart;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 
 /**
@@ -74,6 +75,7 @@ public class HttpRequest extends Builder {
     private Boolean useSystemProperties       = DescriptorImpl.useSystemProperties;
     private boolean useNtlm                   = DescriptorImpl.useNtlm;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
+    private List<HttpRequestFormDataPart> formData = DescriptorImpl.formData;
 
 	@DataBoundConstructor
 	public HttpRequest(@NonNull String url) {
@@ -239,6 +241,15 @@ public class HttpRequest extends Builder {
 		this.customHeaders = customHeaders;
 	}
 
+	public List<HttpRequestFormDataPart> getFormData() {
+		return formData;
+	}
+
+	@DataBoundSetter
+	public void setFormData(List<HttpRequestFormDataPart> formData) {
+		this.formData = Collections.unmodifiableList(formData);
+	}
+
 	public String getUploadFile() {
 		return uploadFile;
 	}
@@ -276,6 +287,9 @@ public class HttpRequest extends Builder {
 	protected Object readResolve() {
 		if (customHeaders == null) {
 			customHeaders = DescriptorImpl.customHeaders;
+		}
+		if (formData == null) {
+			formData = DescriptorImpl.formData;
 		}
 		if (validResponseCodes == null || validResponseCodes.trim().isEmpty()) {
 			validResponseCodes = DescriptorImpl.validResponseCodes;
@@ -371,25 +385,53 @@ public class HttpRequest extends Builder {
 		return workspace.child(filePath);
 	}
 
-	FilePath resolveUploadFile(EnvVars envVars, AbstractBuild<?,?> build) {
-		if (uploadFile == null || uploadFile.trim().isEmpty()) {
+	FilePath resolveUploadFile(EnvVars envVars, AbstractBuild<?, ?> build) {
+		return resolveUploadFileInternal(uploadFile, envVars, build);
+	}
+
+	private static FilePath resolveUploadFileInternal(String path, EnvVars envVars, AbstractBuild<?, ?> build) {
+		if (path == null || path.trim().isEmpty()) {
 			return null;
 		}
-		String filePath = envVars.expand(uploadFile);
+		String filePath = envVars.expand(path);
 		try {
 			FilePath workspace = build.getWorkspace();
 			if (workspace == null) {
-				throw new IllegalStateException("Could not find workspace to check existence of upload file: " + uploadFile +
-						". You should use it inside a 'node' block");
+				throw new IllegalStateException(
+						"Could not find workspace to check existence of upload file: " + path
+								+ ". You should use it inside a 'node' block");
 			}
 			FilePath uploadFilePath = workspace.child(filePath);
-				if (!uploadFilePath.exists()) {
-					throw new IllegalStateException("Could not find upload file: " + uploadFile);
-				}
+			if (!uploadFilePath.exists()) {
+				throw new IllegalStateException("Could not find upload file: " + path);
+			}
 			return uploadFilePath;
 		} catch (IOException | InterruptedException e) {
 			throw new IllegalStateException(e);
 		}
+	}
+
+	List<HttpRequestFormDataPart> resolveFormDataParts(EnvVars envVars, AbstractBuild<?, ?> build) {
+		if (formData == null || formData.isEmpty()) {
+			return Collections.emptyList();
+		}
+
+		List<HttpRequestFormDataPart> resolved = new ArrayList<>(formData.size());
+
+		for (HttpRequestFormDataPart part : formData) {
+			String name = envVars.expand(part.getName());
+			String fileName = envVars.expand(part.getFileName());
+			FilePath resolvedUploadFile =
+					resolveUploadFileInternal(part.getUploadFile(), envVars, build);
+			String body = envVars.expand(part.getBody());
+
+			HttpRequestFormDataPart newPart = new HttpRequestFormDataPart(part.getUploadFile(),
+					name, fileName, part.getContentType(), body);
+			newPart.setResolvedUploadFile(resolvedUploadFile);
+			resolved.add(newPart);
+		}
+
+		return resolved;
 	}
 
     @Override
@@ -440,7 +482,8 @@ public class HttpRequest extends Builder {
         public static final boolean  wrapAsMultipart           = true;
         public static final Boolean  useSystemProperties       = false;
         public static final boolean  useNtlm                   = false;
-        public static final List <HttpRequestNameValuePair> customHeaders = Collections.emptyList();
+        public static final List<HttpRequestNameValuePair> customHeaders = Collections.emptyList();
+        public static final List<HttpRequestFormDataPart> formData = Collections.emptyList();
 
         public DescriptorImpl() {
             load();
