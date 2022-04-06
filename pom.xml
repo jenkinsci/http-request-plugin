@@ -27,7 +27,7 @@ THE SOFTWARE.
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>4.39</version>
+		<version>4.40</version>
 		<relativePath />
 	</parent>
 
@@ -52,7 +52,6 @@ THE SOFTWARE.
 		<changelist>-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/http-request-plugin</gitHubRepo>
 		<jenkins.version>2.249.1</jenkins.version>
-		<java.level>8</java.level>
 		<hpi.compatibleSinceVersion>1.8.17</hpi.compatibleSinceVersion>
 	</properties>
 
