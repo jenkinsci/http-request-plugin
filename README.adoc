@@ -113,7 +113,8 @@ httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON',
                "password" : {
                   "value" : "my_password"
                },
-            }''',  url: 'https://api.github.com/orgs/${orgName}'
+            }''',
+            url: 'https://api.github.com/orgs/${orgName}'
 ----
 
 
