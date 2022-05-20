@@ -92,7 +92,9 @@ You may also send content in the body of the request, such as for a PATCH reques
 def patchOrg = """
     {"description": "$description"}
 """
-def response = httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', httpMode: 'PATCH', requestBody: patchOrg, url: "https://api.github.com/orgs/${orgName}"
+def response = httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON',
+                           httpMode: 'PATCH', requestBody: patchOrg,
+                           url: "https://api.github.com/orgs/${orgName}"
 ----
 
 You may also send content in the body of the request, such as for a POST request:
@@ -103,13 +105,16 @@ You may also send content in the body of the request, such as for a POST request
 def patchOrg = """
     {"description": "$description"}
 """
-httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', httpMode: 'POST', quiet: true, requestBody: '''{
-   "display-name" : "my_Username",
-   "email" : "user@example.test",
-   "password" : {
-      "value" : "my_password"
-   },
-}''',  url: 'https://api.github.com/orgs/${orgName}'
+httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON',
+            httpMode: 'POST', quiet: true,
+            requestBody: '''{
+               "display-name" : "my_Username",
+               "email" : "user@example.test",
+               "password" : {
+                  "value" : "my_password"
+               },
+            }''',
+            url: 'https://api.github.com/orgs/${orgName}'
 ----
 
 
@@ -124,66 +129,85 @@ You can also set custom headers with mask set true:
 
 [source,groovy]
 ----
-def response =  [[maskValue: true, name: 'foo', value: 'bar']],  url: 'https://api.github.com/orgs/${orgName}'
+def response =  httpRequest customHeaders: [[maskValue: true, name: 'foo', value: 'bar']],
+                            url: 'https://api.github.com/orgs/${orgName}'
 ----
 
 You can send ``multipart/form-data`` forms:
 
 [source,groovy]
 ----
-def response = httpRequest httpMode: 'POST', formData: [[contentType: 'application/json', name: 'model', body: '{"foo": "bar"}'], [contentType: 'text/plain', name: 'file', fileName: 'readme.txt', uploadFile: 'data/lipsum.txt']]
+def response = httpRequest httpMode: 'POST', formData: [
+               [contentType: 'application/json', name: 'model', body: '{"foo": "bar"}'],
+               [contentType: 'text/plain', name: 'file', fileName: 'readme.txt',
+               uploadFile: 'data/lipsum.txt']]
 ----
 
 You can send a request with form-data:
 
 [source,groovy]
 ----
-def response = httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_FORM_DATA', formData: [[body: '''{
- "name" : "example",
- "type" : "bot"
-}''', contentType: 'text/plain', fileName: 'sample', name: 'data', uploadFile: './files/readme.txt']], httpMode: 'POST', quiet: true, responseHandle: 'NONE', timeout: null, url: 'https://api.github.com/orgs/${orgName}', validResponseCodes: '200,404', validResponseContent: 'token'
+def response = httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_FORM_DATA',
+                           formData: [[body: '''{
+                                         "name" : "example",
+                                         "type" : "bot"
+                                        }''',
+                           contentType: 'text/plain', fileName: 'sample', name: 'data',
+                           uploadFile: './files/readme.txt']],
+                           httpMode: 'POST', quiet: true, responseHandle: 'NONE', timeout: null,
+                           url: 'https://api.github.com/orgs/${orgName}',
+                           validResponseCodes: '200,404', validResponseContent: 'token'
 ----
 
 You can send ``multipart file`` and ``multipart entity name``:
 
 [source,groovy]
 ----
-def response = httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_OCTETSTREAM', httpMode: 'POST', multipartName: 'file', quiet: true, responseHandle: 'NONE', timeout: null, uploadFile: './files/readme.txt', url: 'https://api.github.com/orgs/${orgName}'
+def response = httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_OCTETSTREAM',
+                           httpMode: 'POST', multipartName: 'file', quiet: true,
+                           responseHandle: 'NONE', timeout: null, uploadFile: './files/readme.txt',
+                           url: 'https://api.github.com/orgs/${orgName}'
 ----
 
 You can send a request with SSL error ignored
 
 [source,groovy]
 ----
-def response = httpRequest ignoreSslErrors: true, responseHandle: 'NONE', url: 'https://api.github.com/orgs/${orgName}'
+def response = httpRequest ignoreSslErrors: true, responseHandle: 'NONE',
+                           url: 'https://api.github.com/orgs/${orgName}'
 ----
 
 You can send a request with http proxy
 
 [source,groovy]
 ----
-def response = httpRequest httpProxy: 'http://proxy.local', responseHandle: 'NONE', url: 'https://api.github.com/orgs/${orgName}'
+def response = httpRequest httpProxy: 'http://proxy.local', responseHandle: 'NONE',
+                           url: 'https://api.github.com/orgs/${orgName}'
 ----
 
 You can send a request with http proxy authenticate
 
 [source,groovy]
 ----
-def response = httpRequest httpProxy-authenticate: Basic, 'http://proxy.local', responseHandle: 'NONE', url: 'https://api.github.com/orgs/${orgName}'
+def response = httpRequest httpProxy-authenticate: Basic, 'http://proxy.local',
+               responseHandle: 'NONE', url: 'https://api.github.com/orgs/${orgName}'
 ----
 
 You can send a request with accepted response codes
 
 [source,groovy]
 ----
-def response = httpRequest responseHandle: 'NONE', url: 'https://api.github.com/orgs/${orgName}', validResponseCodes: '200,404'
+def response = httpRequest responseHandle: 'NONE', validResponseCodes: '200,404',
+                           url: 'https://api.github.com/orgs/${orgName}'
 ----
 
 You can send a request with accepted response content
 
 [source,groovy]
 ----
-def response = httpRequest responseHandle: 'STRING', url: 'https://api.github.com/orgs/${orgName}', validResponseCodes: '200,404', validResponseContent: 'token'
+def response = httpRequest responseHandle: 'STRING',
+                           url: 'https://api.github.com/orgs/${orgName}',
+                           validResponseCodes: '200,404', validResponseContent: 'token'
 ----
 
 You can send a request with connection timeout
@@ -204,7 +228,8 @@ You can send a request where response is printed on the console
 
 [source,groovy]
 ----
-def response = httpRequest consoleLogResponseBody: true, url:'https://api.github.com/orgs/${orgName}'
+def response = httpRequest consoleLogResponseBody: true,
+               url:'https://api.github.com/orgs/${orgName}'
 ----
 
 You can send a request without logging output — with logs turned off
