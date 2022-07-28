@@ -8,6 +8,7 @@ import net.sf.json.JSONObject;
 
 import org.kohsuke.stapler.StaplerRequest;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.XmlFile;
 import hudson.init.InitMilestone;
@@ -28,7 +29,7 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 @Extension
 public class HttpRequestGlobalConfig extends GlobalConfiguration {
 
-    private List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<>();
+    private transient List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<>();
     private List<FormAuthentication> formAuthentications = new ArrayList<>();
 
     private static final XStream2 XSTREAM2 = new XStream2();
@@ -78,10 +79,17 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
         return GlobalConfiguration.all().get(HttpRequestGlobalConfig.class);
     }
 
+	/**
+	 * @deprecated SECURITY-2053: Avoid using Basic Digest Authentication
+	 */
+	@Deprecated
     public List<BasicDigestAuthentication> getBasicDigestAuthentications() {
         return basicDigestAuthentications;
     }
 
+	/**
+	 * @deprecated SECURITY-2053: Avoid using Basic Digest Authentication
+	 */
     public void setBasicDigestAuthentications(
             List<BasicDigestAuthentication> basicDigestAuthentications) {
         this.basicDigestAuthentications = basicDigestAuthentications;
