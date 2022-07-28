@@ -11,6 +11,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -27,9 +28,12 @@ public class BasicDigestAuthentication extends AbstractDescribableImpl<BasicDige
         implements Authenticator {
 	private static final long serialVersionUID = 4818288270720177069L;
 
-	private final String keyName;
-    private final String userName;
-    private final String password;
+	@SuppressFBWarnings(value="SE_TRANSIENT_FIELD_NOT_RESTORED", justification = "SECURITY-2053:Field should not be serialized")
+	private transient final String keyName;
+	@SuppressFBWarnings(value="SE_TRANSIENT_FIELD_NOT_RESTORED", justification = "SECURITY-2053:Field should not be serialized")
+    private transient final String userName;
+	@SuppressFBWarnings(value="SE_TRANSIENT_FIELD_NOT_RESTORED", justification = "SECURITY-2053:Field should not be serialized")
+    private transient final String password;
 
     @DataBoundConstructor
     public BasicDigestAuthentication(String keyName, String userName,
