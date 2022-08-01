@@ -15,7 +15,6 @@ import org.jvnet.hudson.test.recipes.LocalData;
 import hudson.model.FreeStyleProject;
 import hudson.tasks.Builder;
 
-import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
@@ -33,7 +32,6 @@ public class HttpRequestBackwardCompatibilityTest {
     public void defaultGlobalConfig() {
         // Test that config from 1.8.6 can be loaded
         HttpRequestGlobalConfig cfg = HttpRequestGlobalConfig.get();
-        assertEquals(Collections.emptyList(), cfg.getBasicDigestAuthentications());
         assertEquals(Collections.emptyList(), cfg.getFormAuthentications());
         assertEquals("jenkins.plugins.http_request.HttpRequest.xml", cfg.getConfigFile().getFile().getName());
     }
@@ -45,18 +43,6 @@ public class HttpRequestBackwardCompatibilityTest {
         // Specifically tests the HttpRequestGlobalConfig.xStreamCompatibility() method
         // and the HttpRequestGlobalConfig.getConfigFile() method
         HttpRequestGlobalConfig cfg = HttpRequestGlobalConfig.get();
-
-        List<BasicDigestAuthentication> bdas = cfg.getBasicDigestAuthentications();
-        assertEquals(2,bdas.size());
-		Iterator<BasicDigestAuthentication> itr = bdas.iterator();
-		BasicDigestAuthentication bda = itr.next();
-		assertEquals("k1",bda.getKeyName());
-        assertEquals("u1",bda.getUserName());
-        assertEquals("p1",bda.getPassword());
-		bda = itr.next();
-		assertEquals("k2",bda.getKeyName());
-        assertEquals("u2",bda.getUserName());
-        assertEquals("p2",bda.getPassword());
 
         List<FormAuthentication> fas = cfg.getFormAuthentications();
         assertEquals(1,fas.size());

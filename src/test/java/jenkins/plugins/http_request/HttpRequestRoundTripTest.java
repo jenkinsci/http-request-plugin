@@ -10,7 +10,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
@@ -62,10 +61,6 @@ public class HttpRequestRoundTripTest {
 
     @Test
     public void configRoundtripGroup3() throws Exception {
-        List<BasicDigestAuthentication> bda = new ArrayList<>();
-        bda.add(new BasicDigestAuthentication("keyname1","username1","password1"));
-        bda.add(new BasicDigestAuthentication("keyname2","username2","password2"));
-        HttpRequestGlobalConfig.get().setBasicDigestAuthentications(bda);
         configRoundTrip(before);
 
         List<HttpRequestNameValuePair> params = new ArrayList<>();
@@ -115,18 +110,6 @@ public class HttpRequestRoundTripTest {
           HttpRequestNameValuePair anvp = after.getCustomHeaders().get(idx);
           assertEquals(bnvp.getName(),anvp.getName());
           assertEquals(bnvp.getValue(),anvp.getValue());
-        }
-
-        // Basic authentication check
-        List<BasicDigestAuthentication> beforeBdas = HttpRequestGlobalConfig.get().getBasicDigestAuthentications();
-        List<BasicDigestAuthentication> afterBdas  = HttpRequestGlobalConfig.get().getBasicDigestAuthentications();
-        assertEquals(beforeBdas.size(), afterBdas.size());
-        for (int idx = 0; idx < beforeBdas.size(); idx++) {
-            BasicDigestAuthentication beforeBda = beforeBdas.get(idx);
-            BasicDigestAuthentication afterBda = afterBdas.get(idx);
-            assertEquals(beforeBda.getKeyName(), afterBda.getKeyName());
-            assertEquals(beforeBda.getUserName(),afterBda.getUserName());
-            assertEquals(beforeBda.getPassword(),afterBda.getPassword());
         }
 
         // Form authentication check

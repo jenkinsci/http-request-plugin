@@ -52,7 +52,7 @@ THE SOFTWARE.
 		<changelist>-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/http-request-plugin</gitHubRepo>
 		<jenkins.version>2.249.1</jenkins.version>
-		<hpi.compatibleSinceVersion>1.8.17</hpi.compatibleSinceVersion>
+		<hpi.compatibleSinceVersion>1.16</hpi.compatibleSinceVersion>
 	</properties>
 
 	<repositories>

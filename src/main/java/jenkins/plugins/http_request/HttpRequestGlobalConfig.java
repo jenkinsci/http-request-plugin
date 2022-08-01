@@ -28,7 +28,11 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 @Extension
 public class HttpRequestGlobalConfig extends GlobalConfiguration {
 
-    private List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<>();
+    /**
+     * @deprecated removed without replacement
+     */
+    @Deprecated
+    private transient List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<>();
     private List<FormAuthentication> formAuthentications = new ArrayList<>();
 
     private static final XStream2 XSTREAM2 = new XStream2();
@@ -78,10 +82,18 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
         return GlobalConfiguration.all().get(HttpRequestGlobalConfig.class);
     }
 
+    /**
+     * @deprecated removed without replacement
+     */
+    @Deprecated
     public List<BasicDigestAuthentication> getBasicDigestAuthentications() {
         return basicDigestAuthentications;
     }
 
+    /**
+     * @deprecated removed without replacement
+     */
+    @Deprecated
     public void setBasicDigestAuthentications(
             List<BasicDigestAuthentication> basicDigestAuthentications) {
         this.basicDigestAuthentications = basicDigestAuthentications;
@@ -97,10 +109,7 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
     }
 
     public List<Authenticator> getAuthentications() {
-        List<Authenticator> list = new ArrayList<>();
-        list.addAll(basicDigestAuthentications);
-        list.addAll(formAuthentications);
-        return list;
+        return new ArrayList<>(formAuthentications);
     }
 
     public Authenticator getAuthentication(String keyName) {
@@ -110,5 +119,12 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
             }
         }
         return null;
+    }
+
+    protected Object readResolve() {
+        if (this.basicDigestAuthentications != null) {
+            this.basicDigestAuthentications = new ArrayList<>();
+        }
+        return this;
     }
 }

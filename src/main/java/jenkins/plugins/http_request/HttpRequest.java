@@ -42,7 +42,6 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
 
-import jenkins.plugins.http_request.auth.BasicDigestAuthentication;
 import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.HttpRequestFormDataPart;
@@ -536,10 +535,6 @@ public class HttpRequest extends Builder {
 			}
 
 			List<Option> options = new ArrayList<>();
-			for (BasicDigestAuthentication basic : HttpRequestGlobalConfig.get().getBasicDigestAuthentications()) {
-				options.add(new Option("(deprecated - use Jenkins Credentials) " +
-						basic.getKeyName(), basic.getKeyName()));
-            }
 
             for (FormAuthentication formAuthentication : HttpRequestGlobalConfig.get().getFormAuthentications()) {
 				options.add(new Option(formAuthentication.getKeyName()));
