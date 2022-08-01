@@ -536,10 +536,6 @@ public class HttpRequest extends Builder {
 			}
 
 			List<Option> options = new ArrayList<>();
-			for (BasicDigestAuthentication basic : HttpRequestGlobalConfig.get().getBasicDigestAuthentications()) {
-				options.add(new Option("(deprecated - use Jenkins Credentials) " +
-						basic.getKeyName(), basic.getKeyName()));
-            }
 
             for (FormAuthentication formAuthentication : HttpRequestGlobalConfig.get().getFormAuthentications()) {
 				options.add(new Option(formAuthentication.getKeyName()));
