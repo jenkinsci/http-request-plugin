@@ -120,4 +120,9 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
         }
         return null;
     }
+
+	protected Object readResolve() {
+		this.basicDigestAuthentications = new ArrayList<>();
+		return this;
+	}
 }

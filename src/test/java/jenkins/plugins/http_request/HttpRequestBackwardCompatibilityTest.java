@@ -47,16 +47,7 @@ public class HttpRequestBackwardCompatibilityTest {
         HttpRequestGlobalConfig cfg = HttpRequestGlobalConfig.get();
 
         List<BasicDigestAuthentication> bdas = cfg.getBasicDigestAuthentications();
-        assertEquals(2,bdas.size());
-		Iterator<BasicDigestAuthentication> itr = bdas.iterator();
-		BasicDigestAuthentication bda = itr.next();
-		assertEquals("k1",bda.getKeyName());
-        assertEquals("u1",bda.getUserName());
-        assertEquals("p1",bda.getPassword());
-		bda = itr.next();
-		assertEquals("k2",bda.getKeyName());
-        assertEquals("u2",bda.getUserName());
-        assertEquals("p2",bda.getPassword());
+        assertEquals(0,bdas.size());
 
         List<FormAuthentication> fas = cfg.getFormAuthentications();
         assertEquals(1,fas.size());
