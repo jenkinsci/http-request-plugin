@@ -109,7 +109,7 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
     }
 
     public List<Authenticator> getAuthentications() {
-		return new ArrayList<>(formAuthentications);
+        return new ArrayList<>(formAuthentications);
     }
 
     public Authenticator getAuthentication(String keyName) {
@@ -121,8 +121,8 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
         return null;
     }
 
-	protected Object readResolve() {
-		this.basicDigestAuthentications = new ArrayList<>();
-		return this;
-	}
+    protected Object readResolve() {
+        this.basicDigestAuthentications = new ArrayList<>();
+        return this;
+    }
 }
