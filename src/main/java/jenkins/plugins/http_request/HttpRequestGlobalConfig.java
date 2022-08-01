@@ -28,6 +28,10 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 @Extension
 public class HttpRequestGlobalConfig extends GlobalConfiguration {
 
+    /**
+     * @deprecated removed without replacement
+     */
+    @Deprecated
     private transient List<BasicDigestAuthentication> basicDigestAuthentications = new ArrayList<>();
     private List<FormAuthentication> formAuthentications = new ArrayList<>();
 
@@ -78,17 +82,18 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
         return GlobalConfiguration.all().get(HttpRequestGlobalConfig.class);
     }
 
-	/**
-	 * @deprecated SECURITY-2053: Avoid using Basic Digest Authentication
-	 */
-	@Deprecated
+    /**
+     * @deprecated removed without replacement
+     */
+    @Deprecated
     public List<BasicDigestAuthentication> getBasicDigestAuthentications() {
         return basicDigestAuthentications;
     }
 
-	/**
-	 * @deprecated SECURITY-2053: Avoid using Basic Digest Authentication
-	 */
+    /**
+     * @deprecated removed without replacement
+     */
+    @Deprecated
     public void setBasicDigestAuthentications(
             List<BasicDigestAuthentication> basicDigestAuthentications) {
         this.basicDigestAuthentications = basicDigestAuthentications;
