@@ -109,10 +109,7 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
     }
 
     public List<Authenticator> getAuthentications() {
-        List<Authenticator> list = new ArrayList<>();
-        list.addAll(basicDigestAuthentications);
-        list.addAll(formAuthentications);
-        return list;
+		return new ArrayList<>(formAuthentications);
     }
 
     public Authenticator getAuthentication(String keyName) {
