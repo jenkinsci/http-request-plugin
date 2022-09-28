@@ -58,6 +58,7 @@ import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.Item;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.remoting.RemoteOutputStream;
 import hudson.security.ACL;
@@ -118,6 +119,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			FilePath outputFile = http.resolveOutputFile(envVars, build);
 			FilePath uploadFile = http.resolveUploadFile(envVars, build);
 			Item project = build.getProject();
+			Run<?, ?> run = build;
 
 			List<HttpRequestFormDataPart> formData = http.resolveFormDataParts(envVars, build);
 
@@ -134,6 +136,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 					ResponseHandle.NONE,
 
 					project,
+					run,
 					taskListener.getLogger());
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
@@ -149,6 +152,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 		// TODO: resolveFormDataParts missing
 		Item project = execution.getProject();
+		Run<?, ?> run = execution.getContext().get(Run.class);
+
 		return new HttpRequestExecution(
 				step.getUrl(), step.getHttpMode(), step.isIgnoreSslErrors(),
 				step.getHttpProxy(), step.getProxyAuthentication(),
@@ -160,7 +165,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 				step.getValidResponseCodes(), step.getValidResponseContent(),
 				step.getConsoleLogResponseBody(), outputFile,
 				step.getResponseHandle(),
-				project, taskListener.getLogger());
+				project, run, taskListener.getLogger());
 	}
 
 	private HttpRequestExecution(
@@ -175,7 +180,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			Boolean consoleLogResponseBody, FilePath outputFile,
 			ResponseHandle responseHandle,
 
-			Item project, PrintStream logger
+			Item project, Run<?, ?> run, PrintStream logger
 	) {
 		this.url = url;
 		this.httpMode = httpMode;
@@ -191,6 +196,9 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 								project, ACL.SYSTEM,
 								URIRequirementBuilder.fromUri(url).build()),
 						CredentialsMatchers.withId(proxyAuthentication));
+
+				CredentialsProvider.trackAll(run, credential);
+
 				if (credential instanceof StandardUsernamePasswordCredentials) {
 					this.proxyCredentials = (StandardUsernamePasswordCredentials) credential;
 				} else {
@@ -220,6 +228,9 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 								project, ACL.SYSTEM,
 								URIRequirementBuilder.fromUri(url).build()),
 						CredentialsMatchers.withId(authentication));
+
+				CredentialsProvider.trackAll(run, credential);
+
 				if (credential != null) {
 					if (credential instanceof StandardUsernamePasswordCredentials) {
 						if (this.useNtlm) {

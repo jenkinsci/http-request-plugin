@@ -243,7 +243,17 @@ You can handle response
 
 [source,groovy]
 ----
-httpRequest responseHandle: 'LEAVE_OPEN',  url:'https://api.github.com/orgs/${orgName}'
+def response = httpRequest responseHandle: 'LEAVE_OPEN',
+                           url: "https://api.github.com/orgs/${orgName}"
+response.close() // must call response.close() after a LEAVE_OPEN
+----
+
+You can use a Jenkins credential to authenticate the request
+
+[source,groovy]
+----
+def response = httpRequest authenticate: 'my-jenkins-credential-id',
+                           url: 'https://api.github.com/user/jenkinsci'
 ----
 
 For details on the Pipeline features, use the Pipeline snippet generator in the Pipeline job 
