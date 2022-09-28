@@ -77,9 +77,7 @@ public class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         proj.setDefinition(
                 new CpsFlowDefinition(
                         "def response = httpRequest(url: 'https://api.github.com/users/jenkinsci',\n"
-                                + "                                                     authentication: '"
-                                + credential.getId()
-                                + "')\n"
+                                + "                 authentication: '" + credential.getId() + "')\n"
                                 + "println('Status: '+response.getStatus())\n"
                                 + "println('Response: '+response.getContent())\n",
                         true));
