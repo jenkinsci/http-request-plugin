@@ -200,7 +200,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 				CredentialsProvider.trackAll(run, credential);
 
 				if (credential instanceof StandardUsernamePasswordCredentials) {
-					this.proxyCredentials = (StandardUsernamePasswordCredentials) credential;
+					// create snapshot of credentials because it needs to be serialized to the agent
+					this.proxyCredentials = CredentialsProvider.snapshot((StandardUsernamePasswordCredentials) credential);
 				} else {
 					this.proxyCredentials = null;
 					throw new IllegalStateException("Proxy authentication '" + proxyAuthentication + "' doesn't exist anymore or is not a username/password credential type");
@@ -232,6 +233,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 				CredentialsProvider.trackAll(run, credential);
 
 				if (credential != null) {
+					// create snapshot of credential because it needs to be serialized to the agent
+					credential = CredentialsProvider.snapshot(credential);
 					if (credential instanceof StandardUsernamePasswordCredentials) {
 						if (this.useNtlm) {
 							auth = new CredentialNtlmAuthentication((StandardUsernamePasswordCredentials) credential);
