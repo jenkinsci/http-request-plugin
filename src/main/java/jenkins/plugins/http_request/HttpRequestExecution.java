@@ -58,6 +58,7 @@ import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.Item;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.remoting.RemoteOutputStream;
 import hudson.security.ACL;
@@ -70,6 +71,7 @@ import jenkins.plugins.http_request.auth.CertificateAuthentication;
 import jenkins.plugins.http_request.auth.CredentialBasicAuthentication;
 import jenkins.plugins.http_request.auth.CredentialNtlmAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
+import jenkins.plugins.http_request.util.HttpRequestFormDataPart;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 import jenkins.plugins.http_request.util.RequestAction;
 
@@ -87,6 +89,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 	private final String body;
 	private final List<HttpRequestNameValuePair> headers;
+	private final List<HttpRequestFormDataPart> formData;
 
 	private final FilePath uploadFile;
 	private final String multipartName;
@@ -116,6 +119,9 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			FilePath outputFile = http.resolveOutputFile(envVars, build);
 			FilePath uploadFile = http.resolveUploadFile(envVars, build);
 			Item project = build.getProject();
+			Run<?, ?> run = build;
+
+			List<HttpRequestFormDataPart> formData = http.resolveFormDataParts(envVars, build);
 
 			return new HttpRequestExecution(
 					url, http.getHttpMode(), http.getIgnoreSslErrors(),
@@ -123,12 +129,14 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 					body, headers, http.getTimeout(),
 					uploadFile, http.getMultipartName(), http.getWrapAsMultipart(),
 					http.getAuthentication(), http.isUseNtlm(), http.getUseSystemProperties(),
+					formData,
 
 					http.getValidResponseCodes(), http.getValidResponseContent(),
 					http.getConsoleLogResponseBody(), outputFile,
 					ResponseHandle.NONE,
 
 					project,
+					run,
 					taskListener.getLogger());
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
@@ -140,18 +148,24 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		List<HttpRequestNameValuePair> headers = step.resolveHeaders();
 		FilePath outputFile = execution.resolveOutputFile();
 		FilePath uploadFile = execution.resolveUploadFile();
+		List<HttpRequestFormDataPart> formData = execution.resolveFormDataParts();
+
+		// TODO: resolveFormDataParts missing
 		Item project = execution.getProject();
+		Run<?, ?> run = execution.getContext().get(Run.class);
+
 		return new HttpRequestExecution(
 				step.getUrl(), step.getHttpMode(), step.isIgnoreSslErrors(),
 				step.getHttpProxy(), step.getProxyAuthentication(),
 				step.getRequestBody(), headers, step.getTimeout(),
 				uploadFile, step.getMultipartName(), step.isWrapAsMultipart(),
 				step.getAuthentication(), step.isUseNtlm(), step.getUseSystemProperties(),
+				formData,
 
 				step.getValidResponseCodes(), step.getValidResponseContent(),
 				step.getConsoleLogResponseBody(), outputFile,
 				step.getResponseHandle(),
-				project, taskListener.getLogger());
+				project, run, taskListener.getLogger());
 	}
 
 	private HttpRequestExecution(
@@ -160,12 +174,13 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			List<HttpRequestNameValuePair> headers, Integer timeout,
 			FilePath uploadFile, String multipartName, boolean wrapAsMultipart,
 			String authentication, boolean useNtlm, boolean useSystemProperties,
+			List<HttpRequestFormDataPart> formData,
 
 			String validResponseCodes, String validResponseContent,
 			Boolean consoleLogResponseBody, FilePath outputFile,
 			ResponseHandle responseHandle,
 
-			Item project, PrintStream logger
+			Item project, Run<?, ?> run, PrintStream logger
 	) {
 		this.url = url;
 		this.httpMode = httpMode;
@@ -181,8 +196,12 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 								project, ACL.SYSTEM,
 								URIRequirementBuilder.fromUri(url).build()),
 						CredentialsMatchers.withId(proxyAuthentication));
+
+				CredentialsProvider.trackAll(run, credential);
+
 				if (credential instanceof StandardUsernamePasswordCredentials) {
-					this.proxyCredentials = (StandardUsernamePasswordCredentials) credential;
+					// create snapshot of credentials because it needs to be serialized to the agent
+					this.proxyCredentials = CredentialsProvider.snapshot((StandardUsernamePasswordCredentials) credential);
 				} else {
 					this.proxyCredentials = null;
 					throw new IllegalStateException("Proxy authentication '" + proxyAuthentication + "' doesn't exist anymore or is not a username/password credential type");
@@ -197,6 +216,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 		this.body = body;
 		this.headers = headers;
+		this.formData = formData;
 		this.timeout = timeout != null ? timeout : -1;
 		this.useNtlm = useNtlm;
 		if (authentication != null && !authentication.isEmpty()) {
@@ -209,7 +229,12 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 								project, ACL.SYSTEM,
 								URIRequirementBuilder.fromUri(url).build()),
 						CredentialsMatchers.withId(authentication));
+
+				CredentialsProvider.trackAll(run, credential);
+
 				if (credential != null) {
+					// create snapshot of credential because it needs to be serialized to the agent
+					credential = CredentialsProvider.snapshot(credential);
 					if (credential instanceof StandardUsernamePasswordCredentials) {
 						if (this.useNtlm) {
 							auth = new CredentialNtlmAuthentication((StandardUsernamePasswordCredentials) credential);
@@ -293,9 +318,35 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			}
 
 			HttpClientUtil clientUtil = new HttpClientUtil();
+			// Create the simple body, this is the most frequent operation. It will be overridden
+			// later, if a more complex payload descriptor is set.
 			HttpRequestBase httpRequestBase = clientUtil.createRequestBase(new RequestAction(new URL(url), httpMode, body, null, headers));
 
-			if (uploadFile != null && (httpMode == HttpMode.POST || httpMode == HttpMode.PUT)) {
+			if (formData != null && !formData.isEmpty() && httpMode == HttpMode.POST) {
+				// multipart/form-data builder mode
+				MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+
+				for (HttpRequestFormDataPart part : formData) {
+					if (part.getFileName() == null || part.getFileName().isEmpty()) {
+						ContentType textContentType = part.getContentType() == null || part.getContentType().isEmpty()
+								? ContentType.TEXT_PLAIN
+								: ContentType.create(part.getContentType());
+						builder.addTextBody(part.getName(), part.getBody(),
+								textContentType);
+					} else {
+						ContentType fileContentType = part.getContentType() == null || part.getContentType().isEmpty()
+								? ContentType.APPLICATION_OCTET_STREAM
+								: ContentType.create(part.getContentType());
+						builder.addBinaryBody(part.getName(),
+								new File(part.getResolvedUploadFile().getRemote()),
+								fileContentType, part.getFileName());
+					}
+				}
+
+				HttpEntity mimeBody = builder.build();
+				((HttpEntityEnclosingRequestBase) httpRequestBase).setEntity(mimeBody);
+			} else if (uploadFile != null && (httpMode == HttpMode.POST || httpMode == HttpMode.PUT)) {
+				// No form-data, but a singular uploadFile is set.
 				ContentType contentType = ContentType.APPLICATION_OCTET_STREAM;
 				for (HttpRequestNameValuePair header : headers) {
 					if (HttpHeaders.CONTENT_TYPE.equalsIgnoreCase(header.getName())) {
@@ -317,6 +368,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 					entity = new FileEntity(new File(uploadFile.getRemote()), contentType);
 				}
 
+				// File upload overrides requestBody.
 				((HttpEntityEnclosingRequestBase) httpRequestBase).setEntity(entity);
 				httpRequestBase.setHeader(entity.getContentType());
 				httpRequestBase.setHeader(entity.getContentEncoding());

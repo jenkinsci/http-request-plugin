@@ -27,7 +27,7 @@ THE SOFTWARE.
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>4.24</version>
+		<version>4.48</version>
 		<relativePath />
 	</parent>
 
@@ -37,7 +37,6 @@ THE SOFTWARE.
 	<name>HTTP Request Plugin</name>
 	<description>
 		This plugin sends a http request to an url with some parameters.
-		See the release notes for changes and compatibility https://github.com/jenkinsci/http-request-plugin/releases
 	</description>
 	<url>https://github.com/jenkinsci/http-request-plugin</url>
 
@@ -49,12 +48,11 @@ THE SOFTWARE.
 	</licenses>
 
 	<properties>
-		<revision>1.12</revision>
+		<revision>1.17</revision>
 		<changelist>-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/http-request-plugin</gitHubRepo>
-		<jenkins.version>2.222.4</jenkins.version>
-		<java.level>8</java.level>
-		<hpi.compatibleSinceVersion>1.8.17</hpi.compatibleSinceVersion>
+		<jenkins.version>2.249.1</jenkins.version>
+		<hpi.compatibleSinceVersion>1.16</hpi.compatibleSinceVersion>
 	</properties>
 
 	<repositories>
@@ -75,8 +73,8 @@ THE SOFTWARE.
 		<dependencies>
 			<dependency>
 				<groupId>io.jenkins.tools.bom</groupId>
-				<artifactId>bom-2.222.x</artifactId>
-				<version>887.vae9c8ac09ff7</version>
+				<artifactId>bom-2.249.x</artifactId>
+				<version>984.vb5eaac999a7e</version>
 				<scope>import</scope>
 				<type>pom</type>
 			</dependency>
@@ -131,8 +129,8 @@ THE SOFTWARE.
 	</dependencies>
 
 	<scm>
-		<connection>scm:git:ssh://github.com/${gitHubRepo}.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com/${gitHubRepo}.git</developerConnection>
+		<connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
+		<developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
 		<url>https://github.com/${gitHubRepo}</url>
 		<tag>${scmTag}</tag>
 	</scm>

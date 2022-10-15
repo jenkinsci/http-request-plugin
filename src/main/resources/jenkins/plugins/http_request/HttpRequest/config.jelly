@@ -42,14 +42,19 @@
             </f:entry>
         </f:section>
         <f:section title="File Upload ">
-        	<f:entry field="wrapAsMultipart" title="Wrap as Multipart request?" help="/plugin/http_request/help-wrapAsMultipart.html">
-				<f:booleanRadio />
-			</f:entry>
+            <f:entry field="wrapAsMultipart" title="Wrap as Multipart request?" help="/plugin/http_request/help-wrapAsMultipart.html">
+                <f:booleanRadio />
+            </f:entry>
             <f:entry field="uploadFile" title="Upload file path" help="/plugin/http_request/help-uploadFile.html">
                 <f:textbox />
             </f:entry>
             <f:entry field="multipartName" title="Multipart entity name" help="/plugin/http_request/help-multipartName.html">
                 <f:textbox />
+            </f:entry>
+        </f:section>
+        <f:section title="Form Data">
+            <f:entry title="Form Entries" help="/plugin/http_request/help-formData.html">
+                <f:repeatableProperty field="formData" />
             </f:entry>
         </f:section>
         <f:section title="Response">

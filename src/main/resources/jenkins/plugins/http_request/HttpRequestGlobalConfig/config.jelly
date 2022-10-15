@@ -18,27 +18,6 @@
 		</d:tag>
 	</d:taglib>
     <f:section title="HTTP Request">
-    	<f:entry title="DEPRECATED (use Jenkins credentials) Basic/Digest Authentication">
-            <f:repeatable field="basicDigestAuthentications">
-				<local:blockWrapper>
-                    <f:entry title="Key Name" field="keyName" help="/plugin/http_request/help-keyName.html">
-                        <f:textbox />
-                    </f:entry>
-                    <f:entry title="Username" field="userName" help="/plugin/http_request/help-userName.html">
-                        <f:textbox />
-                    </f:entry>
-                    <f:entry title="Password" field="password" help="/plugin/http_request/help-password.html">
-                        <f:password />
-                    </f:entry>
-                    <f:entry title="">
-                        <div align="right">
-                            <f:repeatableDeleteButton />
-                        </div>
-                    </f:entry>
-				</local:blockWrapper>
-            </f:repeatable>
-        </f:entry>
-
         <f:entry title="Form Authentication">
             <f:repeatable field="formAuthentications">
                 <local:blockWrapper>

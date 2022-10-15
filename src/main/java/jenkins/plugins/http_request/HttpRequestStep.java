@@ -3,15 +3,17 @@ package jenkins.plugins.http_request;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 import org.apache.http.HttpHeaders;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.steps.SynchronousNonBlockingStepExecution;
 import org.kohsuke.stapler.AncestorInPath;
@@ -29,6 +31,7 @@ import hudson.remoting.VirtualChannel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
+import jenkins.plugins.http_request.util.HttpRequestFormDataPart;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 
 /**
@@ -56,6 +59,7 @@ public final class HttpRequestStep extends Step {
     private Boolean useSystemProperties       = DescriptorImpl.useSystemProperties;
     private boolean useNtlm                   = DescriptorImpl.useNtlm;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
+	private List<HttpRequestFormDataPart> formData = DescriptorImpl.formData;
 	private String outputFile = DescriptorImpl.outputFile;
 	private ResponseHandle responseHandle = DescriptorImpl.responseHandle;
 
@@ -204,6 +208,15 @@ public final class HttpRequestStep extends Step {
         return customHeaders;
     }
 
+	public List<HttpRequestFormDataPart> getFormData() {
+		return formData;
+	}
+
+	@DataBoundSetter
+	public void setFormData(List<HttpRequestFormDataPart> formData) {
+		this.formData = Collections.unmodifiableList(formData);
+	}
+
 	public String getOutputFile() {
 		return outputFile;
 	}
@@ -289,7 +302,7 @@ public final class HttpRequestStep extends Step {
 	}
 
 	@Extension
-    public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
+    public static final class DescriptorImpl extends StepDescriptor {
         public static final boolean ignoreSslErrors = HttpRequest.DescriptorImpl.ignoreSslErrors;
         public static final HttpMode httpMode                  = HttpRequest.DescriptorImpl.httpMode;
         public static final String   httpProxy                 = HttpRequest.DescriptorImpl.httpProxy;
@@ -309,11 +322,15 @@ public final class HttpRequestStep extends Step {
         public static final Boolean  useSystemProperties       = HttpRequest.DescriptorImpl.useSystemProperties;
         public static final boolean  useNtlm                   = HttpRequest.DescriptorImpl.useNtlm;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.emptyList();
+        public static final List <HttpRequestFormDataPart> formData = Collections.emptyList();
         public static final String outputFile = "";
 		public static final ResponseHandle responseHandle = ResponseHandle.STRING;
 
-        public DescriptorImpl() {
-            super(Execution.class);
+        @Override
+        public Set<? extends Class<?>> getRequiredContext() {
+            Set<Class<?>> context = new HashSet<>();
+            Collections.addAll(context, Run.class, TaskListener.class);
+            return Collections.unmodifiableSet(context);
         }
 
 		@Override
@@ -411,20 +428,27 @@ public final class HttpRequestStep extends Step {
 		}
 
 		FilePath resolveUploadFile() {
-			String uploadFile = step.getUploadFile();
-			if (uploadFile == null || uploadFile.trim().isEmpty()) {
+			return resolveUploadFileInternal(step.getUploadFile());
+		}
+
+		public Item getProject() throws IOException, InterruptedException {
+			return Objects.requireNonNull(getContext().get(Run.class)).getParent();
+		}
+
+		private FilePath resolveUploadFileInternal(String path) {
+			if (path == null || path.trim().isEmpty()) {
 				return null;
 			}
 
 			try {
 				FilePath workspace = getContext().get(FilePath.class);
 				if (workspace == null) {
-					throw new IllegalStateException("Could not find workspace to check existence of upload file: " + uploadFile +
+					throw new IllegalStateException("Could not find workspace to check existence of upload file: " + path +
 							". You should use it inside a 'node' block");
 				}
-				FilePath uploadFilePath = workspace.child(uploadFile);
+				FilePath uploadFilePath = workspace.child(path);
 				if (!uploadFilePath.exists()) {
-					throw new IllegalStateException("Could not find upload file: " + uploadFile);
+					throw new IllegalStateException("Could not find upload file: " + path);
 				}
 				return uploadFilePath;
 			} catch (IOException | InterruptedException e) {
@@ -432,8 +456,22 @@ public final class HttpRequestStep extends Step {
 			}
 		}
 
-		public Item getProject() throws IOException, InterruptedException {
-			return Objects.requireNonNull(getContext().get(Run.class)).getParent();
+		List<HttpRequestFormDataPart> resolveFormDataParts() {
+			List<HttpRequestFormDataPart> formData = step.getFormData();
+			if (formData == null || formData.isEmpty()) {
+				return Collections.emptyList();
+			}
+
+			List<HttpRequestFormDataPart> resolved = new ArrayList<>(formData.size());
+
+			for (HttpRequestFormDataPart part : formData) {
+				HttpRequestFormDataPart newPart = new HttpRequestFormDataPart(part.getUploadFile(),
+						part.getName(), part.getFileName(), part.getContentType(), part.getBody());
+				newPart.setResolvedUploadFile(resolveUploadFileInternal(part.getUploadFile()));
+				resolved.add(newPart);
+			}
+
+			return resolved;
 		}
 	}
 }
