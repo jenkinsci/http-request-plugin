@@ -4,27 +4,30 @@
   -->
   <Match>
     <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED"/>
-    <Class name="org.jenkins.plugins.http_request.HttpRequestExecution"/>
+    <Class name="jenkins.plugins.http_request.HttpRequestExecution"/>
+    <Field name="localLogger"/>
   </Match>
 
   <Match>
     <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED"/>
-    <Class name="org.jenkins.plugins.http_request.HttpRequestStep$Execution"/>
+    <Class name="jenkins.plugins.http_request.HttpRequestStep$Execution"/>
+    <Field name="step"/>
   </Match>
 
   <Match>
     <Bug pattern="REC_CATCH_EXCEPTION"/>
-    <Class name="org.jenkins.plugins.http_request.auth.CertificateAuthentication"/>
+    <Class name="jenkins.plugins.http_request.auth.CertificateAuthentication"/>
+    <Method name="authenticate"/>
   </Match>
 
   <Match>
     <Bug pattern="SE_NO_SERIALVERSIONID"/>
-    <Class name="org.jenkins.plugins.http_request.auth.CredentialNtlmAuthentication"/>
+    <Class name="jenkins.plugins.http_request.auth.CertificateAuthentication"/>
   </Match>
 
   <Match>
     <Bug pattern="SE_NO_SERIALVERSIONID"/>
-    <Class name="org.jenkins.plugins.http_request.auth.CertificateAuthentication"/>
+    <Class name="jenkins.plugins.http_request.auth.CredentialNtlmAuthentication"/>
   </Match>
 
 </FindBugsFilter>
