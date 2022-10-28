@@ -1,0 +1,30 @@
+<FindBugsFilter>
+  <!--
+    Exclusions in this section have been triaged and determined to be false positives.
+  -->
+  <Match>
+    <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED"/>
+    <Class name="org.jenkins.plugins.http_request.HttpRequestExecution"/>
+  </Match>
+
+  <Match>
+    <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED"/>
+    <Class name="org.jenkins.plugins.http_request.HttpRequestStep$Execution"/>
+  </Match>
+
+  <Match>
+    <Bug pattern="REC_CATCH_EXCEPTION"/>
+    <Class name="org.jenkins.plugins.http_request.auth.CertificateAuthentication"/>
+  </Match>
+
+  <Match>
+    <Bug pattern="SE_NO_SERIALVERSIONID"/>
+    <Class name="org.jenkins.plugins.http_request.auth.CredentialNtlmAuthentication"/>
+  </Match>
+
+  <Match>
+    <Bug pattern="SE_NO_SERIALVERSIONID"/>
+    <Class name="org.jenkins.plugins.http_request.auth.CertificateAuthentication"/>
+  </Match>
+
+</FindBugsFilter>
