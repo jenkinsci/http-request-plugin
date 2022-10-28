@@ -52,6 +52,9 @@ THE SOFTWARE.
 		<changelist>-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/http-request-plugin</gitHubRepo>
 		<jenkins.version>2.303.1</jenkins.version>
+		<spotbugs.failOnError>true</spotbugs.failOnError>
+		<spotbugs.threshold>Low</spotbugs.threshold>
+		<spotbugs.excludeFilterFile>${project.basedir}/src/spotbugs/spotbugs-excludes.xml</spotbugs.excludeFilterFile>
 		<hpi.compatibleSinceVersion>1.16</hpi.compatibleSinceVersion>
 	</properties>
 
