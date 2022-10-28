@@ -51,7 +51,7 @@ THE SOFTWARE.
 		<revision>1.17</revision>
 		<changelist>-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/http-request-plugin</gitHubRepo>
-		<jenkins.version>2.249.1</jenkins.version>
+		<jenkins.version>2.303.1</jenkins.version>
 		<hpi.compatibleSinceVersion>1.16</hpi.compatibleSinceVersion>
 	</properties>
 
