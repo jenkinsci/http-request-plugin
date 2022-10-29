@@ -35,7 +35,10 @@ public class CertificateAuthentication implements Authenticator {
 							credentials.getPassword().getPlainText().toCharArray()).build());
 
 			return clientBuilder.build();
-		} catch (Exception e) {
+		}catch(RuntimeException e){
+			throw new RuntimeException();
+		} 
+		catch (Exception e) {
 			throw new IOException(e);
 		}
 	}
