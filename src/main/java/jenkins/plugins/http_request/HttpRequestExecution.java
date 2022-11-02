@@ -243,7 +243,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 						}
 					}
 					if (credential instanceof StandardCertificateCredentials) {
-						auth = new CertificateAuthentication((StandardCertificateCredentials) credential);
+						auth = new CertificateAuthentication((StandardCertificateCredentials) credential, this.ignoreSslErrors);
 					}
 				}
 			}
