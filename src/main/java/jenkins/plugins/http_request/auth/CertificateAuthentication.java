@@ -72,10 +72,8 @@ public class CertificateAuthentication implements Authenticator {
 					trustStrategy = new TrustAllStrategy();
 					//trustStrategy = new TrustSelfSignedStrategy();
 				}
-				System.err.println("Adding Trust Material from provided KeyStore");
-				contextBuilder = contextBuilder.loadTrustMaterial(keyStore, trustStrategy);
-				System.err.println("Added Trust Material from provided KeyStore");
 
+				contextBuilder = contextBuilder.loadTrustMaterial(keyStore, trustStrategy);
 				logger.println("Added Trust Material from provided KeyStore");
 			} catch (Exception e) {
 				logger.println("Failed to add Trust Material from provided KeyStore (so Key Material might end up untrusted): " + e.getMessage());
@@ -85,9 +83,7 @@ public class CertificateAuthentication implements Authenticator {
 				//  And do we really care about the difference?
 			}
 
-			System.err.println("Adding Key Material from provided KeyStore");
 			contextBuilder = contextBuilder.loadKeyMaterial(keyStore, keyStorePassChars);
-			System.err.println("Added Key Material from provided KeyStore");
 			logger.println("Added Key Material from provided KeyStore");
 
 			clientBuilder = clientBuilder.setSSLContext(contextBuilder.build());
