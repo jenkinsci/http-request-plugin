@@ -440,6 +440,12 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			CloseableHttpClient httpclient, HttpClientUtil clientUtil, HttpRequestBase httpRequestBase,
 			HttpContext context) throws IOException {
 		ResponseContentSupplier responseContentSupplier;
+		logger().println("Sending HTTP request with" +
+			" CloseableHttpClient=" + httpclient.toString() +
+			" HttpClientUtil=" + clientUtil.toString() +
+			" HttpRequestBase=" + httpRequestBase.toString() +
+			" HttpContext=" + context.toString()
+			);
 		try {
 			final HttpResponse response = clientUtil.execute(httpclient, context, httpRequestBase, logger());
 			// The HttpEntity is consumed by the ResponseContentSupplier
