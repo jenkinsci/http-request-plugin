@@ -35,7 +35,8 @@ The following features are available in both Pipeline and traditional project ty
 * Programmable range of expected response codes (a response code outside the range fails the build)
 * Supports Basic Authentication (see global configuration)
 * Supports Form Authentication (see global configuration)
-* You can specify a string that must be present in the response (if the string is not present, the 
+* Supports Certificate-based Authentication with a Jenkins stored credential
+* You can specify a string that must be present in the response (if the string is not present, the
   build fails)
 * You can set a connection timeout limit (build fails if timeout is exceeded)
 * You can set an "Accept" header directly
@@ -256,7 +257,23 @@ def response = httpRequest authenticate: 'my-jenkins-credential-id',
                            url: 'https://api.github.com/user/jenkinsci'
 ----
 
-For details on the Pipeline features, use the Pipeline snippet generator in the Pipeline job 
+You can send an SSL request with authentication by user certificate;
+for a private CA, make sure to first add the CA certificate is as
+"Trusted", then add the user key along with certification chain up
+to same CA certificate, into your PKCS12 keystore file which you
+upload to Jenkins credentials, and you also must use a non-trivial
+password for that keystore. Keep in mind that for systems under test
+which create their own self-signed CA and HTTPS protection, you can
+programmatically create and upload the credentials, into a domain
+where the job has write access (its folder etc.)
+
+[source,groovy]
+----
+def response = httpRequest authentication: 'user_with_cert_and_ca',
+                           url: 'https://sut123.local.domain:8443/api/v1/status/debug'
+----
+
+For details on the Pipeline features, use the Pipeline snippet generator in the Pipeline job
 configuration.
 
 [WARNING]
