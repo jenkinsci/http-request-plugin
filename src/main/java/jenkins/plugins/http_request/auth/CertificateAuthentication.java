@@ -5,6 +5,7 @@ import java.io.PrintStream;
 import java.security.KeyStore;
 
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -88,6 +89,11 @@ public class CertificateAuthentication implements Authenticator {
 
 			clientBuilder = clientBuilder.setSSLContext(contextBuilder.build());
 			logger.println("Set SSL context for the HTTP client builder");
+
+			SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
+					contextBuilder.build());
+			clientBuilder = clientBuilder.setSSLSocketFactory(sslsf);
+			logger.println("Set SSL socket factory for the HTTP client builder");
 
 			return clientBuilder.build();
 		} catch (Exception e) {
