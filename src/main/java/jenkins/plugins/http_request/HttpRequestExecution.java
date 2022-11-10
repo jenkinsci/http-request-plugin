@@ -516,7 +516,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 		@Override
 		public X509Certificate[] getAcceptedIssuers() {
-			return null;
+			return new X509Certificate[0];
 		}
 
 		@Override
