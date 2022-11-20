@@ -109,6 +109,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	private final OutputStream remoteLogger;
 	private transient PrintStream localLogger;
 
+	private final boolean followRedirects;
+
 	static HttpRequestExecution from(HttpRequest http,
 									 EnvVars envVars, AbstractBuild<?, ?> build, TaskListener taskListener) {
 		try {
@@ -133,7 +135,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 					http.getValidResponseCodes(), http.getValidResponseContent(),
 					http.getConsoleLogResponseBody(), outputFile,
-					ResponseHandle.NONE,
+					ResponseHandle.NONE, http.isFollowRedirects(),
 
 					project,
 					run,
@@ -164,7 +166,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 				step.getValidResponseCodes(), step.getValidResponseContent(),
 				step.getConsoleLogResponseBody(), outputFile,
-				step.getResponseHandle(),
+				step.getResponseHandle(), step.isFollowRedirects(),
 				project, run, taskListener.getLogger());
 	}
 
@@ -178,13 +180,14 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 			String validResponseCodes, String validResponseContent,
 			Boolean consoleLogResponseBody, FilePath outputFile,
-			ResponseHandle responseHandle,
+			ResponseHandle responseHandle, boolean followRedirects,
 
 			Item project, Run<?, ?> run, PrintStream logger
 	) {
 		this.url = url;
 		this.httpMode = httpMode;
 		this.ignoreSslErrors = ignoreSslErrors;
+		this.followRedirects = followRedirects;
 
 		if (StringUtils.isNotBlank(httpProxy)) {
 			this.httpProxy = HttpHost.create(httpProxy);
@@ -307,6 +310,10 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		CloseableHttpClient httpclient = null;
 		try {
 			HttpClientBuilder clientBuilder = HttpClientBuilder.create();
+
+			if (!this.followRedirects) {
+				clientBuilder.disableRedirectHandling();
+			}
 
 			if (useSystemProperties) {
 				clientBuilder.useSystemProperties();

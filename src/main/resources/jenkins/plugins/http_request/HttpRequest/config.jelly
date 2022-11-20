@@ -76,6 +76,9 @@
             <f:entry field="quiet" title="Quiet all output?" help="/plugin/http_request/help-quiet.html">
                 <f:booleanRadio />
             </f:entry>
+			<f:entry field="followRedirects" title="Enable redirect handling?" help="/plugin/http_request/help-followRedirects.html">
+				<f:booleanRadio />
+			</f:entry>
         </f:section>
     </f:advanced>
 </j:jelly>
