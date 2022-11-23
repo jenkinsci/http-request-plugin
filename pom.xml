@@ -27,7 +27,7 @@ THE SOFTWARE.
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>4.49</version>
+		<version>4.51</version>
 		<relativePath />
 	</parent>
 
@@ -54,7 +54,6 @@ THE SOFTWARE.
 		<jenkins.version>2.303.1</jenkins.version>
 		<spotbugs.failOnError>true</spotbugs.failOnError>
 		<spotbugs.threshold>Low</spotbugs.threshold>
-		<spotbugs.excludeFilterFile>${project.basedir}/src/spotbugs/spotbugs-excludes.xml</spotbugs.excludeFilterFile>
 		<hpi.compatibleSinceVersion>1.16</hpi.compatibleSinceVersion>
 	</properties>
 

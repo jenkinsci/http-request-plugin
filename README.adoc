@@ -102,10 +102,6 @@ You may also send content in the body of the request, such as for a POST request
 
 [source,groovy]
 ----
-// create payload
-def patchOrg = """
-    {"description": "$description"}
-"""
 httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON',
             httpMode: 'POST', quiet: true,
             requestBody: '''{
