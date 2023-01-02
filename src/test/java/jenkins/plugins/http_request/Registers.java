@@ -23,7 +23,7 @@ import javax.servlet.http.Part;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
-import org.eclipse.jetty.http.MultiPartFormInputStream;
+import org.eclipse.jetty.server.MultiPartFormInputStream;
 import org.eclipse.jetty.server.Request;
 
 import jenkins.plugins.http_request.HttpRequestTestBase.SimpleHandler;
@@ -279,7 +279,7 @@ public class Registers {
 			private static final String MULTIPART_FORMDATA_TYPE = "multipart/form-data";
 
 			private void enableMultipartSupport(HttpServletRequest request, MultipartConfigElement multipartConfig) {
-				request.setAttribute(Request.MULTIPART_CONFIG_ELEMENT, multipartConfig);
+				request.setAttribute(Request.__MULTIPART_CONFIG_ELEMENT, multipartConfig);
 			}
 
 			private boolean isMultipartRequest(ServletRequest request) {
@@ -321,7 +321,7 @@ public class Registers {
 
 			private void enableMultipartSupport(HttpServletRequest request,
 					MultipartConfigElement multipartConfig) {
-				request.setAttribute(Request.MULTIPART_CONFIG_ELEMENT, multipartConfig);
+				request.setAttribute(Request.__MULTIPART_CONFIG_ELEMENT, multipartConfig);
 			}
 
 			private boolean isMultipartRequest(ServletRequest request) {
