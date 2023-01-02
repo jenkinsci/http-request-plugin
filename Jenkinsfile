@@ -7,9 +7,6 @@ buildPlugin(useContainerAgent: true, configurations: [
   // Jenkins version).
   [ platform: 'linux', jdk: '11' ],
 
-  // Test the common case (i.e., a recent LTS release) on both Linux and Windows.
-  [ platform: 'windows', jdk: '11' ],
-
   // Test the bleeding edge of the compatibility spectrum (i.e., the latest supported Java runtime).
-  [ platform: 'linux', jdk: '17', jenkins: '2.381' ],
+  [ platform: 'windows', jdk: '17', jenkins: '2.375.1' ],
 ])
