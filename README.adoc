@@ -20,12 +20,13 @@ toc::[]
 
 [abstract]
 .Overview
-This plugin sends a HTTP/HTTPS request to a user specified URL. The request is made as a job 
-execution in Jenkins and depending of the HTTP response the job could be marked as failed 
-(configurable). For example, responses such as 404 and 500 could make the job fail. When a
-job fails it will log the response to help identify the problem. The request may be  as an HTTP GET 
-or POST mode, by choosing the HTTP mode. If it was not informed, it will use the default from global
-settings whose default is POST.
+This plugin sends a HTTP/HTTPS request to a user specified URL. The request is made via job 
+execution in Jenkins and depending on the HTTP response the job can be marked as failed 
+(configurable). For example, responses such as 404 and 500 can make the job fail. When a
+job fails it will log the response to help identify the problem.
+
+According to the setting of HTTP mode the request will be performed either using HTTP GET or POST.
+If there is no such setting then it will use the default from global settings. Default there is POST.
 
 == Features
 
