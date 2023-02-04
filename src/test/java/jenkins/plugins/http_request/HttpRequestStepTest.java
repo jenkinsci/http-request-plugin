@@ -142,6 +142,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
         j.assertLogContains("Fail: Response doesn't contain expected content 'bad content'", run);
+        j.assertLogContains(" while calling " + baseURL(), run);
         j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
@@ -248,6 +249,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         j.assertBuildStatus(Result.FAILURE, run);
         j.assertLogContains("Throwing status 400 for test",run);
         j.assertLogContains("Fail: Status code 400 is not in the accepted range: 100:399", run);
+        j.assertLogContains(" while calling " + baseURL(), run);
     }
 
     @Test
@@ -272,6 +274,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         j.assertBuildStatusSuccess(run);
         j.assertLogContains("Throwing status 400 for test",run);
         j.assertLogContains("Success: Status code 400 is in the accepted range: 100:599", run);
+        j.assertLogNotContains(" while calling " + baseURL(), run);
     }
 
     @Test
@@ -448,6 +451,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
         j.assertLogContains("Fail: Status code 408 is not in the accepted range: 100:399", run);
+        j.assertLogContains(" while calling " + baseURL(), run);
     }
 
     @Test
