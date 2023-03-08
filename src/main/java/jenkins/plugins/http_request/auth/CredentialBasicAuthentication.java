@@ -37,7 +37,7 @@ public class CredentialBasicAuthentication implements Authenticator {
         if (host == null || credentials == null) {
             throw new IllegalArgumentException("Null target host or credentials");
         }
-        extraCredentials.put(host, credential);
+        extraCredentials.put(host, credentials);
     }
 
     @Override
