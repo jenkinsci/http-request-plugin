@@ -2,6 +2,7 @@ package jenkins.plugins.http_request.auth;
 
 import java.io.PrintStream;
 
+import org.apache.http.HttpHost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -53,8 +54,8 @@ public class BasicDigestAuthentication extends AbstractDescribableImpl<BasicDige
 
 	@Override
 	public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpContext context,
-											HttpRequestBase requestBase, PrintStream logger) {
-		CredentialBasicAuthentication.auth(clientBuilder, context, URIUtils.extractHost(requestBase.getURI()), userName, password);
+											HttpRequestBase requestBase, HttpHost proxyHost, PrintStream logger) {
+		CredentialBasicAuthentication.auth(clientBuilder, context, URIUtils.extractHost(requestBase.getURI()), proxyHost, userName, password);
 		return clientBuilder.build();
 	}
 

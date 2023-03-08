@@ -46,33 +46,42 @@ public class CredentialBasicAuthentication implements Authenticator {
     }
 
     @Override
-    public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpContext context, HttpRequestBase requestBase, PrintStream logger) {
-        prepare(clientBuilder, context, requestBase);
+    public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpContext context, HttpRequestBase requestBase, HttpHost proxyHost, PrintStream logger) {
+        prepare(clientBuilder, context, requestBase, proxyHost);
         return clientBuilder.build();
     }
 
-    public void prepare(HttpClientBuilder clientBuilder, HttpContext context, HttpRequestBase requestBase) {
-        prepare(clientBuilder, context, URIUtils.extractHost(requestBase.getURI()));
+    public void prepare(HttpClientBuilder clientBuilder, HttpContext context, HttpRequestBase requestBase, HttpHost proxyHost) {
+        prepare(clientBuilder, context, URIUtils.extractHost(requestBase.getURI()), proxyHost);
     }
 
-    public void prepare(HttpClientBuilder clientBuilder, HttpContext context, HttpHost targetHost) {
-        auth(clientBuilder, context, targetHost,
+    public void prepare(HttpClientBuilder clientBuilder, HttpContext context, HttpHost targetHost, HttpHost proxyHost) {
+        auth(clientBuilder, context, targetHost, proxyHost,
                 credential.getUsername(), credential.getPassword().getPlainText(), extraCredentials);
     }
 
-    static void auth(HttpClientBuilder clientBuilder, HttpContext context, HttpHost targetHost,
+    static void auth(HttpClientBuilder clientBuilder, HttpContext context, HttpHost targetHost, HttpHost proxyHost,
                      String username, String password) {
-        auth(clientBuilder, context, targetHost, username, password, null);
+        auth(clientBuilder, context, targetHost, proxyHost, username, password, null);
     }
 
-    static void auth(HttpClientBuilder clientBuilder, HttpContext context, HttpHost targetHost,
+    static void auth(HttpClientBuilder clientBuilder, HttpContext context, HttpHost targetHost, HttpHost proxyHost,
                      String username, String password, Map<HttpHost, StandardUsernamePasswordCredentials> extraCreds) {
         CredentialsProvider provider = new BasicCredentialsProvider();
         AuthCache authCache = new BasicAuthCache();
 
         provider.setCredentials(new AuthScope(targetHost.getHostName(), targetHost.getPort()),
                 new org.apache.http.auth.UsernamePasswordCredentials(username, password));
-        authCache.put(targetHost, new BasicScheme());
+
+        if (proxyHost != null) {
+            // Do not preempt authentication if target is the proxy
+            if (!targetHost.getHostName().equals(proxyHost.getHostName()) ||
+                (targetHost.getPort() != (proxyHost.getPort()))) {
+                authCache.put(targetHost, new BasicScheme());
+            }
+        } else {
+            authCache.put(targetHost, new BasicScheme());
+        }
 
         if (extraCreds != null && !extraCreds.isEmpty()) {
             for (Map.Entry<HttpHost, StandardUsernamePasswordCredentials> creds : extraCreds.entrySet()) {
@@ -83,7 +92,16 @@ public class CredentialBasicAuthentication implements Authenticator {
                                 creds.getValue().getPassword().getPlainText()
                         )
                 );
-                authCache.put(creds.getKey(), new BasicScheme());
+
+                if (proxyHost != null) {
+                    // Do not preempt authentication if target is the proxy
+                    if (!creds.getKey().getHostName().equals(proxyHost.getHostName()) ||
+                        (creds.getKey().getPort() != (proxyHost.getPort()))) {
+                        authCache.put(targetHost, new BasicScheme());
+                    }
+                } else {
+                    authCache.put(targetHost, new BasicScheme());
+                }
             }
         }
 

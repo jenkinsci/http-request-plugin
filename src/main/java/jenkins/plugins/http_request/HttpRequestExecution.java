@@ -424,7 +424,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 				((CredentialBasicAuthentication) authenticator).addCredentials(httpProxy, proxyCredentials);
 			} else {
 				new CredentialBasicAuthentication(proxyCredentials)
-						.prepare(clientBuilder, context, httpProxy);
+						.prepare(clientBuilder, context, httpProxy, httpProxy);
 			}
 		}
 
@@ -433,7 +433,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		}
 
 		logger().println("Using authentication: " + authenticator.getKeyName());
-		return authenticator.authenticate(clientBuilder, context, httpRequestBase, logger());
+		return authenticator.authenticate(clientBuilder, context, httpRequestBase, httpProxy, logger());
 	}
 
 	private ResponseContentSupplier executeRequest(
