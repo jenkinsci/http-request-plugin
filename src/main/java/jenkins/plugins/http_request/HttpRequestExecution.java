@@ -78,7 +78,8 @@ import jenkins.plugins.http_request.util.RequestAction;
 /**
  * @author Janario Oliveira
  */
-public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentSupplier, RuntimeException> {
+public class HttpRequestExecution
+		extends MasterToSlaveCallable<ResponseContentSupplier, RuntimeException> {
 
 	private static final long serialVersionUID = -2066857816168989599L;
 	private final String url;
@@ -109,8 +110,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 	private final OutputStream remoteLogger;
 	private transient PrintStream localLogger;
 
-	static HttpRequestExecution from(HttpRequest http,
-									 EnvVars envVars, AbstractBuild<?, ?> build, TaskListener taskListener) {
+	static HttpRequestExecution from(HttpRequest http, EnvVars envVars, AbstractBuild<?, ?> build,
+			TaskListener taskListener) {
 		try {
 			String url = http.resolveUrl(envVars, build, taskListener);
 			String body = http.resolveBody(envVars, build, taskListener);
@@ -123,28 +124,23 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 			List<HttpRequestFormDataPart> formData = http.resolveFormDataParts(envVars, build);
 
-			return new HttpRequestExecution(
-					url, http.getHttpMode(), http.getIgnoreSslErrors(),
-					http.getHttpProxy(), http.getProxyAuthentication(),
-					body, headers, http.getTimeout(),
-					uploadFile, http.getMultipartName(), http.getWrapAsMultipart(),
-					http.getAuthentication(), http.isUseNtlm(), http.getUseSystemProperties(),
-					formData,
+			return new HttpRequestExecution(url, http.getHttpMode(), http.getIgnoreSslErrors(),
+					http.getHttpProxy(), http.getProxyAuthentication(), body, headers,
+					http.getTimeout(), uploadFile, http.getMultipartName(),
+					http.getWrapAsMultipart(), http.getAuthentication(), http.isUseNtlm(),
+					http.getUseSystemProperties(), formData,
 
 					http.getValidResponseCodes(), http.getValidResponseContent(),
-					http.getConsoleLogResponseBody(), outputFile,
-					ResponseHandle.NONE,
+					http.getConsoleLogResponseBody(), outputFile, ResponseHandle.NONE,
 
-					project,
-					run,
-					taskListener.getLogger());
+					project, run, taskListener.getLogger());
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}
 	}
 
-	static HttpRequestExecution from(HttpRequestStep step, TaskListener taskListener, Execution execution)
-			throws IOException, InterruptedException {
+	static HttpRequestExecution from(HttpRequestStep step, TaskListener taskListener,
+			Execution execution) throws IOException, InterruptedException {
 		List<HttpRequestNameValuePair> headers = step.resolveHeaders();
 		FilePath outputFile = execution.resolveOutputFile();
 		FilePath uploadFile = execution.resolveUploadFile();
@@ -154,34 +150,26 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		Item project = execution.getProject();
 		Run<?, ?> run = execution.getContext().get(Run.class);
 
-		return new HttpRequestExecution(
-				step.getUrl(), step.getHttpMode(), step.isIgnoreSslErrors(),
-				step.getHttpProxy(), step.getProxyAuthentication(),
-				step.getRequestBody(), headers, step.getTimeout(),
-				uploadFile, step.getMultipartName(), step.isWrapAsMultipart(),
-				step.getAuthentication(), step.isUseNtlm(), step.getUseSystemProperties(),
-				formData,
+		return new HttpRequestExecution(step.getUrl(), step.getHttpMode(), step.isIgnoreSslErrors(),
+				step.getHttpProxy(), step.getProxyAuthentication(), step.getRequestBody(), headers,
+				step.getTimeout(), uploadFile, step.getMultipartName(), step.isWrapAsMultipart(),
+				step.getAuthentication(), step.isUseNtlm(), step.getUseSystemProperties(), formData,
 
 				step.getValidResponseCodes(), step.getValidResponseContent(),
-				step.getConsoleLogResponseBody(), outputFile,
-				step.getResponseHandle(),
-				project, run, taskListener.getLogger());
+				step.getConsoleLogResponseBody(), outputFile, step.getResponseHandle(), project,
+				run, taskListener.getLogger());
 	}
 
-	private HttpRequestExecution(
-			String url, HttpMode httpMode, boolean ignoreSslErrors,
+	private HttpRequestExecution(String url, HttpMode httpMode, boolean ignoreSslErrors,
 			String httpProxy, String proxyAuthentication, String body,
-			List<HttpRequestNameValuePair> headers, Integer timeout,
-			FilePath uploadFile, String multipartName, boolean wrapAsMultipart,
-			String authentication, boolean useNtlm, boolean useSystemProperties,
-			List<HttpRequestFormDataPart> formData,
+			List<HttpRequestNameValuePair> headers, Integer timeout, FilePath uploadFile,
+			String multipartName, boolean wrapAsMultipart, String authentication, boolean useNtlm,
+			boolean useSystemProperties, List<HttpRequestFormDataPart> formData,
 
-			String validResponseCodes, String validResponseContent,
-			Boolean consoleLogResponseBody, FilePath outputFile,
-			ResponseHandle responseHandle,
+			String validResponseCodes, String validResponseContent, Boolean consoleLogResponseBody,
+			FilePath outputFile, ResponseHandle responseHandle,
 
-			Item project, Run<?, ?> run, PrintStream logger
-	) {
+			Item project, Run<?, ?> run, PrintStream logger) {
 		this.url = url;
 		this.httpMode = httpMode;
 		this.ignoreSslErrors = ignoreSslErrors;
@@ -191,20 +179,20 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			if (StringUtils.isNotBlank(proxyAuthentication)) {
 
 				StandardCredentials credential = CredentialsMatchers.firstOrNull(
-						CredentialsProvider.lookupCredentials(
-								StandardCredentials.class,
-								project, ACL.SYSTEM,
-								URIRequirementBuilder.fromUri(url).build()),
+						CredentialsProvider.lookupCredentials(StandardCredentials.class, project,
+								ACL.SYSTEM, URIRequirementBuilder.fromUri(url).build()),
 						CredentialsMatchers.withId(proxyAuthentication));
 
 				CredentialsProvider.trackAll(run, credential);
 
 				if (credential instanceof StandardUsernamePasswordCredentials) {
 					// create snapshot of credentials because it needs to be serialized to the agent
-					this.proxyCredentials = CredentialsProvider.snapshot((StandardUsernamePasswordCredentials) credential);
+					this.proxyCredentials = CredentialsProvider
+							.snapshot((StandardUsernamePasswordCredentials) credential);
 				} else {
 					this.proxyCredentials = null;
-					throw new IllegalStateException("Proxy authentication '" + proxyAuthentication + "' doesn't exist anymore or is not a username/password credential type");
+					throw new IllegalStateException("Proxy authentication '" + proxyAuthentication
+							+ "' doesn't exist anymore or is not a username/password credential type");
 				}
 			} else {
 				this.proxyCredentials = null;
@@ -224,10 +212,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 			if (auth == null) {
 				StandardCredentials credential = CredentialsMatchers.firstOrNull(
-						CredentialsProvider.lookupCredentials(
-								StandardCredentials.class,
-								project, ACL.SYSTEM,
-								URIRequirementBuilder.fromUri(url).build()),
+						CredentialsProvider.lookupCredentials(StandardCredentials.class, project,
+								ACL.SYSTEM, URIRequirementBuilder.fromUri(url).build()),
 						CredentialsMatchers.withId(authentication));
 
 				CredentialsProvider.trackAll(run, credential);
@@ -237,20 +223,23 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 					credential = CredentialsProvider.snapshot(credential);
 					if (credential instanceof StandardUsernamePasswordCredentials) {
 						if (this.useNtlm) {
-							auth = new CredentialNtlmAuthentication((StandardUsernamePasswordCredentials) credential);
+							auth = new CredentialNtlmAuthentication(
+									(StandardUsernamePasswordCredentials) credential);
 						} else {
-							auth = new CredentialBasicAuthentication((StandardUsernamePasswordCredentials) credential);
+							auth = new CredentialBasicAuthentication(
+									(StandardUsernamePasswordCredentials) credential);
 						}
 					}
 					if (credential instanceof StandardCertificateCredentials) {
-						auth = new CertificateAuthentication((StandardCertificateCredentials) credential);
+						auth = new CertificateAuthentication(
+								(StandardCertificateCredentials) credential);
 					}
 				}
 			}
 
-
 			if (auth == null) {
-				throw new IllegalStateException("Authentication '" + authentication + "' doesn't exist anymore");
+				throw new IllegalStateException(
+						"Authentication '" + authentication + "' doesn't exist anymore");
 			}
 			authenticator = auth;
 		} else {
@@ -264,8 +253,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		this.validResponseCodes = validResponseCodes;
 		this.validResponseContent = validResponseContent != null ? validResponseContent : "";
 		this.consoleLogResponseBody = Boolean.TRUE.equals(consoleLogResponseBody);
-		this.responseHandle = this.consoleLogResponseBody || !this.validResponseContent.isEmpty() ?
-				ResponseHandle.STRING : responseHandle;
+		this.responseHandle = this.consoleLogResponseBody || !this.validResponseContent.isEmpty()
+				? ResponseHandle.STRING : responseHandle;
 		this.outputFile = outputFile;
 
 		this.localLogger = logger;
@@ -283,26 +272,22 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 		try {
 			return authAndRequest();
-		} catch (IOException | InterruptedException |
-				KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
+		} catch (IOException | InterruptedException | KeyStoreException | NoSuchAlgorithmException
+				| KeyManagementException e) {
 			throw new IllegalStateException(e);
 		}
 	}
 
 	private PrintStream logger() {
 		if (localLogger == null) {
-			try {
-				localLogger = new PrintStream(remoteLogger, true, StandardCharsets.UTF_8.name());
-			} catch (UnsupportedEncodingException e) {
-				throw new IllegalStateException(e);
-			}
+			localLogger = new PrintStream(remoteLogger, true, StandardCharsets.UTF_8);
 		}
 		return localLogger;
 	}
 
-	private ResponseContentSupplier authAndRequest()
-			throws IOException, InterruptedException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
-		//only leave open if no error happen
+	private ResponseContentSupplier authAndRequest() throws IOException, InterruptedException,
+			KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
+		// only leave open if no error happen
 		ResponseHandle responseHandle = ResponseHandle.NONE;
 		CloseableHttpClient httpclient = null;
 		try {
@@ -320,7 +305,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			HttpClientUtil clientUtil = new HttpClientUtil();
 			// Create the simple body, this is the most frequent operation. It will be overridden
 			// later, if a more complex payload descriptor is set.
-			HttpRequestBase httpRequestBase = clientUtil.createRequestBase(new RequestAction(new URL(url), httpMode, body, null, headers));
+			HttpRequestBase httpRequestBase = clientUtil.createRequestBase(
+					new RequestAction(new URL(url), httpMode, body, null, headers));
 
 			if (formData != null && !formData.isEmpty() && httpMode == HttpMode.POST) {
 				// multipart/form-data builder mode
@@ -328,24 +314,26 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 				for (HttpRequestFormDataPart part : formData) {
 					if (part.getFileName() == null || part.getFileName().isEmpty()) {
-						ContentType textContentType = part.getContentType() == null || part.getContentType().isEmpty()
-								? ContentType.TEXT_PLAIN
-								: ContentType.create(part.getContentType());
-						builder.addTextBody(part.getName(), part.getBody(),
-								textContentType);
+						ContentType textContentType =
+								part.getContentType() == null || part.getContentType().isEmpty()
+										? ContentType.TEXT_PLAIN
+										: ContentType.create(part.getContentType());
+						builder.addTextBody(part.getName(), part.getBody(), textContentType);
 					} else {
-						ContentType fileContentType = part.getContentType() == null || part.getContentType().isEmpty()
-								? ContentType.APPLICATION_OCTET_STREAM
-								: ContentType.create(part.getContentType());
+						ContentType fileContentType =
+								part.getContentType() == null || part.getContentType().isEmpty()
+										? ContentType.APPLICATION_OCTET_STREAM
+										: ContentType.create(part.getContentType());
 						builder.addBinaryBody(part.getName(),
-								new File(part.getResolvedUploadFile().getRemote()),
-								fileContentType, part.getFileName());
+								new File(part.getResolvedUploadFile().getRemote()), fileContentType,
+								part.getFileName());
 					}
 				}
 
 				HttpEntity mimeBody = builder.build();
 				((HttpEntityEnclosingRequestBase) httpRequestBase).setEntity(mimeBody);
-			} else if (uploadFile != null && (httpMode == HttpMode.POST || httpMode == HttpMode.PUT)) {
+			} else if (uploadFile != null
+					&& (httpMode == HttpMode.POST || httpMode == HttpMode.PUT)) {
 				// No form-data, but a singular uploadFile is set.
 				ContentType contentType = ContentType.APPLICATION_OCTET_STREAM;
 				for (HttpRequestNameValuePair header : headers) {
@@ -377,7 +365,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			HttpContext context = new BasicHttpContext();
 			httpclient = auth(clientBuilder, httpRequestBase, context);
 
-			ResponseContentSupplier response = executeRequest(httpclient, clientUtil, httpRequestBase, context);
+			ResponseContentSupplier response =
+					executeRequest(httpclient, clientUtil, httpRequestBase, context);
 			processResponse(response);
 
 			responseHandle = this.responseHandle;
@@ -394,37 +383,38 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		}
 	}
 
-	private void configureTimeoutAndSsl(HttpClientBuilder clientBuilder) throws NoSuchAlgorithmException, KeyManagementException {
-		//timeout
+	private void configureTimeoutAndSsl(HttpClientBuilder clientBuilder)
+			throws NoSuchAlgorithmException, KeyManagementException {
+		// timeout
 		if (timeout > 0) {
 			int t = timeout * 1000;
-			RequestConfig config = RequestConfig.custom()
-					.setSocketTimeout(t)
-					.setConnectTimeout(t)
-					.setConnectionRequestTimeout(t)
-					.build();
+			RequestConfig config = RequestConfig.custom().setSocketTimeout(t).setConnectTimeout(t)
+					.setConnectionRequestTimeout(t).build();
 			clientBuilder.setDefaultRequestConfig(config);
 		}
-		//Ignore SSL errors
+		// Ignore SSL errors
 		if (ignoreSslErrors) {
 			SSLContext sc = SSLContext.getInstance("SSL");
-			sc.init(null, new TrustManager[]{new NoopTrustManager()}, new java.security.SecureRandom());
-			SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sc, NoopHostnameVerifier.INSTANCE);
+			sc.init(null, new TrustManager[] { new NoopTrustManager() },
+					new java.security.SecureRandom());
+			SSLConnectionSocketFactory sslsf =
+					new SSLConnectionSocketFactory(sc, NoopHostnameVerifier.INSTANCE);
 			clientBuilder.setSSLSocketFactory(sslsf);
 		}
 	}
 
-	private CloseableHttpClient auth(
-			HttpClientBuilder clientBuilder, HttpRequestBase httpRequestBase,
-			HttpContext context) throws IOException, InterruptedException {
+	private CloseableHttpClient auth(HttpClientBuilder clientBuilder,
+			HttpRequestBase httpRequestBase, HttpContext context)
+			throws IOException, InterruptedException {
 
 		if (proxyCredentials != null) {
 			logger().println("Using proxy authentication: " + proxyCredentials.getId());
 			if (authenticator instanceof CredentialBasicAuthentication) {
-				((CredentialBasicAuthentication) authenticator).addCredentials(httpProxy, proxyCredentials);
+				((CredentialBasicAuthentication) authenticator).addCredentials(httpProxy,
+						proxyCredentials);
 			} else {
-				new CredentialBasicAuthentication(proxyCredentials)
-						.prepare(clientBuilder, context, httpProxy);
+				new CredentialBasicAuthentication(proxyCredentials).prepare(clientBuilder, context,
+						httpProxy);
 			}
 		}
 
@@ -436,20 +426,25 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		return authenticator.authenticate(clientBuilder, context, httpRequestBase, logger());
 	}
 
-	private ResponseContentSupplier executeRequest(
-			CloseableHttpClient httpclient, HttpClientUtil clientUtil, HttpRequestBase httpRequestBase,
-			HttpContext context) throws IOException {
+	private ResponseContentSupplier executeRequest(CloseableHttpClient httpclient,
+			HttpClientUtil clientUtil, HttpRequestBase httpRequestBase, HttpContext context)
+			throws IOException {
 		ResponseContentSupplier responseContentSupplier;
 		try {
-			final HttpResponse response = clientUtil.execute(httpclient, context, httpRequestBase, logger());
+			final HttpResponse response =
+					clientUtil.execute(httpclient, context, httpRequestBase, logger());
 			// The HttpEntity is consumed by the ResponseContentSupplier
 			responseContentSupplier = new ResponseContentSupplier(responseHandle, response);
 		} catch (UnknownHostException uhe) {
-			logger().println("Treating UnknownHostException(" + uhe.getMessage() + ") as 404 Not Found");
-			responseContentSupplier = new ResponseContentSupplier("UnknownHostException as 404 Not Found", 404);
+			logger().println(
+					"Treating UnknownHostException(" + uhe.getMessage() + ") as 404 Not Found");
+			responseContentSupplier =
+					new ResponseContentSupplier("UnknownHostException as 404 Not Found", 404);
 		} catch (SocketTimeoutException | ConnectException ce) {
-			logger().println("Treating " + ce.getClass() + "(" + ce.getMessage() + ") as 408 Request Timeout");
-			responseContentSupplier = new ResponseContentSupplier(ce.getClass() + "(" + ce.getMessage() + ") as 408 Request Timeout", 408);
+			logger().println("Treating " + ce.getClass() + "(" + ce.getMessage()
+					+ ") as 408 Request Timeout");
+			responseContentSupplier = new ResponseContentSupplier(
+					ce.getClass() + "(" + ce.getMessage() + ") as 408 Request Timeout", 408);
 		}
 
 		return responseContentSupplier;
@@ -459,30 +454,34 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		List<IntStream> ranges = DescriptorImpl.parseToRange(validResponseCodes);
 		for (IntStream range : ranges) {
 			if (range.anyMatch(status -> status == response.getStatus())) {
-				logger().println("Success: Status code " + response.getStatus() + " is in the accepted range: " + validResponseCodes);
+				logger().println("Success: Status code " + response.getStatus()
+						+ " is in the accepted range: " + validResponseCodes);
 				return;
 			}
 		}
-		throw new AbortException("Fail: Status code " + response.getStatus() + " is not in the accepted range: " + validResponseCodes + " while calling " + url);
+		throw new AbortException("Fail: Status code " + response.getStatus()
+				+ " is not in the accepted range: " + validResponseCodes + " while calling " + url);
 	}
 
-	private void processResponse(ResponseContentSupplier response) throws IOException, InterruptedException {
-		//logs
+	private void processResponse(ResponseContentSupplier response)
+			throws IOException, InterruptedException {
+		// logs
 		if (consoleLogResponseBody) {
 			logger().println("Response: \n" + response.getContent());
 		}
 
-		//validate status code
+		// validate status code
 		responseCodeIsValid(response);
 
-		//validate content
+		// validate content
 		if (!validResponseContent.isEmpty()) {
 			if (!response.getContent().contains(validResponseContent)) {
-				throw new AbortException("Fail: Response doesn't contain expected content '" + validResponseContent + "'" + " while calling " + url);
+				throw new AbortException("Fail: Response doesn't contain expected content '"
+						+ validResponseContent + "'" + " while calling " + url);
 			}
 		}
 
-		//save file
+		// save file
 		if (outputFile == null) {
 			return;
 		}
