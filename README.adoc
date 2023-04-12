@@ -30,18 +30,34 @@ If there is no such setting then it will use the default from global settings. D
 
 == Features
 
-The following features are available in both Pipeline and traditional project types:
+The following powerful features are available in both Pipeline and traditional project types, giving you greater control and flexibility over your builds:
 
-* Programmable HTTP method: GET, POST, PUT, PATCH, DELETE, or HEAD
-* Programmable range of expected response codes (a response code outside the range fails the build)
-* Supports Basic Authentication (see global configuration)
-* Supports Form Authentication (see global configuration)
-* You can specify a string that must be present in the response (if the string is not present, the 
-  build fails)
-* You can set a connection timeout limit (build fails if timeout is exceeded)
-* You can set an "Accept" header directly
-* You can set a "Content-Type" header directly
-* You can set any custom header
+* Programmable HTTP method:
+Choose from a variety of HTTP methods, including GET, POST, PUT, PATCH, DELETE, or HEAD, to suit your project's specific needs.
+
+* Programmable range of expected response codes:
+Specify a range of expected response codes for your build, and if the response code falls outside the specified range, the build will fail, saving you time and hassle.
+
+* Supports Basic Authentication:
+Use Basic Authentication to ensure that only authorized users can access your project's resources, providing an additional layer of security.
+
+* Supports Form Authentication:
+Form Authentication enables users to authenticate themselves by submitting a username and password through a form, ensuring that only authorized users can access your resources.
+
+* Specify a required string in the response:
+Ensure that a specific string is present in the response by specifying it beforehand. If the string is not present, the build will fail, alerting you to the issue.
+
+* Set a connection timeout limit:
+Prevent builds from taking too long by setting a connection timeout limit. If the limit is exceeded, the build will fail, saving you time and resources.
+
+* Set an "Accept" header directly:
+Set the "Accept" header directly, providing greater control over the type of data that the server returns in response to a request.
+
+* Set a "Content-Type" header directly:
+Set the "Content-Type" header directly, specifying the type of data that you are sending in your request, helping to ensure that the server can correctly process your request.
+
+* Set any custom header:
+Set any custom header that you require, enabling you to interact with APIs or web services that require specific headers or authentication protocols.
 
 === Basic plugin features
 
