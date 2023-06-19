@@ -12,7 +12,8 @@ public enum HttpMode {
 	PUT,
 	DELETE,
 	OPTIONS,
-	PATCH;
+	PATCH,
+	MKCOL;
 
 	public static ListBoxModel getFillItems() {
 		ListBoxModel items = new ListBoxModel();
