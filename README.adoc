@@ -33,7 +33,7 @@ If there is no such setting then it will use the default from global settings. D
 The following powerful features are available in both Pipeline and traditional project types, giving you greater control and flexibility over your builds:
 
 * Programmable HTTP method:
-Choose from a variety of HTTP methods, including GET, POST, PUT, PATCH, DELETE, or HEAD, to suit your project's specific needs.
+Choose from a variety of HTTP methods, including GET, POST, MKCOL, PUT, PATCH, DELETE, OPTIONS, or HEAD, to suit your project's specific needs.
 
 * Programmable range of expected response codes:
 Specify a range of expected response codes for your build, and if the response code falls outside the specified range, the build will fail, saving you time and hassle.
@@ -268,6 +268,24 @@ You can use a Jenkins credential to authenticate the request
 ----
 def response = httpRequest authenticate: 'my-jenkins-credential-id',
                            url: 'https://api.github.com/user/jenkinsci'
+----
+
+A basic WebDAV upload can be built using ``MKCOL`` and ``PUT`` like so:
+
+[source,groovy]
+----
+// create directory aka a collection
+httpRequest authenticate: 'my-jenkins-credential-id',
+            httpMode: 'MKCOL',
+            // on Apache httpd 201 = collection created, 405 = collection already exists
+            validResponseCodes: '201,405',
+            url: "https://example.com/webdav-enabled-server/reports/${version}/"
+// upload a file
+httpRequest authenticate: 'my-jenkins-credential-id',
+            httpMode: 'PUT',
+            validResponseCodes: '201',
+            url: "https://example.com/reports/${version}/your-report-maybe.html",
+            uploadFile: './local/path/to/report.html'
 ----
 
 For details on the Pipeline features, use the Pipeline snippet generator in the Pipeline job 
