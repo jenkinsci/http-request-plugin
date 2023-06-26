@@ -62,6 +62,8 @@ public class HttpClientUtil {
 			http = new HttpPatch(uri);
         } else if (requestAction.getMode() == HttpMode.OPTIONS) {
         	return new HttpOptions(getUrlWithParams(requestAction));
+		} else if (requestAction.getMode() == HttpMode.MKCOL) {
+			return new HttpMkcol(uri);
 		} else { //default post
 			http = new HttpPost(uri);
 		}

@@ -1,33 +1,16 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:d="jelly:define" xmlns:local="local">
-	<d:taglib uri="local">
-		<!-- TODO remove and use div instead after baseline is 2.264 or newer -->
-		<d:tag name="blockWrapper">
-			<j:choose>
-				<j:when test="${divBasedFormLayout}">
-					<div>
-						<d:invokeBody/>
-					</div>
-				</j:when>
-				<j:otherwise>
-					<table style="width:100%">
-						<d:invokeBody/>
-					</table>
-				</j:otherwise>
-			</j:choose>
-		</d:tag>
-	</d:taglib>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:d="jelly:define">
     <f:section title="HTTP Request">
         <f:entry title="Form Authentication">
             <f:repeatable field="formAuthentications">
-                <local:blockWrapper>
+                <div>
                     <f:entry title="Key Name" field="keyName" help="/plugin/http_request/help-keyName.html">
                         <f:textbox name="formAuthentication.keyName" />
                     </f:entry>
 
                     <f:entry title="Actions">
                         <f:repeatable field="actions" help="/plugin/http_request/help-authentication-actions.html">
-                            <local:blockWrapper>
+                            <div>
                                 <f:entry title="URL" field="url" help="/plugin/http_request/help-url.html">
                                     <f:textbox name="actionFormAuthentication.url" />
                                 </f:entry>
@@ -36,7 +19,7 @@
                                 </f:entry>
                                 <f:entry title="Parameters" help="/plugin/http_request/help-authentication-parameters.html">
                                     <f:repeatable field="params">
-                                        <local:blockWrapper width="100%">
+                                        <div width="100%">
                                             <f:entry title="Name" field="name" help="/plugin/http_request/help-authentication-parameter-name.html">
                                                 <f:textbox name="httpRequestNameValuePair.name" />
                                             </f:entry>
@@ -48,7 +31,7 @@
                                                     <f:repeatableDeleteButton />
                                                 </div>
                                             </f:entry>
-                                        </local:blockWrapper>
+                                        </div>
                                     </f:repeatable>
                                 </f:entry>
                                 <f:entry>
@@ -56,7 +39,7 @@
                                         <f:repeatableDeleteButton />
                                     </div>
                                 </f:entry>
-                            </local:blockWrapper>
+                            </div>
                         </f:repeatable>
                     </f:entry>
 
@@ -65,7 +48,7 @@
                             <f:repeatableDeleteButton />
                         </div>
                     </f:entry>
-                </local:blockWrapper>
+                </div>
             </f:repeatable>
         </f:entry>
     </f:section>

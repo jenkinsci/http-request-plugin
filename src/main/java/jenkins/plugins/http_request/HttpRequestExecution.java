@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -291,11 +290,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
 	private PrintStream logger() {
 		if (localLogger == null) {
-			try {
-				localLogger = new PrintStream(remoteLogger, true, StandardCharsets.UTF_8.name());
-			} catch (UnsupportedEncodingException e) {
-				throw new IllegalStateException(e);
-			}
+			localLogger = new PrintStream(remoteLogger, true, StandardCharsets.UTF_8);
 		}
 		return localLogger;
 	}
@@ -472,7 +467,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 				return;
 			}
 		}
-		throw new AbortException("Fail: Status code " + response.getStatus() + " is not in the accepted range: " + validResponseCodes);
+		throw new AbortException("Fail: Status code " + response.getStatus() + " is not in the accepted range: " + validResponseCodes + " while calling " + url);
 	}
 
 	private void processResponse(ResponseContentSupplier response) throws IOException, InterruptedException {
@@ -487,7 +482,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		//validate content
 		if (!validResponseContent.isEmpty()) {
 			if (!response.getContent().contains(validResponseContent)) {
-				throw new AbortException("Fail: Response doesn't contain expected content '" + validResponseContent + "'");
+				throw new AbortException("Fail: Response doesn't contain expected content '" + validResponseContent + "'" + " while calling " + url);
 			}
 		}
 

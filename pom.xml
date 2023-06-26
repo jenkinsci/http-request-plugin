@@ -27,7 +27,7 @@ THE SOFTWARE.
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>4.53</version>
+		<version>4.66</version>
 		<relativePath />
 	</parent>
 
@@ -48,7 +48,7 @@ THE SOFTWARE.
 	</licenses>
 
 	<properties>
-		<revision>1.17</revision>
+		<revision>1.18</revision>
 		<changelist>-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/http-request-plugin</gitHubRepo>
                 <jenkins.version>2.361.4</jenkins.version>
@@ -76,7 +76,7 @@ THE SOFTWARE.
 			<dependency>
 				<groupId>io.jenkins.tools.bom</groupId>
                                 <artifactId>bom-2.361.x</artifactId>
-                                <version>1763.v092b_8980a_f5e</version>
+                                <version>2102.v854b_fec19c92</version>
 				<scope>import</scope>
 				<type>pom</type>
 			</dependency>
