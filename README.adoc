@@ -44,6 +44,9 @@ Use Basic Authentication to ensure that only authorized users can access your pr
 * Supports Form Authentication:
 Form Authentication enables users to authenticate themselves by submitting a username and password through a form, ensuring that only authorized users can access your resources.
 
+* Supports Certificate-based Authentication:
+Use a certificate from a Jenkins stored credential to authenticate your HTTPS requests to a remote server.
+
 * Specify a required string in the response:
 Ensure that a specific string is present in the response by specifying it beforehand. If the string is not present, the build will fail, alerting you to the issue.
 
@@ -270,6 +273,22 @@ def response = httpRequest authenticate: 'my-jenkins-credential-id',
                            url: 'https://api.github.com/user/jenkinsci'
 ----
 
+You can send an SSL request with authentication by user certificate;
+for a private CA, make sure to first add the CA certificate is as
+"Trusted", then add the user key along with certification chain up
+to same CA certificate, into your PKCS12 keystore file which you
+upload to Jenkins credentials, and you also must use a non-trivial
+password for that keystore. Keep in mind that for systems under test
+which create their own self-signed CA and HTTPS protection, you can
+programmatically create and upload the credentials, into a domain
+where the job has write access (its folder etc.)
+
+[source,groovy]
+----
+def response = httpRequest authentication: 'user_with_cert_and_ca',
+                           url: 'https://sut123.local.domain:8443/api/v1/status/debug'
+----
+
 A basic WebDAV upload can be built using ``MKCOL`` and ``PUT`` like so:
 
 [source,groovy]
@@ -288,7 +307,7 @@ httpRequest authenticate: 'my-jenkins-credential-id',
             uploadFile: './local/path/to/report.html'
 ----
 
-For details on the Pipeline features, use the Pipeline snippet generator in the Pipeline job 
+For details on the Pipeline features, use the Pipeline snippet generator in the Pipeline job
 configuration.
 
 [WARNING]

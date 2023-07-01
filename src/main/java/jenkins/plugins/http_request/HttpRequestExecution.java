@@ -242,7 +242,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 						}
 					}
 					if (credential instanceof StandardCertificateCredentials) {
-						auth = new CertificateAuthentication((StandardCertificateCredentials) credential);
+						auth = new CertificateAuthentication((StandardCertificateCredentials) credential, this.ignoreSslErrors);
 					}
 				}
 			}
@@ -435,6 +435,15 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			CloseableHttpClient httpclient, HttpClientUtil clientUtil, HttpRequestBase httpRequestBase,
 			HttpContext context) throws IOException {
 		ResponseContentSupplier responseContentSupplier;
+/*
+		// TODO: pick interesting fields/getters from these classes:
+		logger().println("Sending HTTP request with" +
+			" CloseableHttpClient=" + httpclient.toString() +
+			" HttpClientUtil=" + clientUtil.toString() +
+			" HttpRequestBase=" + httpRequestBase.toString() +
+			" HttpContext=" + context.toString()
+			);
+*/
 		try {
 			final HttpResponse response = clientUtil.execute(httpclient, context, httpRequestBase, logger());
 			// The HttpEntity is consumed by the ResponseContentSupplier
