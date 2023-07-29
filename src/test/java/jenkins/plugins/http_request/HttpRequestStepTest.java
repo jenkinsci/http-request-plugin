@@ -13,10 +13,13 @@ import static jenkins.plugins.http_request.Registers.registerReqAction;
 import static jenkins.plugins.http_request.Registers.registerRequestChecker;
 import static jenkins.plugins.http_request.Registers.registerTimeout;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +37,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import hudson.FilePath;
 import hudson.model.Result;
 
 import jenkins.plugins.http_request.auth.FormAuthentication;
@@ -95,6 +99,57 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         j.assertLogNotContains("URL:", run);
         j.assertLogNotContains("Sending request to url:", run);
         j.assertLogNotContains("Response Code:", run);
+    }
+
+    private String getContentsFromWorkspaceFile(WorkflowJob proj, String fileName) throws IOException, InterruptedException {
+        FilePath workspace = j.jenkins.getWorkspaceFor(proj);
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            workspace.child(fileName).copyTo(baos);
+            return baos.toString(StandardCharsets.UTF_8);
+
+        }
+    }
+
+    @Test
+    public void canSaveFile() throws Exception {
+        // Prepare the server
+        registerRequestChecker(HttpMode.GET);
+
+        // Configure the build
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        proj.setDefinition(new CpsFlowDefinition(
+                "node {httpRequest" +
+                        "url:'" + baseURL() + "/doGET'," +
+                        "outputFile: 'Oll.Korrect'}",
+                true));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatusSuccess(run);
+        assertEquals(ALL_IS_WELL, getContentsFromWorkspaceFile(proj, "Oll.Korrect"));
+    }
+
+    @Test
+    public void fileSavedWithStatusFailure() throws Exception {
+        // Prepare the server
+        registerRequestChecker(HttpMode.GET);
+
+        // Configure the build
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        proj.setDefinition(new CpsFlowDefinition(
+                "node { httpRequest" +
+                        "url:'" + baseURL() + "/invalidStatusCode'," +
+                        "outputFile: 'missing.file' }",
+                true));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatus(Result.FAILURE, run);
+        assertTrue(getContentsFromWorkspaceFile(proj, "missing.file").contains("<title>Error 404"));
     }
 
     @Test
