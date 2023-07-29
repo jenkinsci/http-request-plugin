@@ -6,6 +6,7 @@ import java.util.List;
 
 import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
+import jenkins.plugins.http_request.util.HttpRequestQueryParam;
 import jenkins.plugins.http_request.util.RequestAction;
 
 import org.jenkinsci.plugins.workflow.steps.StepConfigTester;
@@ -74,6 +75,12 @@ public class HttpRequestStepRoundTripTest {
         customHeaders.add(new HttpRequestNameValuePair("param1","value1"));
         before.setCustomHeaders(customHeaders);
         configRoundTrip(before);
+
+        List<HttpRequestQueryParam> queryParams = new ArrayList<>();
+        queryParams.add(new HttpRequestQueryParam("x","y"));
+        queryParams.add(new HttpRequestQueryParam("none"));
+        before.setQueryParams(queryParams);
+        configRoundTrip(before);
     }
 
     @Test
@@ -105,6 +112,15 @@ public class HttpRequestStepRoundTripTest {
           HttpRequestNameValuePair anvp = after.getCustomHeaders().get(idx);
           assertEquals(bnvp.getName(),anvp.getName());
           assertEquals(bnvp.getValue(),anvp.getValue());
+        }
+
+        // Query params check
+        assertEquals(before.getQueryParams().size(),after.getQueryParams().size());
+        for (int idx = 0; idx < before.getQueryParams().size(); idx++) {
+            HttpRequestQueryParam bqp = before.getQueryParams().get(idx);
+            HttpRequestQueryParam aqp = after.getQueryParams().get(idx);
+            assertEquals(bqp.getName(),aqp.getName());
+            assertEquals(bqp.getValue(),aqp.getValue());
         }
 
         // Form authentication check
