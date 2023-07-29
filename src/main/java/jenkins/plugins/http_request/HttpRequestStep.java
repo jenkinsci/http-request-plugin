@@ -11,6 +11,8 @@ import java.util.Set;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 import org.apache.http.HttpHeaders;
+import org.jenkinsci.plugins.workflow.actions.LabelAction;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -39,6 +41,8 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
  */
 public final class HttpRequestStep extends Step {
 
+	private static final int MAX_LABEL_LENGTH = 100;
+
     private final @NonNull String url;
 	private boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
 	private HttpMode httpMode                 = DescriptorImpl.httpMode;
@@ -62,6 +66,7 @@ public final class HttpRequestStep extends Step {
 	private List<HttpRequestFormDataPart> formData = DescriptorImpl.formData;
 	private String outputFile = DescriptorImpl.outputFile;
 	private ResponseHandle responseHandle = DescriptorImpl.responseHandle;
+	private String label                  	= "";
 
     @DataBoundConstructor
     public HttpRequestStep(@NonNull String url) {
@@ -262,7 +267,7 @@ public final class HttpRequestStep extends Step {
 	public void setWrapAsMultipart(boolean wrapAsMultipart) {
 		this.wrapAsMultipart = wrapAsMultipart;
 	}
-	
+
 	@DataBoundSetter
 	public void setUseNtlm(boolean useNtlm) {
 		this.useNtlm = useNtlm;
@@ -272,10 +277,33 @@ public final class HttpRequestStep extends Step {
 		return useNtlm;
 	}
 
-	@Override
-	public StepExecution start(StepContext context) {
-		return new Execution(context, this);
-	}
+    @DataBoundSetter
+    public void setLabel(String label) {
+        if (label != null && label.length() > MAX_LABEL_LENGTH) {
+            label = label.substring(0, MAX_LABEL_LENGTH);
+        }
+        this.label = label;
+    }
+
+    public String getLabel() {
+        return label == null || label.isEmpty() ? httpMode.name() : label;
+    }
+
+    public FormValidation doCheckLabel(@QueryParameter String label) {
+        if (label != null && label.length() > MAX_LABEL_LENGTH) {
+            return FormValidation.error("Label size exceeds maximum of " + MAX_LABEL_LENGTH + " characters.");
+        }
+        return FormValidation.ok();
+    }
+
+    @Override
+    public StepExecution start(StepContext context) throws IOException, InterruptedException {
+        FlowNode flowNode = context.get(FlowNode.class);
+        if (flowNode != null) {
+            flowNode.addAction(new LabelAction(getLabel()));
+        }
+        return new Execution(context, this);
+    }
 
 	@Override
     public DescriptorImpl getDescriptor() {

@@ -13,6 +13,7 @@ import static jenkins.plugins.http_request.Registers.registerReqAction;
 import static jenkins.plugins.http_request.Registers.registerRequestChecker;
 import static jenkins.plugins.http_request.Registers.registerTimeout;
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +31,8 @@ import org.eclipse.jetty.server.Request;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
+import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable.Row;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -753,4 +756,35 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         j.assertBuildStatus(Result.FAILURE, run);
         j.assertLogContains("Proxy authentication 'invalid' doesn't exist anymore or is not a username/password credential type", run);
     }
+
+    @Test
+    public void label() throws Exception {
+        labelIt(", label: 'Dig It'", "Dig It");
+    }
+
+    @Test
+    public void defaultLabelIsMethod() throws Exception {
+        labelIt("", "GET");
+    }
+
+    private void labelIt(String label, String expected) throws Exception {
+        registerRequestChecker(HttpMode.GET);
+
+        WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition("node{ httpRequest url:'"+baseURL()+ "/doGET'"+label+" }", true));
+        WorkflowRun b = j.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
+
+        boolean found = false;
+        FlowGraphTable t = new FlowGraphTable(b.getExecution());
+        t.build();
+        for (Row r : t.getRows()) {
+            String displayName = r.getDisplayName();
+            if (displayName.equals("httpRequest (" + expected + ")")) {
+                found = true;
+            }
+        }
+
+        assertTrue(found);
+    }
+
 }
