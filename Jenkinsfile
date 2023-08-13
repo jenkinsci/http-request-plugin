@@ -1,12 +1,15 @@
-/*
- * See the documentation for more options:
- * https://github.com/jenkins-infra/pipeline-library/
- */
-buildPlugin(useContainerAgent: true, configurations: [
-  // Test the long-term support end of the compatibility spectrum (i.e., the minimum required
-  // Jenkins version).
-  [ platform: 'linux', jdk: '11' ],
-
-  // Test the bleeding edge of the compatibility spectrum (i.e., the latest supported Java runtime).
-  [ platform: 'windows', jdk: '17', jenkins: '2.375.1' ],
-])
+/* `buildPlugin` step provided by: https://github.com/jenkins-infra/pipeline-library */
+buildPlugin(
+  // Run a JVM per core in tests
+  forkCount: '1C',
+  // Container agents start faster and are easier to administer
+  useContainerAgent: true,
+  // Show failures on all configurations
+  failFast: false,
+  // Test Java 11, 17, and 21
+  configurations: [
+    [platform: 'linux',   jdk: '17'],
+    [platform: 'linux',   jdk: '21', jenkins: '2.414'],
+    [platform: 'windows', jdk: '11']
+  ]
+)
