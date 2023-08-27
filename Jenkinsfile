@@ -1,15 +1,11 @@
-/* `buildPlugin` step provided by: https://github.com/jenkins-infra/pipeline-library */
+/*
+ See the documentation for more options:
+ https://github.com/jenkins-infra/pipeline-library/
+*/
 buildPlugin(
-  // Run a JVM per core in tests
-  forkCount: '1C',
-  // Container agents start faster and are easier to administer
-  useContainerAgent: true,
-  // Show failures on all configurations
-  failFast: false,
-  // Test Java 11, 17, and 21
+  forkCount: '1C', // Run parallel tests on ci.jenkins.io for lower costs, faster feedback
+  useContainerAgent: true, // Set to `false` if you need to use Docker for containerized tests
   configurations: [
-    [platform: 'linux',   jdk: '17'],
-    [platform: 'linux',   jdk: '21', jenkins: '2.414'],
-    [platform: 'windows', jdk: '11']
-  ]
-)
+    [platform: 'linux', jdk: 21],
+    [platform: 'windows', jdk: 17],
+])
