@@ -459,54 +459,44 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 		return responseContentSupplier;
 	}
 
-	private void responseCodeIsValid(ResponseContentSupplier response) throws AbortException {
-		List<IntStream> ranges = DescriptorImpl.parseToRange(validResponseCodes);
-		for (IntStream range : ranges) {
-			if (range.anyMatch(status -> status == response.getStatus())) {
-				logger().println("Success: Status code " + response.getStatus() + " is in the accepted range: " + validResponseCodes);
-				return;
-			}
-		}
-		throw new AbortException("Fail: Status code " + response.getStatus() + " is not in the accepted range: " + validResponseCodes + " while calling " + url);
-	}
+    private void processResponse(ResponseContentSupplier response) throws IOException, InterruptedException {
+        logResponse(response);
+        saveFile(response);
+        responseCodeIsValid(response);
+        validateContent(response);
+    }
 
-	private void processResponse(ResponseContentSupplier response) throws IOException, InterruptedException {
-		//logs
-		if (consoleLogResponseBody) {
-			logger().println("Response: \n" + response.getContent());
-		}
+    private void logResponse(ResponseContentSupplier response) {
+        if (consoleLogResponseBody) {
+            logger().println("Response: \n" + response.getContent());
+        }
+    }
 
-		//validate status code
-		responseCodeIsValid(response);
+    private void saveFile(ResponseContentSupplier response) throws IOException, InterruptedException {
+        if (outputFile != null) {
+            logger().println("Saving response body to " + outputFile);
+            try (InputStream in = response.getContentStream(); OutputStream out = outputFile.write()) {
+                IOUtils.copy(in, out);
+            }
+        }
+    }
 
-		//validate content
-		if (!validResponseContent.isEmpty()) {
-			if (!response.getContent().contains(validResponseContent)) {
-				throw new AbortException("Fail: Response doesn't contain expected content '" + validResponseContent + "'" + " while calling " + url);
-			}
-		}
+    private void responseCodeIsValid(ResponseContentSupplier response) throws AbortException {
+        List<IntStream> ranges = DescriptorImpl.parseToRange(validResponseCodes);
+        for (IntStream range : ranges) {
+            if (range.anyMatch(status -> status == response.getStatus())) {
+                logger().println("Success: Status code " + response.getStatus() + " is in the accepted range: " + validResponseCodes);
+                return;
+            }
+        }
+        throw new AbortException("Fail: Status code " + response.getStatus() + " is not in the accepted range: " + validResponseCodes + " while calling " + url);
+    }
 
-		//save file
-		if (outputFile == null) {
-			return;
-		}
-		logger().println("Saving response body to " + outputFile);
-
-		InputStream in = response.getContentStream();
-		if (in == null) {
-			return;
-		}
-		OutputStream out = null;
-		try {
-			out = outputFile.write();
-			IOUtils.copy(in, out);
-		} finally {
-			if (out != null) {
-				out.close();
-			}
-			in.close();
-		}
-	}
+    private void validateContent(ResponseContentSupplier response) throws AbortException {
+        if (!validResponseContent.isEmpty() && !response.getContent().contains(validResponseContent)) {
+            throw new AbortException("Fail: Response doesn't contain expected content '" + validResponseContent + "'" + " while calling " + url);
+        }
+    }
 
 	private static class NoopTrustManager extends X509ExtendedTrustManager {
 
