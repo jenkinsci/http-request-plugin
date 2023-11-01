@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -46,6 +47,7 @@ import jenkins.plugins.http_request.auth.FormAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.HttpRequestFormDataPart;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
+import jenkins.plugins.http_request.util.HttpRequestQueryParam;
 
 /**
  * @author Janario Oliveira
@@ -75,6 +77,7 @@ public class HttpRequest extends Builder {
     private boolean useNtlm                   = DescriptorImpl.useNtlm;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
     private List<HttpRequestFormDataPart> formData = DescriptorImpl.formData;
+    private List<HttpRequestQueryParam> queryParams = DescriptorImpl.queryParams;
 
 	@DataBoundConstructor
 	public HttpRequest(@NonNull String url) {
@@ -249,6 +252,15 @@ public class HttpRequest extends Builder {
 		this.formData = Collections.unmodifiableList(formData);
 	}
 
+    public List<HttpRequestQueryParam> getQueryParams() {
+        return queryParams;
+    }
+
+    @DataBoundSetter
+    public void setQueryParams(List<HttpRequestQueryParam> queryParams) {
+        this.queryParams = Collections.unmodifiableList(queryParams);
+    }
+
 	public String getUploadFile() {
 		return uploadFile;
 	}
@@ -289,6 +301,9 @@ public class HttpRequest extends Builder {
 		}
 		if (formData == null) {
 			formData = DescriptorImpl.formData;
+		}
+		if (queryParams == null) {
+			queryParams = DescriptorImpl.queryParams;
 		}
 		if (validResponseCodes == null || validResponseCodes.trim().isEmpty()) {
 			validResponseCodes = DescriptorImpl.validResponseCodes;
@@ -433,7 +448,13 @@ public class HttpRequest extends Builder {
 		return resolved;
 	}
 
-    @Override
+	public List<HttpRequestQueryParam> resolveQueryParams(EnvVars envVars) {
+		return queryParams.stream()
+				.map(q -> new HttpRequestQueryParam(envVars.expand(q.getName()), envVars.expand(q.getValue())))
+				.collect(Collectors.toList());
+	}
+
+	@Override
     public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener)
     throws InterruptedException, IOException
     {
@@ -483,6 +504,7 @@ public class HttpRequest extends Builder {
         public static final boolean  useNtlm                   = false;
         public static final List<HttpRequestNameValuePair> customHeaders = Collections.emptyList();
         public static final List<HttpRequestFormDataPart> formData = Collections.emptyList();
+		public static final List<HttpRequestQueryParam> queryParams = Collections.emptyList();
 
         public DescriptorImpl() {
             load();

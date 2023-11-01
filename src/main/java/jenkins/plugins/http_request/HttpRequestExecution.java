@@ -6,9 +6,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.ConnectException;
+import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
@@ -72,6 +74,7 @@ import jenkins.plugins.http_request.auth.CredentialNtlmAuthentication;
 import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.HttpRequestFormDataPart;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
+import jenkins.plugins.http_request.util.HttpRequestQueryParam;
 import jenkins.plugins.http_request.util.RequestAction;
 
 /**
@@ -80,7 +83,7 @@ import jenkins.plugins.http_request.util.RequestAction;
 public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentSupplier, RuntimeException> {
 
 	private static final long serialVersionUID = -2066857816168989599L;
-	private final String url;
+	private final URL url;
 	private final HttpMode httpMode;
 	private final boolean ignoreSslErrors;
 	private final HttpHost httpProxy;
@@ -121,6 +124,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			Run<?, ?> run = build;
 
 			List<HttpRequestFormDataPart> formData = http.resolveFormDataParts(envVars, build);
+            List<HttpRequestQueryParam> queryParams = http.resolveQueryParams(envVars);
 
 			return new HttpRequestExecution(
 					url, http.getHttpMode(), http.getIgnoreSslErrors(),
@@ -129,6 +133,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 					uploadFile, http.getMultipartName(), http.getWrapAsMultipart(),
 					http.getAuthentication(), http.isUseNtlm(), http.getUseSystemProperties(),
 					formData,
+                    queryParams,
 
 					http.getValidResponseCodes(), http.getValidResponseContent(),
 					http.getConsoleLogResponseBody(), outputFile,
@@ -160,7 +165,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 				uploadFile, step.getMultipartName(), step.isWrapAsMultipart(),
 				step.getAuthentication(), step.isUseNtlm(), step.getUseSystemProperties(),
 				formData,
-
+                step.getQueryParams(),
 				step.getValidResponseCodes(), step.getValidResponseContent(),
 				step.getConsoleLogResponseBody(), outputFile,
 				step.getResponseHandle(),
@@ -174,14 +179,15 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			FilePath uploadFile, String multipartName, boolean wrapAsMultipart,
 			String authentication, boolean useNtlm, boolean useSystemProperties,
 			List<HttpRequestFormDataPart> formData,
+            List<HttpRequestQueryParam> queryParams,
 
 			String validResponseCodes, String validResponseContent,
 			Boolean consoleLogResponseBody, FilePath outputFile,
 			ResponseHandle responseHandle,
 
 			Item project, Run<?, ?> run, PrintStream logger
-	) {
-		this.url = url;
+	) throws MalformedURLException {
+        this.url = getUrl(url, queryParams);
 		this.httpMode = httpMode;
 		this.ignoreSslErrors = ignoreSslErrors;
 
@@ -315,7 +321,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			HttpClientUtil clientUtil = new HttpClientUtil();
 			// Create the simple body, this is the most frequent operation. It will be overridden
 			// later, if a more complex payload descriptor is set.
-			HttpRequestBase httpRequestBase = clientUtil.createRequestBase(new RequestAction(new URL(url), httpMode, body, null, headers));
+			HttpRequestBase httpRequestBase = clientUtil.createRequestBase(new RequestAction(url, httpMode, body, null, headers));
 
 			if (formData != null && !formData.isEmpty() && httpMode == HttpMode.POST) {
 				// multipart/form-data builder mode
@@ -388,6 +394,23 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			}
 		}
 	}
+
+    static URL getUrl(String url, List<HttpRequestQueryParam> queryParams) throws MalformedURLException {
+        if (queryParams.isEmpty()) {
+            return new URL(url);
+        }
+        StringBuilder sb = new StringBuilder(url);
+        int position = sb.length();
+        queryParams.forEach(qp -> {
+                    sb.append('&').append(URLEncoder.encode(qp.getName(), StandardCharsets.UTF_8));
+                    if (!qp.getValue().isEmpty()) {
+                        sb.append('=').append(URLEncoder.encode(qp.getValue(), StandardCharsets.UTF_8));
+                    }
+                }
+        );
+        sb.setCharAt(position, '?');
+        return new URL(sb.toString());
+    }
 
 	private void configureTimeoutAndSsl(HttpClientBuilder clientBuilder) throws NoSuchAlgorithmException, KeyManagementException {
 		//timeout

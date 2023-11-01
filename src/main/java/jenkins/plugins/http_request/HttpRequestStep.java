@@ -33,6 +33,7 @@ import hudson.util.ListBoxModel;
 
 import jenkins.plugins.http_request.util.HttpRequestFormDataPart;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
+import jenkins.plugins.http_request.util.HttpRequestQueryParam;
 
 /**
  * @author Martin d'Anjou
@@ -60,6 +61,7 @@ public final class HttpRequestStep extends Step {
     private boolean useNtlm                   = DescriptorImpl.useNtlm;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
 	private List<HttpRequestFormDataPart> formData = DescriptorImpl.formData;
+	private List<HttpRequestQueryParam> queryParams = DescriptorImpl.queryParams;
 	private String outputFile = DescriptorImpl.outputFile;
 	private ResponseHandle responseHandle = DescriptorImpl.responseHandle;
 
@@ -217,6 +219,15 @@ public final class HttpRequestStep extends Step {
 		this.formData = Collections.unmodifiableList(formData);
 	}
 
+	public List<HttpRequestQueryParam> getQueryParams() {
+		return queryParams;
+	}
+
+	@DataBoundSetter
+	public void setQueryParams(List<HttpRequestQueryParam> queryParams) {
+		this.queryParams = Collections.unmodifiableList(queryParams);
+	}
+
 	public String getOutputFile() {
 		return outputFile;
 	}
@@ -323,7 +334,8 @@ public final class HttpRequestStep extends Step {
         public static final boolean  useNtlm                   = HttpRequest.DescriptorImpl.useNtlm;
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.emptyList();
         public static final List <HttpRequestFormDataPart> formData = Collections.emptyList();
-        public static final String outputFile = "";
+		public static final List<HttpRequestQueryParam> queryParams = HttpRequest.DescriptorImpl.queryParams;
+		public static final String outputFile = "";
 		public static final ResponseHandle responseHandle = ResponseHandle.STRING;
 
         @Override
