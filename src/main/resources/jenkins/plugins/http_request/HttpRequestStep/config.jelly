@@ -9,7 +9,9 @@
     <f:entry field="ignoreSslErrors" title="Ignore Ssl errors?" help="/plugin/http_request/help-ignoreSslErrors.html">
         <f:booleanRadio />
     </f:entry>
-
+	<f:entry field="label" title="${%Label}">
+		<f:textbox/>
+	</f:entry>
     <f:advanced>
         <f:entry field="httpProxy" title="Http Proxy" help="/plugin/http_request/help-httpProxy.html">
             <f:textbox />

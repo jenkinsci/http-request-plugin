@@ -49,6 +49,8 @@ public class HttpRequestStepRoundTripTest {
         configRoundTrip(before);
         before.setConsoleLogResponseBody(false);
         configRoundTrip(before);
+		before.setLabel("GET real");
+		configRoundTrip(before);
     }
 
     @Test
@@ -96,7 +98,8 @@ public class HttpRequestStepRoundTripTest {
         j.assertEqualBeans(before, after, "multipartName");
         j.assertEqualBeans(before, after, "timeout");
         j.assertEqualBeans(before, after, "consoleLogResponseBody");
-        j.assertEqualBeans(before, after, "authentication");
+		j.assertEqualBeans(before, after, "authentication");
+        j.assertEqualBeans(before, after, "label");
 
         // Custom header check
         assertEquals(before.getCustomHeaders().size(),after.getCustomHeaders().size());
