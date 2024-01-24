@@ -206,7 +206,7 @@ You can send a request with http proxy authenticate
 
 [source,groovy]
 ----
-def response = httpRequest httpProxy-authenticate: Basic, 'http://proxy.local',
+def response = httpRequest proxyAuthentication: Basic, 'http://proxy.local',
                responseHandle: 'NONE', url: 'https://api.github.com/orgs/${orgName}'
 ----
 
@@ -269,7 +269,7 @@ You can use a Jenkins credential to authenticate the request
 
 [source,groovy]
 ----
-def response = httpRequest authenticate: 'my-jenkins-credential-id',
+def response = httpRequest authentication: 'my-jenkins-credential-id',
                            url: 'https://api.github.com/user/jenkinsci'
 ----
 
@@ -294,13 +294,13 @@ A basic WebDAV upload can be built using ``MKCOL`` and ``PUT`` like so:
 [source,groovy]
 ----
 // create directory aka a collection
-httpRequest authenticate: 'my-jenkins-credential-id',
+httpRequest authentication: 'my-jenkins-credential-id',
             httpMode: 'MKCOL',
             // on Apache httpd 201 = collection created, 405 = collection already exists
             validResponseCodes: '201,405',
             url: "https://example.com/webdav-enabled-server/reports/${version}/"
 // upload a file
-httpRequest authenticate: 'my-jenkins-credential-id',
+httpRequest authentication: 'my-jenkins-credential-id',
             httpMode: 'PUT',
             validResponseCodes: '201',
             url: "https://example.com/reports/${version}/your-report-maybe.html",
