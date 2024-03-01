@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.security.KeyStore;
 
+import org.apache.http.HttpHost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustAllStrategy;
@@ -43,6 +44,7 @@ public class CertificateAuthentication implements Authenticator {
 	public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder,
 											HttpContext context,
 											HttpRequestBase requestBase,
+											HttpHost proxyHost,
 											PrintStream logger) throws IOException {
 		try {
 			KeyStore keyStore = credentials.getKeyStore();

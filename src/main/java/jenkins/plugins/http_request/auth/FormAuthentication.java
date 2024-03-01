@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -50,7 +51,7 @@ public class FormAuthentication extends AbstractDescribableImpl<FormAuthenticati
 
 	@Override
 	public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpContext context,
-								   HttpRequestBase requestBase, PrintStream logger) throws IOException {
+								HttpRequestBase requestBase, HttpHost proxyHost, PrintStream logger) throws IOException {
 		CloseableHttpClient client = clientBuilder.build();
 		final HttpClientUtil clientUtil = new HttpClientUtil();
 		for (RequestAction requestAction : actions) {

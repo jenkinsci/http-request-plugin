@@ -2,6 +2,7 @@ package jenkins.plugins.http_request.auth;
 
 import java.io.PrintStream;
 
+import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.NTCredentials;
 import org.apache.http.client.CredentialsProvider;
@@ -50,7 +51,7 @@ public class CredentialNtlmAuthentication implements Authenticator {
 	}
 
 	@Override
-	public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpContext context, HttpRequestBase requestBase, PrintStream logger) {
+	public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpContext context, HttpRequestBase requestBase, HttpHost proxyHost, PrintStream logger) {
 		return auth(clientBuilder, context, requestBase,
 				username, credential.getPassword().getPlainText(), domain);
 	}

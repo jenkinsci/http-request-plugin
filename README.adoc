@@ -206,7 +206,7 @@ You can send a request with http proxy authenticate
 
 [source,groovy]
 ----
-def response = httpRequest httpProxy-authenticate: Basic, 'http://proxy.local',
+def response = httpRequest httpProxy: 'http://proxy.local', proxyAuthentication: 'my-jenkins-credential-id',
                responseHandle: 'NONE', url: 'https://api.github.com/orgs/${orgName}'
 ----
 
@@ -269,7 +269,7 @@ You can use a Jenkins credential to authenticate the request
 
 [source,groovy]
 ----
-def response = httpRequest authenticate: 'my-jenkins-credential-id',
+def response = httpRequest authentication: 'my-jenkins-credential-id',
                            url: 'https://api.github.com/user/jenkinsci'
 ----
 
