@@ -18,7 +18,7 @@ public enum HttpMode {
 	public static ListBoxModel getFillItems() {
 		ListBoxModel items = new ListBoxModel();
 		for (HttpMode httpMode : values()) {
-			items.add(httpMode.name());
+			items.add(httpMode.name(),httpMode.toString());
 		}
 		return items;
 	}
