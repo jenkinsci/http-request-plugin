@@ -12,6 +12,7 @@ import static jenkins.plugins.http_request.Registers.registerFileUpload;
 import static jenkins.plugins.http_request.Registers.registerFormAuth;
 import static jenkins.plugins.http_request.Registers.registerFormAuthBad;
 import static jenkins.plugins.http_request.Registers.registerInvalidStatusCode;
+import static jenkins.plugins.http_request.Registers.registerRedirects;
 import static jenkins.plugins.http_request.Registers.registerReqAction;
 import static jenkins.plugins.http_request.Registers.registerRequestChecker;
 import static jenkins.plugins.http_request.Registers.registerTimeout;
@@ -1052,6 +1053,42 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		// Check expectations
 		this.j.assertBuildStatus(Result.FAILURE, build);
 		this.j.assertLogContains("Proxy authentication 'non-existent-key' doesn't exist anymore or is not a username/password credential type", build);
+	}
+
+	@Test
+	public void testFollowRedirects() throws Exception {
+		registerRequestChecker(HttpMode.HEAD);
+		registerRedirects();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/redirects");
+		httpRequest.setHttpMode(HttpMode.HEAD);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", build);
+	}
+
+	@Test
+	public void testNotFollowRedirects() throws Exception {
+		registerRedirects();
+
+		// Prepare HttpRequest
+		HttpRequest httpRequest = new HttpRequest(baseURL() + "/redirects");
+		httpRequest.setHttpMode(HttpMode.HEAD);
+		httpRequest.setFollowRedirects(false);
+
+		// Run build
+		FreeStyleProject project = this.j.createFreeStyleProject();
+		project.getBuildersList().add(httpRequest);
+		FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+		this.j.assertBuildStatusSuccess(build);
+		this.j.assertLogContains("Success: Status code 302 is in the accepted range: 100:399", build);
 	}
 
 }
