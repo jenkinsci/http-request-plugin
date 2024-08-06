@@ -23,6 +23,7 @@ import javax.servlet.http.Part;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
+import org.eclipse.jetty.ee8.nested.MultiPartFormInputStream;
 import org.eclipse.jetty.server.Request;
 
 import jenkins.plugins.http_request.HttpRequestTestBase.SimpleHandler;
@@ -293,16 +294,21 @@ public class Registers {
 				MultipartConfigElement multipartConfig = new MultipartConfigElement(testFolder.getAbsolutePath());
 				enableMultipartSupport(request, multipartConfig);
 
+				try {
+					Part part = request.getPart("file-name");
+					assertNotNull(part);
+					assertEquals(uploadFile.length(), part.getSize());
+					assertEquals(uploadFile.getName(), part.getSubmittedFileName());
+					assertEquals(MimeType.APPLICATION_ZIP.getValue(), part.getContentType());
 
-				Part part = request.getPart("file-name");
-				assertNotNull(part);
-				assertEquals(uploadFile.length(), part.getSize());
-				assertEquals(uploadFile.getName(), part.getSubmittedFileName());
-				assertEquals(MimeType.APPLICATION_ZIP.getValue(), part.getContentType());
-
-				body(response, HttpServletResponse.SC_CREATED, ContentType.TEXT_PLAIN, responseText);
-
-				// Handle cleanup of parts, if required. Default servlet API doesn't require specific cleanup.
+					body(response, HttpServletResponse.SC_CREATED, ContentType.TEXT_PLAIN, responseText);
+				} finally {
+					String MULTIPART = "org.eclipse.jetty.servlet.MultiPartFile.multiPartInputStream";
+					MultiPartFormInputStream multipartInputStream = (MultiPartFormInputStream) request.getAttribute(MULTIPART);
+					if (multipartInputStream != null) {
+						multipartInputStream.deleteParts();
+					}
+				}
 			}
 		});
 	}
@@ -333,29 +339,37 @@ public class Registers {
 						new MultipartConfigElement(testFolder.getAbsolutePath());
 				enableMultipartSupport(request, multipartConfig);
 
+				try {
+					Part file1Part = request.getPart("file1");
+					assertNotNull(file1Part);
+					assertEquals(file1.length(), file1Part.getSize());
+					assertEquals(file1.getName(), file1Part.getSubmittedFileName());
+					assertEquals(MimeType.TEXT_PLAIN.getValue(), file1Part.getContentType());
 
-				Part file1Part = request.getPart("file1");
-				assertNotNull(file1Part);
-				assertEquals(file1.length(), file1Part.getSize());
-				assertEquals(file1.getName(), file1Part.getSubmittedFileName());
-				assertEquals(MimeType.TEXT_PLAIN.getValue(), file1Part.getContentType());
+					Part file2Part = request.getPart("file2");
+					assertNotNull(file2Part);
+					assertEquals(file2.length(), file2Part.getSize());
+					assertEquals(file2.getName(), file2Part.getSubmittedFileName());
+					assertEquals(MimeType.APPLICATION_ZIP.getValue(), file2Part.getContentType());
 
-				Part file2Part = request.getPart("file2");
-				assertNotNull(file2Part);
-				assertEquals(file2.length(), file2Part.getSize());
-				assertEquals(file2.getName(), file2Part.getSubmittedFileName());
-				assertEquals(MimeType.APPLICATION_ZIP.getValue(), file2Part.getContentType());
+					Part modelPart = request.getPart("model");
+					assertNotNull(modelPart);
+					assertEquals(content,
+							IOUtils.toString(modelPart.getInputStream(), StandardCharsets.UTF_8));
+					assertEquals(MimeType.APPLICATION_JSON.getValue(), modelPart.getContentType());
 
-				Part modelPart = request.getPart("model");
-				assertNotNull(modelPart);
-				assertEquals(content,
-						IOUtils.toString(modelPart.getInputStream(), StandardCharsets.UTF_8));
-				assertEquals(MimeType.APPLICATION_JSON.getValue(), modelPart.getContentType());
-
-				// So far so good
-				body(response, HttpServletResponse.SC_CREATED, ContentType.TEXT_PLAIN,
+					// So far so good
+					body(response, HttpServletResponse.SC_CREATED, ContentType.TEXT_PLAIN,
 							responseText);
-				// Handle cleanup of parts, if required. Default servlet API doesn't require specific cleanup.
+				} finally {
+					String MULTIPART =
+							"org.eclipse.jetty.servlet.MultiPartFile.multiPartInputStream";
+					MultiPartFormInputStream multipartInputStream =
+							(MultiPartFormInputStream) request.getAttribute(MULTIPART);
+					if (multipartInputStream != null) {
+						multipartInputStream.deleteParts();
+					}
+				}
 			}
 		});
 	}
