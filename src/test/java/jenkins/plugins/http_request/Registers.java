@@ -279,7 +279,7 @@ public class Registers {
 			private static final String MULTIPART_FORMDATA_TYPE = "multipart/form-data";
 
 			private void enableMultipartSupport(HttpServletRequest request, MultipartConfigElement multipartConfig) {
-				request.setAttribute("org.eclipse.multipartConfig", multipartConfig);
+				request.setAttribute("org.eclipse.jetty.multipartConfig", multipartConfig);
 			}
 
 			private boolean isMultipartRequest(ServletRequest request) {
@@ -321,7 +321,7 @@ public class Registers {
 
 			private void enableMultipartSupport(HttpServletRequest request,
 					MultipartConfigElement multipartConfig) {
-				request.setAttribute("org.eclipse.multipartConfig", multipartConfig);
+				request.setAttribute("org.eclipse.jetty.multipartConfig", multipartConfig);
 			}
 
 			private boolean isMultipartRequest(ServletRequest request) {
