@@ -766,16 +766,15 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		registerHandler("/form-auth", HttpMode.POST, new SimpleHandler() {
 			@Override
 			boolean doHandle(Request request, Response response, Callback callback) throws Exception {
-				Fields allParameters = Request.getParameters(request);
-				String username = allParameters.getValue(paramUsername);
-				String password = allParameters.getValue(paramPassword);
+				Fields parameters = Request.getParameters(request);
+				String username = parameters.getValue(paramUsername);
+				String password = parameters.getValue(paramPassword);
 
 				if (!username.equals(valueUsername) || !password.equals(valuePassword)) {
 					response.setStatus(401);
 					return false;
 				}
-				HttpCookie cookie = HttpCookie.build(sessionName, "ok")
-						.build();
+				HttpCookie cookie = HttpCookie.build(sessionName, "ok").build();
 				Response.addCookie(response, cookie);
 				okAllIsWell(response, callback);
 				return true;
