@@ -20,6 +20,7 @@ import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -27,6 +28,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.entity.ContentType;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -636,11 +639,12 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         //configure server
         registerHandler("/doPostBody", HttpMode.POST, new SimpleHandler() {
             @Override
-            void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+            boolean doHandle(Request request, Response response, Callback callback) throws IOException, ExecutionException, InterruptedException {
                 assertEquals("POST", request.getMethod());
 
                 String body = requestBody(request);
-                body(response, HttpServletResponse.SC_OK, ContentType.TEXT_PLAIN, body);
+                body(response, HttpServletResponse.SC_OK, ContentType.TEXT_PLAIN, body, callback);
+				return true;
             }
         });
 

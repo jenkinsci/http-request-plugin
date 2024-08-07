@@ -1,24 +1,31 @@
 package jenkins.plugins.http_request;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.entity.ContentType;
+import org.eclipse.jetty.io.Content;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.DefaultHandler;
+import org.eclipse.jetty.util.Callback;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -31,6 +38,8 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+import com.google.common.math.Quantiles.ScaleAndIndex;
+
 import org.apache.commons.io.IOUtils;
 
 /**
@@ -89,34 +98,33 @@ public class HttpRequestTestBase {
 		}
 	}
 
-	public static abstract class SimpleHandler extends DefaultHandler {
+	public static abstract class SimpleHandler extends Handler.Abstract {
 		@Override
-		public final void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-			doHandle(target, baseRequest, request, response);
-			baseRequest.setHandled(true);
+		public final boolean handle(Request request, Response response, Callback callback) throws Exception {
+			doHandle(request, response, callback);
+			return true;
 		}
 
-		String requestBody(HttpServletRequest request) throws IOException {
-			try (BufferedReader reader = request.getReader()) {
-				return IOUtils.toString(reader);
-			}
+		String requestBody(Request request) throws IOException, ExecutionException, InterruptedException {
+			CompletableFuture<String> completable = Content.Source.asStringAsync(request, UTF_8);
+			return completable.get();
 		}
 
-		void okAllIsWell(HttpServletResponse response) throws IOException {
-			okText(response, ALL_IS_WELL);
+		void okAllIsWell(Response response, Callback callback) throws IOException {
+			okText(response, ALL_IS_WELL, callback);
 		}
 
-		void okText(HttpServletResponse response, String body) throws IOException {
-			body(response, HttpServletResponse.SC_OK, ContentType.TEXT_PLAIN, body);
+		void okText(Response response, String body, Callback callback) throws IOException {
+			body(response, HttpServletResponse.SC_OK, ContentType.TEXT_PLAIN, body, callback);
 		}
 
-		void body(HttpServletResponse response, int status, ContentType contentType, String body) throws IOException {
-			response.setContentType(contentType != null ? contentType.toString() : "");
+		void body(Response response, int status, ContentType contentType, String body, Callback callback) throws IOException {
+			response.getHeaders().put(String.valueOf(contentType), "text/plain; charset=UTF-8");
 			response.setStatus(status);
-			response.getWriter().append(body);
+			Content.Sink.write(response, true, body, callback);
 		}
 
-		abstract void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException;
+		abstract boolean doHandle(Request request, Response response, Callback callback) throws Exception;
 	}
 
 	private static final class ServerRunning {
@@ -134,17 +142,19 @@ public class HttpRequestTestBase {
 			context.setContextPath("/");
 			context.setHandler(new DefaultHandler() {
 				@Override
-				public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				public boolean handle(Request request, Response response, Callback callback) throws Exception {
+					String target = request.getHttpURI().getPath();
 					Map<HttpMode, Handler> handlerByMethod = handlersByMethodByTarget.get(target);
 					if (handlerByMethod != null) {
 						Handler handler = handlerByMethod.get(HttpMode.valueOf(request.getMethod()));
 						if (handler != null) {
-							handler.handle(target, baseRequest, request, response);
-							return;
+							handler.handle(request, response, callback);
+							return true;
 						}
 					}
 
-					super.handle(target, baseRequest, request, response);
+					super.handle(request, response, callback);
+					return true;
 				}
 			});
 			server.setHandler(context);

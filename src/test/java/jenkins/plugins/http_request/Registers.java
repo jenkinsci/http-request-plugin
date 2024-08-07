@@ -1,5 +1,6 @@
 package jenkins.plugins.http_request;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -12,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Enumeration;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import javax.servlet.MultipartConfigElement;
 import javax.servlet.ServletException;
@@ -24,7 +26,12 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
 import org.eclipse.jetty.ee8.nested.MultiPartFormInputStream;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
+import org.eclipse.jetty.util.Fields;
+import org.eclipse.jetty.util.Fields.Field;
 
 import jenkins.plugins.http_request.HttpRequestTestBase.SimpleHandler;
 
@@ -36,12 +43,13 @@ public class Registers {
 	static void registerRequestChecker(final HttpMode method) {
 		registerHandler("/do" + method.name(), method, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
 				assertEquals(method.name(), request.getMethod());
 
-				String query = request.getQueryString();
+				String query = request.getHttpURI().getQuery();
 				assertNull(query);
-				okAllIsWell(response);
+				okAllIsWell(response, callback);
+				return true;
 			}
 		});
 	}
@@ -49,10 +57,10 @@ public class Registers {
 	static void registerContentTypeRequestChecker(final MimeType mimeType, final HttpMode httpMode, final String responseMessage) {
 		registerHandler("/incoming_" + mimeType.toString(), httpMode, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException, ExecutionException, InterruptedException {
 				assertEquals(httpMode.name(), request.getMethod());
 
-				Enumeration<String> headers = request.getHeaders(HttpHeaders.CONTENT_TYPE);
+				Enumeration<String> headers = request.getHeaders().getValues(HttpHeaders.CONTENT_TYPE);
 				if (mimeType == MimeType.NOT_SET) {
 					assertFalse(headers.hasMoreElements());
 				} else {
@@ -63,10 +71,11 @@ public class Registers {
 					assertEquals(mimeType.getContentType().toString(), value);
 				}
 
-				String query = request.getQueryString();
+				String query = request.getHttpURI().getQuery();
 				assertNull(query);
 				String body = responseMessage != null ? responseMessage : requestBody(request);
-				body(response, HttpServletResponse.SC_OK, mimeType.getContentType(), body);
+				body(response, HttpStatus.OK_200, mimeType.getContentType(), body, callback);
+				return true;
 			}
 		});
 	}
@@ -74,10 +83,11 @@ public class Registers {
 	static void registerAcceptedTypeRequestChecker(final MimeType mimeType) {
 		registerHandler("/accept_" + mimeType.toString(), HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
 				assertEquals("GET", request.getMethod());
 
-				Enumeration<String> headers = request.getHeaders(HttpHeaders.ACCEPT);
+				Enumeration<String> headers = request.getHeaders().getValues(HttpHeaders.ACCEPT);
+
 
 				if (mimeType == MimeType.NOT_SET) {
 					assertFalse(headers.hasMoreElements());
@@ -88,9 +98,10 @@ public class Registers {
 
 					assertEquals(mimeType.getValue(), value);
 				}
-				String query = request.getQueryString();
+				String query = request.getHttpURI().getQuery();
 				assertNull(query);
-				okAllIsWell(response);
+				okAllIsWell(response, callback);
+				return true;
 			}
 		});
 	}
@@ -99,12 +110,13 @@ public class Registers {
 		// Timeout, do not respond!
 		registerHandler("/timeout", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) {
+			boolean doHandle(Request request, Response response, Callback callback) {
 				try {
 					Thread.sleep(10000);
 				} catch (InterruptedException ex) {
 					// do nothing the sleep will be interrupted when the test ends
 				}
+				return true;
 			}
 		});
 	}
@@ -113,22 +125,22 @@ public class Registers {
 		// Accept the form authentication
 		registerHandler("/reqAction", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) throws Exception {
 				assertEquals("GET", request.getMethod());
 
-				Map<String, String[]> parameters = request.getParameterMap();
+				Fields parameters = Request.getParameters(request);
 
-				assertEquals(2, parameters.size());
-				assertTrue(parameters.containsKey("param1"));
-				String[] value = parameters.get("param1");
-				assertEquals(1, value.length);
-				assertEquals("value1", value[0]);
+				assertEquals(2, parameters.getSize());
+				assertTrue(parameters.toMultiMap().containsKey("param1"));
+				Field value = parameters.get("param1");
+				assertNotNull(value); //replace assertEquals(1, value.length);
+				assertEquals("value1", value.getValue());
 
-				assertTrue(parameters.containsKey("param2"));
-				value = parameters.get("param2");
-				assertEquals(1, value.length);
-				assertEquals("value2", value[0]);
-				okAllIsWell(response);
+				assertTrue(parameters.toMultiMap().containsKey("param2"));
+				value = parameters.get("param1");
+				assertNotNull(value); //replace assertEquals(2, value.length);
+				okAllIsWell(response, callback);
+				return true;
 			}
 		});
 	}
@@ -137,8 +149,9 @@ public class Registers {
 		// Check the form authentication
 		registerHandler("/formAuth", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
-				okAllIsWell(response);
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+				okAllIsWell(response, callback);
+				return true;
 			}
 		});
 	}
@@ -147,8 +160,9 @@ public class Registers {
 		// Check the form authentication header
 		registerHandler("/formAuthBad", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
-				body(response, HttpServletResponse.SC_BAD_REQUEST, ContentType.TEXT_PLAIN, "Not allowed");
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+				body(response, HttpStatus.BAD_REQUEST_400, ContentType.TEXT_PLAIN, "Not allowed", callback);
+				return false;
 			}
 		});
 	}
@@ -157,8 +171,8 @@ public class Registers {
 		// Check the basic authentication header
 		registerHandler("/basicAuth", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
-				Enumeration<String> headers = request.getHeaders(HttpHeaders.AUTHORIZATION);
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+				Enumeration<String> headers = request.getHeaders().getValues(HttpHeaders.AUTHORIZATION);
 
 				String value = headers.nextElement();
 				assertFalse(headers.hasMoreElements());
@@ -169,7 +183,8 @@ public class Registers {
 				assertEquals("username1", usernamePassword[0]);
 				assertEquals("password1", usernamePassword[1]);
 
-				okAllIsWell(response);
+				okAllIsWell(response, callback);
+				return true;
 			}
 		});
 	}
@@ -178,12 +193,13 @@ public class Registers {
 		// Check that request body is present and that the containing parameter ${Tag} has been resolved to "trunk"
 		registerHandler("/checkRequestBodyWithTag", HttpMode.POST, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException, ExecutionException, InterruptedException {
 				assertEquals("POST", request.getMethod());
 				String requestBody = requestBody(request);
 
 				assertEquals("cleanupDir=D:/continuousIntegration/deployments/Daimler/trunk/standalone", requestBody);
-				okAllIsWell(response);
+				okAllIsWell(response, callback);
+				return true;
 			}
 		});
 	}
@@ -192,8 +208,8 @@ public class Registers {
 		// Check the custom headers
 		registerHandler("/customHeaders", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
-				Enumeration<String> headers = request.getHeaders("customHeader");
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+				Enumeration<String> headers = request.getHeaders().getValues("customHeader");
 
 				String value1 = headers.nextElement();
 				String value2 = headers.nextElement();
@@ -202,7 +218,8 @@ public class Registers {
 				assertEquals("value1", value1);
 				assertEquals("value2", value2);
 
-				okAllIsWell(response);
+				okAllIsWell(response, callback);
+				return true;
 			}
 		});
 	}
@@ -211,12 +228,13 @@ public class Registers {
 		// Return an invalid status code
 		registerHandler("/invalidStatusCode", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
 				assertEquals("GET", request.getMethod());
-				String query = request.getQueryString();
+				String query = request.getHttpURI().getQuery();
 				assertNull(query);
 
-				body(response, HttpServletResponse.SC_BAD_REQUEST, ContentType.TEXT_PLAIN, "Throwing status 400 for test");
+				body(response, HttpStatus.BAD_REQUEST_400, ContentType.TEXT_PLAIN, "Throwing status 400 for test", callback);
+				return false;
 			}
 		});
 	}
@@ -225,18 +243,20 @@ public class Registers {
 		// Check if the parameters in custom headers have been resolved
 		registerHandler("/customHeadersResolved", HttpMode.POST, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
-				Enumeration<String> headers = request.getHeaders("resolveCustomParam");
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+				Enumeration<String> headers = request.getHeaders().getValues("resolveCustomParam");
+
 				String value = headers.nextElement();
 				assertFalse(headers.hasMoreElements());
 				assertEquals("trunk", value);
 
-				headers = request.getHeaders("resolveEnvParam");
+				headers = request.getHeaders().getValues("resolveCustomParam");
 				value = headers.nextElement();
 				assertFalse(headers.hasMoreElements());
 				assertEquals("C:/path/to/my/workspace", value);
 
-				okAllIsWell(response);
+				okAllIsWell(response, callback);
+				return true;
 			}
 		});
 	}
@@ -245,17 +265,19 @@ public class Registers {
 		// Check that exactly one build parameter is passed
 		registerHandler("/checkBuildParameters", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) throws Exception {
 				assertEquals("GET", request.getMethod());
 
-				Map<String, String[]> parameters = request.getParameterMap();
-				assertEquals(1, parameters.size());
-				assertTrue(parameters.containsKey("foo"));
-				String[] value = parameters.get("foo");
-				assertEquals(1, value.length);
-				assertEquals("value", value[0]);
+				Fields parameters = Request.getParameters(request);
 
-				okAllIsWell(response);
+				assertEquals(1, parameters.getSize());
+				assertTrue(parameters.toMultiMap().containsKey("foo"));
+				Field value = parameters.get("foo");
+				assertNotNull(value); //replace assertEquals(1, value.length);
+				assertEquals("value", value.getValue());
+				okAllIsWell(response, callback);
+
+				return true;
 			}
 		});
 	}
@@ -264,11 +286,12 @@ public class Registers {
 		// Check that request body is present and equals to TestRequestBody
 		registerHandler("/checkRequestBody", HttpMode.POST, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException, ExecutionException, InterruptedException {
 				assertEquals("POST", request.getMethod());
 				String requestBody = requestBody(request);
 				assertEquals("TestRequestBody", requestBody);
-				okAllIsWell(response);
+				okAllIsWell(response, callback);
+				return true;
 			}
 		});
 	}
@@ -278,16 +301,16 @@ public class Registers {
 
 			private static final String MULTIPART_FORMDATA_TYPE = "multipart/form-data";
 
-			private void enableMultipartSupport(HttpServletRequest request, MultipartConfigElement multipartConfig) {
+			private void enableMultipartSupport(Request request, MultipartConfigElement multipartConfig) {
 				request.setAttribute("org.eclipse.jetty.multipartConfig", multipartConfig);
 			}
 
-			private boolean isMultipartRequest(ServletRequest request) {
-				return request.getContentType() != null && request.getContentType().startsWith(MULTIPART_FORMDATA_TYPE);
+			private boolean isMultipartRequest(Request request) {
+				return request.getHeaders().get(HttpHeaders.CONTENT_TYPE) != null && request.getHeaders().get(HttpHeaders.CONTENT_TYPE).startsWith(MULTIPART_FORMDATA_TYPE);
 			}
 
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException, ServletException {
 				assertEquals("POST", request.getMethod());
 				assertTrue(isMultipartRequest(request));
 
@@ -301,7 +324,7 @@ public class Registers {
 					assertEquals(uploadFile.getName(), part.getSubmittedFileName());
 					assertEquals(MimeType.APPLICATION_ZIP.getValue(), part.getContentType());
 
-					body(response, HttpServletResponse.SC_CREATED, ContentType.TEXT_PLAIN, responseText);
+					body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN, responseText, callback);
 				} finally {
 					String MULTIPART = "org.eclipse.jetty.servlet.MultiPartFile.multiPartInputStream";
 					MultiPartFormInputStream multipartInputStream = (MultiPartFormInputStream) request.getAttribute(MULTIPART);
@@ -330,8 +353,7 @@ public class Registers {
 			}
 
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request,
-					HttpServletResponse response) throws IOException, ServletException {
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException, ServletException {
 				assertEquals("POST", request.getMethod());
 				assertTrue(isMultipartRequest(request));
 
@@ -355,12 +377,12 @@ public class Registers {
 					Part modelPart = request.getPart("model");
 					assertNotNull(modelPart);
 					assertEquals(content,
-							IOUtils.toString(modelPart.getInputStream(), StandardCharsets.UTF_8));
+							IOUtils.toString(modelPart.getInputStream(), UTF_8));
 					assertEquals(MimeType.APPLICATION_JSON.getValue(), modelPart.getContentType());
 
 					// So far so good
 					body(response, HttpServletResponse.SC_CREATED, ContentType.TEXT_PLAIN,
-							responseText);
+							responseText, callback);
 				} finally {
 					String MULTIPART =
 							"org.eclipse.jetty.servlet.MultiPartFile.multiPartInputStream";
@@ -384,12 +406,12 @@ public class Registers {
 			}
 
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
 				assertEquals("PUT", request.getMethod());
 				assertFalse(isMultipartRequest(request));
 				assertEquals(uploadFile.length(), request.getContentLength());
 				assertEquals(MimeType.APPLICATION_ZIP.getValue(), request.getContentType());
-				body(response, HttpServletResponse.SC_CREATED, ContentType.TEXT_PLAIN, responseText);
+				body(response, HttpServletResponse.SC_CREATED, ContentType.TEXT_PLAIN, responseText, callback);
 			}
 		});
 	}

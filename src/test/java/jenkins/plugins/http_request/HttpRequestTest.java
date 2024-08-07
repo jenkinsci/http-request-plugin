@@ -34,7 +34,11 @@ import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHttpResponse;
+import org.eclipse.jetty.http.HttpCookie;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
+import org.eclipse.jetty.util.Fields;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Rule;
@@ -766,23 +770,28 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		registerHandler("/form-auth", HttpMode.POST, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
-				String username = request.getParameter(paramUsername);
-				String password = request.getParameter(paramPassword);
+			boolean doHandle(Request request, Response response, Callback callback) throws Exception {
+				Fields allParameters = Request.getParameters(request);
+				String username = allParameters.getValue(paramUsername);
+				String password = allParameters.getValue(paramPassword);
+
 				if (!username.equals(valueUsername) || !password.equals(valuePassword)) {
 					response.setStatus(401);
-					return;
+					return false;
 				}
-				response.addCookie(new Cookie(sessionName, "ok"));
-				okAllIsWell(response);
+				HttpCookie cookie = HttpCookie.build(sessionName, "ok")
+						.build();
+				Response.addCookie(response, cookie);
+				okAllIsWell(response, callback);
+				return true;
 			}
 		});
 		registerHandler("/test-auth", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
 				String jsessionValue = "";
-				Cookie[] cookies = request.getCookies();
-				for (Cookie cookie : cookies) {
+				List<HttpCookie> cookies = Request.getCookies(request);
+				for (HttpCookie cookie : cookies) {
 					if (cookie.getName().equals(sessionName)) {
 						jsessionValue = cookie.getValue();
 						break;
@@ -791,9 +800,10 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 				if (!jsessionValue.equals("ok")) {
 					response.setStatus(401);
-					return;
+					return false;
 				}
-				okAllIsWell(response);
+				okAllIsWell(response, callback);
+				return true;
 			}
 		});
 
