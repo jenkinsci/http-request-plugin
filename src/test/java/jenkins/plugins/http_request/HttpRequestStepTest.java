@@ -22,11 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.entity.ContentType;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
@@ -643,7 +641,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
                 assertEquals("POST", request.getMethod());
 
                 String body = requestBody(request);
-                body(response, HttpServletResponse.SC_OK, ContentType.TEXT_PLAIN, body, callback);
+                body(response, HttpStatus.OK_200, ContentType.TEXT_PLAIN, body, callback);
 				return true;
             }
         });

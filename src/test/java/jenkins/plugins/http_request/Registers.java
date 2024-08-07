@@ -9,16 +9,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Enumeration;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.MultipartConfigElement;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
@@ -332,6 +328,7 @@ public class Registers {
 						multipartInputStream.deleteParts();
 					}
 				}
+				return true;
 			}
 		});
 	}
@@ -342,14 +339,14 @@ public class Registers {
 
 			private static final String MULTIPART_FORMDATA_TYPE = "multipart/form-data";
 
-			private void enableMultipartSupport(HttpServletRequest request,
+			private void enableMultipartSupport(Request request,
 					MultipartConfigElement multipartConfig) {
 				request.setAttribute("org.eclipse.jetty.multipartConfig", multipartConfig);
 			}
 
-			private boolean isMultipartRequest(ServletRequest request) {
-				return request.getContentType() != null
-						&& request.getContentType().startsWith(MULTIPART_FORMDATA_TYPE);
+			private boolean isMultipartRequest(Request request) {
+				return request.getHeaders().get(HttpHeaders.CONTENT_TYPE) != null
+						&& request.getHeaders().get(HttpHeaders.CONTENT_TYPE).startsWith(MULTIPART_FORMDATA_TYPE);
 			}
 
 			@Override
@@ -381,7 +378,7 @@ public class Registers {
 					assertEquals(MimeType.APPLICATION_JSON.getValue(), modelPart.getContentType());
 
 					// So far so good
-					body(response, HttpServletResponse.SC_CREATED, ContentType.TEXT_PLAIN,
+					body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN,
 							responseText, callback);
 				} finally {
 					String MULTIPART =
@@ -392,6 +389,7 @@ public class Registers {
 						multipartInputStream.deleteParts();
 					}
 				}
+				return true;
 			}
 		});
 	}
@@ -401,17 +399,18 @@ public class Registers {
 
 			private static final String MULTIPART_FORMDATA_TYPE = "multipart/form-data";
 
-			private boolean isMultipartRequest(ServletRequest request) {
-				return request.getContentType() != null && request.getContentType().startsWith(MULTIPART_FORMDATA_TYPE);
+			private boolean isMultipartRequest(Request request) {
+				return request.getHeaders().get(HttpHeaders.CONTENT_TYPE) != null && request.getHeaders().get(HttpHeaders.CONTENT_TYPE).startsWith(MULTIPART_FORMDATA_TYPE);
 			}
 
 			@Override
 			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
 				assertEquals("PUT", request.getMethod());
 				assertFalse(isMultipartRequest(request));
-				assertEquals(uploadFile.length(), request.getContentLength());
-				assertEquals(MimeType.APPLICATION_ZIP.getValue(), request.getContentType());
-				body(response, HttpServletResponse.SC_CREATED, ContentType.TEXT_PLAIN, responseText, callback);
+				assertEquals(uploadFile.length(), request.getHeaders().get(HttpHeaders.CONTENT_TYPE));
+				assertEquals(MimeType.APPLICATION_ZIP.getValue(), request.getHeaders().get(HttpHeaders.CONTENT_TYPE));
+				body(response,  HttpStatus.CREATED_201, ContentType.TEXT_PLAIN, responseText, callback);
+				return true;
 			}
 		});
 	}
