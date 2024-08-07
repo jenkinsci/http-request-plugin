@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Enumeration;
+import java.util.Map;
 
 import javax.servlet.MultipartConfigElement;
 import javax.servlet.http.Part;
@@ -23,7 +24,6 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
-import org.eclipse.jetty.util.Fields;
 
 import jenkins.plugins.http_request.HttpRequestTestBase.SimpleHandler;
 
@@ -120,17 +120,18 @@ public class Registers {
 			boolean doHandle(Request request, Response response, Callback callback) throws Exception {
 				assertEquals("GET", request.getMethod());
 
-				Fields parameters = Request.getParameters(request);
+				Map<String, String[]> parameters = Request.getParameters(request).toStringArrayMap();
 
-				assertEquals(2, parameters.getSize());
-				assertTrue(parameters.toMultiMap().containsKey("param1"));
-				Fields.Field value = parameters.get("param1");
-				assertNotNull(value); //replace assertEquals(1, value.length);
-				assertEquals("value1", value.getValue());
+				assertEquals(2, parameters.size());
+				assertTrue(parameters.containsKey("param1"));
+				String[] value = parameters.get("param1");
+				assertEquals(1, value.length);
+				assertEquals("value1", value[0]);
 
-				assertTrue(parameters.toMultiMap().containsKey("param2"));
-				value = parameters.get("param1");
-				assertNotNull(value); //replace assertEquals(2, value.length);
+				assertTrue(parameters.containsKey("param2"));
+				value = parameters.get("param2");
+				assertEquals(1, value.length);
+				assertEquals("value2", value[0]);
 				okAllIsWell(response, callback);
 				return true;
 			}
@@ -260,15 +261,15 @@ public class Registers {
 			boolean doHandle(Request request, Response response, Callback callback) throws Exception {
 				assertEquals("GET", request.getMethod());
 
-				Fields parameters = Request.getParameters(request);
+				Map<String, String[]> parameters = Request.getParameters(request).toStringArrayMap();
 
-				assertEquals(1, parameters.getSize());
-				assertTrue(parameters.toMultiMap().containsKey("foo"));
-				Fields.Field value = parameters.get("foo");
-				assertNotNull(value); //replace assertEquals(1, value.length);
-				assertEquals("value", value.getValue());
+				assertEquals(1, parameters.size());
+				assertTrue(parameters.containsKey("foo"));
+				String[] value = parameters.get("foo");
+				assertEquals(1, value.length);
+				assertEquals("value", value[0]);
+
 				okAllIsWell(response, callback);
-
 				return true;
 			}
 		});
@@ -418,7 +419,7 @@ public class Registers {
 				assertFalse(isMultipartRequest(request));
 				assertEquals(uploadFile.length(), request.getLength());
 				assertEquals(MimeType.APPLICATION_ZIP.getValue(), request.getHeaders().get(HttpHeaders.CONTENT_TYPE));
-				body(response,  HttpStatus.CREATED_201, ContentType.TEXT_PLAIN, responseText, callback);
+				body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN, responseText, callback);
 				return true;
 			}
 		});
