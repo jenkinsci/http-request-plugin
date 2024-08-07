@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.entity.ContentType;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.io.Content;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
@@ -109,7 +110,7 @@ public class HttpRequestTestBase {
 		}
 
 		void okText(Response response, String body, Callback callback) throws IOException {
-			body(response, HttpServletResponse.SC_OK, ContentType.TEXT_PLAIN, body, callback);
+			body(response, HttpStatus.OK_200, ContentType.TEXT_PLAIN, body, callback);
 		}
 
 		void body(Response response, int status, ContentType contentType, String body, Callback callback) throws IOException {
