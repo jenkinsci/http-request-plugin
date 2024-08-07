@@ -9,8 +9,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.http.entity.ContentType;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.io.Content;
