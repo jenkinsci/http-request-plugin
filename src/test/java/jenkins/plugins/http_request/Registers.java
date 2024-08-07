@@ -25,7 +25,6 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.Fields;
-import org.eclipse.jetty.util.Fields.Field;
 
 import jenkins.plugins.http_request.HttpRequestTestBase.SimpleHandler;
 
@@ -126,7 +125,7 @@ public class Registers {
 
 				assertEquals(2, parameters.getSize());
 				assertTrue(parameters.toMultiMap().containsKey("param1"));
-				Field value = parameters.get("param1");
+				Fields.Field value = parameters.get("param1");
 				assertNotNull(value); //replace assertEquals(1, value.length);
 				assertEquals("value1", value.getValue());
 
@@ -266,7 +265,7 @@ public class Registers {
 
 				assertEquals(1, parameters.getSize());
 				assertTrue(parameters.toMultiMap().containsKey("foo"));
-				Field value = parameters.get("foo");
+				Fields.Field value = parameters.get("foo");
 				assertNotNull(value); //replace assertEquals(1, value.length);
 				assertEquals("value", value.getValue());
 				okAllIsWell(response, callback);
