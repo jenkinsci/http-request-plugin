@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.http.entity.ContentType;
+import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.io.Content;
 import org.eclipse.jetty.server.Connector;
@@ -108,7 +109,7 @@ public class HttpRequestTestBase {
 		}
 
 		void body(Response response, int status, ContentType contentType, String body, Callback callback) {
-			response.getHeaders().put(String.valueOf(contentType), "text/plain; charset=UTF-8");
+			response.getHeaders().add(HttpHeader.CONTENT_TYPE, "text/plain; charset=UTF-8");
 			response.setStatus(status);
 			Content.Sink.write(response, true, body, callback);
 		}
