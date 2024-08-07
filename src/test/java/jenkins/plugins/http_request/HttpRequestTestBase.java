@@ -108,7 +108,9 @@ public class HttpRequestTestBase {
 		}
 
 		void body(Response response, int status, ContentType contentType, String body, Callback callback) {
-			response.getHeaders().add(HttpHeader.CONTENT_TYPE, "text/plain; charset=UTF-8");
+			if (contentType != null) {
+				response.getHeaders().add(HttpHeader.CONTENT_TYPE, contentType.toString());
+			}
 			response.setStatus(status);
 			Content.Sink.write(response, true, body, callback);
 		}
