@@ -1,8 +1,7 @@
 package jenkins.plugins.http_request;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -101,7 +100,7 @@ public class HttpRequestTestBase {
 		}
 
 		String requestBody(Request request) throws IOException, ExecutionException, InterruptedException {
-			CompletableFuture<String> completable = Content.Source.asStringAsync(request, UTF_8);
+			CompletableFuture<String> completable = Content.Source.asStringAsync(request, StandardCharsets.UTF_8);
 			return completable.get();
 		}
 

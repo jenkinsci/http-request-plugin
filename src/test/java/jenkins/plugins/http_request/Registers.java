@@ -1,6 +1,5 @@
 package jenkins.plugins.http_request;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -9,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Enumeration;
 import java.util.concurrent.ExecutionException;
@@ -386,7 +386,7 @@ public class Registers {
 							if (part.getName().equals("model")) {
 								assertNotNull(part);
 								assertEquals(content,
-										IOUtils.toString(part.getInputStream(), UTF_8));
+										IOUtils.toString(part.getInputStream(), StandardCharsets.UTF_8));
 								assertEquals(MimeType.APPLICATION_JSON.getValue(), part.getContentType());
 							}
 						}
