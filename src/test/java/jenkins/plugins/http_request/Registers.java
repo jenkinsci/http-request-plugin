@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Enumeration;
-import java.util.concurrent.ExecutionException;
 
 import javax.servlet.MultipartConfigElement;
 import javax.servlet.http.Part;
@@ -50,7 +49,7 @@ public class Registers {
 	static void registerContentTypeRequestChecker(final MimeType mimeType, final HttpMode httpMode, final String responseMessage) {
 		registerHandler("/incoming_" + mimeType.toString(), httpMode, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws ExecutionException, InterruptedException {
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
 				assertEquals(httpMode.name(), request.getMethod());
 
 				Enumeration<String> headers = request.getHeaders().getValues(HttpHeaders.CONTENT_TYPE);
@@ -186,7 +185,7 @@ public class Registers {
 		// Check that request body is present and that the containing parameter ${Tag} has been resolved to "trunk"
 		registerHandler("/checkRequestBodyWithTag", HttpMode.POST, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws ExecutionException, InterruptedException {
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
 				assertEquals("POST", request.getMethod());
 				String requestBody = requestBody(request);
 
@@ -279,7 +278,7 @@ public class Registers {
 		// Check that request body is present and equals to TestRequestBody
 		registerHandler("/checkRequestBody", HttpMode.POST, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws ExecutionException, InterruptedException {
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
 				assertEquals("POST", request.getMethod());
 				String requestBody = requestBody(request);
 				assertEquals("TestRequestBody", requestBody);

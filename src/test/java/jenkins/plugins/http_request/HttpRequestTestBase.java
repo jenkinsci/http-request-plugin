@@ -1,12 +1,11 @@
 package jenkins.plugins.http_request;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.http.entity.ContentType;
 import org.eclipse.jetty.http.HttpStatus;
@@ -96,9 +95,8 @@ public class HttpRequestTestBase {
 			return true;
 		}
 
-		String requestBody(Request request) throws ExecutionException, InterruptedException {
-			CompletableFuture<String> completable = Content.Source.asStringAsync(request, StandardCharsets.UTF_8);
-			return completable.get();
+		String requestBody(Request request) throws IOException {
+			return Content.Source.asString(request, StandardCharsets.UTF_8);
 		}
 
 		void okAllIsWell(Response response, Callback callback) {
