@@ -379,7 +379,7 @@ public class Registers {
 								assertNotNull(part);
 								assertEquals(file2.length(), part.getSize());
 								assertEquals(file2.getName(), part.getSubmittedFileName());
-								assertEquals(MimeType.TEXT_PLAIN.getValue(), part.getContentType());
+								assertEquals(MimeType.APPLICATION_ZIP.getValue(), part.getContentType());
 							}
 
 							if (part.getName().equals("model")) {
