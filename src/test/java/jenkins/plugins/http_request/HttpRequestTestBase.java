@@ -92,8 +92,7 @@ public class HttpRequestTestBase {
 	public static abstract class SimpleHandler extends Handler.Abstract {
 		@Override
 		public final boolean handle(Request request, Response response, Callback callback) throws Exception {
-			doHandle(request, response, callback);
-			return true;
+			return doHandle(request, response, callback);
 		}
 
 		String requestBody(Request request) throws IOException {
@@ -138,13 +137,11 @@ public class HttpRequestTestBase {
 					if (handlerByMethod != null) {
 						Handler handler = handlerByMethod.get(HttpMode.valueOf(request.getMethod()));
 						if (handler != null) {
-							handler.handle(request, response, callback);
-							return true;
+							return handler.handle(request, response, callback);
 						}
 					}
 
-					super.handle(request, response, callback);
-					return true;
+					return super.handle(request, response, callback);
 				}
 			});
 			server.setHandler(context);
