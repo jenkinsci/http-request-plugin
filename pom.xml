@@ -51,7 +51,9 @@ THE SOFTWARE.
 		<revision>1.19</revision>
 		<changelist>-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/http-request-plugin</gitHubRepo>
-                <jenkins.version>2.361.4</jenkins.version>
+                <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
+                <jenkins.baseline>2.426</jenkins.baseline>
+                <jenkins.version>${jenkins.baseline}.3</jenkins.version>
 		<spotbugs.failOnError>true</spotbugs.failOnError>
 		<spotbugs.threshold>Low</spotbugs.threshold>
 		<hpi.compatibleSinceVersion>1.16</hpi.compatibleSinceVersion>
@@ -75,8 +77,8 @@ THE SOFTWARE.
 		<dependencies>
 			<dependency>
 				<groupId>io.jenkins.tools.bom</groupId>
-                                <artifactId>bom-2.361.x</artifactId>
-                                <version>2102.v854b_fec19c92</version>
+                                <artifactId>bom-${jenkins.baseline}.x</artifactId>
+                                <version>3208.vb_21177d4b_cd9</version>
 				<scope>import</scope>
 				<type>pom</type>
 			</dependency>
