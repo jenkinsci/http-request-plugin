@@ -15,7 +15,6 @@ import static jenkins.plugins.http_request.Registers.registerTimeout;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -637,7 +636,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         //configure server
         registerHandler("/doPostBody", HttpMode.POST, new SimpleHandler() {
             @Override
-            boolean doHandle(Request request, Response response, Callback callback) throws IOException, ExecutionException, InterruptedException {
+            boolean doHandle(Request request, Response response, Callback callback) throws ExecutionException, InterruptedException {
                 assertEquals("POST", request.getMethod());
 
                 String body = requestBody(request);

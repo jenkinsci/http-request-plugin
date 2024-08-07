@@ -1,6 +1,5 @@
 package jenkins.plugins.http_request;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -97,20 +96,20 @@ public class HttpRequestTestBase {
 			return true;
 		}
 
-		String requestBody(Request request) throws IOException, ExecutionException, InterruptedException {
+		String requestBody(Request request) throws ExecutionException, InterruptedException {
 			CompletableFuture<String> completable = Content.Source.asStringAsync(request, StandardCharsets.UTF_8);
 			return completable.get();
 		}
 
-		void okAllIsWell(Response response, Callback callback) throws IOException {
+		void okAllIsWell(Response response, Callback callback) {
 			okText(response, ALL_IS_WELL, callback);
 		}
 
-		void okText(Response response, String body, Callback callback) throws IOException {
+		void okText(Response response, String body, Callback callback) {
 			body(response, HttpStatus.OK_200, ContentType.TEXT_PLAIN, body, callback);
 		}
 
-		void body(Response response, int status, ContentType contentType, String body, Callback callback) throws IOException {
+		void body(Response response, int status, ContentType contentType, String body, Callback callback) {
 			response.getHeaders().put(String.valueOf(contentType), "text/plain; charset=UTF-8");
 			response.setStatus(status);
 			Content.Sink.write(response, true, body, callback);

@@ -19,7 +19,6 @@ import static jenkins.plugins.http_request.Registers.registerUnwrappedPutFileUpl
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -784,7 +783,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		});
 		registerHandler("/test-auth", HttpMode.GET, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) {
 				String jsessionValue = "";
 				List<HttpCookie> cookies = Request.getCookies(request);
 				for (HttpCookie cookie : cookies) {

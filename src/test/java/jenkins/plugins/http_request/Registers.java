@@ -36,7 +36,7 @@ public class Registers {
 	static void registerRequestChecker(final HttpMode method) {
 		registerHandler("/do" + method.name(), method, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) {
 				assertEquals(method.name(), request.getMethod());
 
 				String query = request.getHttpURI().getQuery();
@@ -50,7 +50,7 @@ public class Registers {
 	static void registerContentTypeRequestChecker(final MimeType mimeType, final HttpMode httpMode, final String responseMessage) {
 		registerHandler("/incoming_" + mimeType.toString(), httpMode, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException, ExecutionException, InterruptedException {
+			boolean doHandle(Request request, Response response, Callback callback) throws ExecutionException, InterruptedException {
 				assertEquals(httpMode.name(), request.getMethod());
 
 				Enumeration<String> headers = request.getHeaders().getValues(HttpHeaders.CONTENT_TYPE);
@@ -76,7 +76,7 @@ public class Registers {
 	static void registerAcceptedTypeRequestChecker(final MimeType mimeType) {
 		registerHandler("/accept_" + mimeType.toString(), HttpMode.GET, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) {
 				assertEquals("GET", request.getMethod());
 
 				Enumeration<String> headers = request.getHeaders().getValues(HttpHeaders.ACCEPT);
@@ -142,7 +142,7 @@ public class Registers {
 		// Check the form authentication
 		registerHandler("/formAuth", HttpMode.GET, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) {
 				okAllIsWell(response, callback);
 				return true;
 			}
@@ -153,7 +153,7 @@ public class Registers {
 		// Check the form authentication header
 		registerHandler("/formAuthBad", HttpMode.GET, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) {
 				body(response, HttpStatus.BAD_REQUEST_400, ContentType.TEXT_PLAIN, "Not allowed", callback);
 				return false;
 			}
@@ -164,7 +164,7 @@ public class Registers {
 		// Check the basic authentication header
 		registerHandler("/basicAuth", HttpMode.GET, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) {
 				Enumeration<String> headers = request.getHeaders().getValues(HttpHeaders.AUTHORIZATION);
 
 				String value = headers.nextElement();
@@ -186,7 +186,7 @@ public class Registers {
 		// Check that request body is present and that the containing parameter ${Tag} has been resolved to "trunk"
 		registerHandler("/checkRequestBodyWithTag", HttpMode.POST, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException, ExecutionException, InterruptedException {
+			boolean doHandle(Request request, Response response, Callback callback) throws ExecutionException, InterruptedException {
 				assertEquals("POST", request.getMethod());
 				String requestBody = requestBody(request);
 
@@ -201,7 +201,7 @@ public class Registers {
 		// Check the custom headers
 		registerHandler("/customHeaders", HttpMode.GET, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) {
 				Enumeration<String> headers = request.getHeaders().getValues("customHeader");
 
 				String value1 = headers.nextElement();
@@ -221,7 +221,7 @@ public class Registers {
 		// Return an invalid status code
 		registerHandler("/invalidStatusCode", HttpMode.GET, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) {
 				assertEquals("GET", request.getMethod());
 				String query = request.getHttpURI().getQuery();
 				assertNull(query);
@@ -236,7 +236,7 @@ public class Registers {
 		// Check if the parameters in custom headers have been resolved
 		registerHandler("/customHeadersResolved", HttpMode.POST, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) {
 				Enumeration<String> headers = request.getHeaders().getValues("resolveCustomParam");
 
 				String value = headers.nextElement();
@@ -279,7 +279,7 @@ public class Registers {
 		// Check that request body is present and equals to TestRequestBody
 		registerHandler("/checkRequestBody", HttpMode.POST, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException, ExecutionException, InterruptedException {
+			boolean doHandle(Request request, Response response, Callback callback) throws ExecutionException, InterruptedException {
 				assertEquals("POST", request.getMethod());
 				String requestBody = requestBody(request);
 				assertEquals("TestRequestBody", requestBody);
@@ -414,7 +414,7 @@ public class Registers {
 			}
 
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) {
 				assertEquals("PUT", request.getMethod());
 				assertFalse(isMultipartRequest(request));
 				assertEquals(uploadFile.length(), request.getLength());
