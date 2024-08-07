@@ -642,7 +642,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
                 String body = requestBody(request);
                 body(response, HttpStatus.OK_200, ContentType.TEXT_PLAIN, body, callback);
-				return true;
+                return true;
             }
         });
 
