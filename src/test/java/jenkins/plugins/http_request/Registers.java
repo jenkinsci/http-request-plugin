@@ -14,8 +14,6 @@ import java.util.Enumeration;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.MultipartConfigElement;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
 import org.apache.commons.io.IOUtils;
@@ -306,7 +304,10 @@ public class Registers {
 			}
 
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException, ServletException {
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+				String MULTIPART = "org.eclipse.jetty.servlet.MultiPartFile.multiPartInputStream";
+				MultiPartFormInputStream multipartInputStream = (MultiPartFormInputStream) request.getAttribute(MULTIPART);
+
 				assertEquals("POST", request.getMethod());
 				assertTrue(isMultipartRequest(request));
 
@@ -314,16 +315,19 @@ public class Registers {
 				enableMultipartSupport(request, multipartConfig);
 
 				try {
-					/*Part part = request.getPart("file-name");
-					assertNotNull(part);
-					assertEquals(uploadFile.length(), part.getSize());
-					assertEquals(uploadFile.getName(), part.getSubmittedFileName());
-					assertEquals(MimeType.APPLICATION_ZIP.getValue(), part.getContentType());*/
+					if (multipartInputStream != null) {
+						for (Part part : multipartInputStream.getParts()) {
+							if (part.getName().equals("file-name")) {
+								assertNotNull(part);
+								assertEquals(uploadFile.length(), part.getSize());
+								assertEquals(uploadFile.getName(), part.getSubmittedFileName());
+								assertEquals(MimeType.APPLICATION_ZIP.getValue(), part.getContentType());
+							}
+						}
+					}
 
 					body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN, responseText, callback);
 				} finally {
-					String MULTIPART = "org.eclipse.jetty.servlet.MultiPartFile.multiPartInputStream";
-					MultiPartFormInputStream multipartInputStream = (MultiPartFormInputStream) request.getAttribute(MULTIPART);
 					if (multipartInputStream != null) {
 						multipartInputStream.deleteParts();
 					}
@@ -350,7 +354,11 @@ public class Registers {
 			}
 
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException, ServletException {
+			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+				String MULTIPART =
+						"org.eclipse.jetty.servlet.MultiPartFile.multiPartInputStream";
+				MultiPartFormInputStream multipartInputStream =
+						(MultiPartFormInputStream) request.getAttribute(MULTIPART);
 				assertEquals("POST", request.getMethod());
 				assertTrue(isMultipartRequest(request));
 
@@ -359,32 +367,35 @@ public class Registers {
 				enableMultipartSupport(request, multipartConfig);
 
 				try {
-					/*Part file1Part = request.getPart("file1");
-					assertNotNull(file1Part);
-					assertEquals(file1.length(), file1Part.getSize());
-					assertEquals(file1.getName(), file1Part.getSubmittedFileName());
-					assertEquals(MimeType.TEXT_PLAIN.getValue(), file1Part.getContentType());
+					if (multipartInputStream != null) {
+						for (Part part : multipartInputStream.getParts()) {
+							if (part.getName().equals("file1")) {
+								assertNotNull(part);
+								assertEquals(file1.length(), part.getSize());
+								assertEquals(file1.getName(), part.getSubmittedFileName());
+								assertEquals(MimeType.TEXT_PLAIN.getValue(), part.getContentType());
+							}
 
-					Part file2Part = request.getPart("file2");
-					assertNotNull(file2Part);
-					assertEquals(file2.length(), file2Part.getSize());
-					assertEquals(file2.getName(), file2Part.getSubmittedFileName());
-					assertEquals(MimeType.APPLICATION_ZIP.getValue(), file2Part.getContentType());
+							if (part.getName().equals("file2")) {
+								assertNotNull(part);
+								assertEquals(file2.length(), part.getSize());
+								assertEquals(file2.getName(), part.getSubmittedFileName());
+								assertEquals(MimeType.TEXT_PLAIN.getValue(), part.getContentType());
+							}
 
-					Part modelPart = request.getPart("model");
-					assertNotNull(modelPart);
-					assertEquals(content,
-							IOUtils.toString(modelPart.getInputStream(), UTF_8));
-					assertEquals(MimeType.APPLICATION_JSON.getValue(), modelPart.getContentType());*/
+							if (part.getName().equals("model")) {
+								assertNotNull(part);
+								assertEquals(content,
+										IOUtils.toString(part.getInputStream(), UTF_8));
+								assertEquals(MimeType.APPLICATION_JSON.getValue(), part.getContentType());
+							}
+						}
+					}
 
 					// So far so good
 					body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN,
 							responseText, callback);
 				} finally {
-					String MULTIPART =
-							"org.eclipse.jetty.servlet.MultiPartFile.multiPartInputStream";
-					MultiPartFormInputStream multipartInputStream =
-							(MultiPartFormInputStream) request.getAttribute(MULTIPART);
 					if (multipartInputStream != null) {
 						multipartInputStream.deleteParts();
 					}
