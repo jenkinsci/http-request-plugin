@@ -1,15 +1,14 @@
 package jenkins.plugins.http_request;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.http.entity.ContentType;
+import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.io.Content;
 import org.eclipse.jetty.server.Connector;
@@ -93,13 +92,11 @@ public class HttpRequestTestBase {
 	public static abstract class SimpleHandler extends Handler.Abstract {
 		@Override
 		public final boolean handle(Request request, Response response, Callback callback) throws Exception {
-			doHandle(request, response, callback);
-			return true;
+			return doHandle(request, response, callback);
 		}
 
-		String requestBody(Request request) throws ExecutionException, InterruptedException {
-			CompletableFuture<String> completable = Content.Source.asStringAsync(request, UTF_8);
-			return completable.get();
+		String requestBody(Request request) throws IOException {
+			return Content.Source.asString(request, StandardCharsets.UTF_8);
 		}
 
 		void okAllIsWell(Response response, Callback callback) {
@@ -111,7 +108,9 @@ public class HttpRequestTestBase {
 		}
 
 		void body(Response response, int status, ContentType contentType, String body, Callback callback) {
-			response.getHeaders().put(String.valueOf(contentType), "text/plain; charset=UTF-8");
+			if (contentType != null) {
+				response.getHeaders().add(HttpHeader.CONTENT_TYPE, contentType.toString());
+			}
 			response.setStatus(status);
 			Content.Sink.write(response, true, body, callback);
 		}
@@ -140,13 +139,11 @@ public class HttpRequestTestBase {
 					if (handlerByMethod != null) {
 						Handler handler = handlerByMethod.get(HttpMode.valueOf(request.getMethod()));
 						if (handler != null) {
-							handler.handle(request, response, callback);
-							return true;
+							return handler.handle(request, response, callback);
 						}
 					}
 
-					super.handle(request, response, callback);
-					return true;
+					return super.handle(request, response, callback);
 				}
 			});
 			server.setHandler(context);

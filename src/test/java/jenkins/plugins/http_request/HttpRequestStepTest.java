@@ -20,7 +20,6 @@ import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.entity.ContentType;
@@ -637,12 +636,12 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         //configure server
         registerHandler("/doPostBody", HttpMode.POST, new SimpleHandler() {
             @Override
-            boolean doHandle(Request request, Response response, Callback callback) throws IOException, ExecutionException, InterruptedException {
+            boolean doHandle(Request request, Response response, Callback callback) throws IOException {
                 assertEquals("POST", request.getMethod());
 
                 String body = requestBody(request);
                 body(response, HttpStatus.OK_200, ContentType.TEXT_PLAIN, body, callback);
-				return true;
+                return true;
             }
         });
 

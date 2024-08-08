@@ -19,16 +19,11 @@ import static jenkins.plugins.http_request.Registers.registerUnwrappedPutFileUpl
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
@@ -771,16 +766,15 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		registerHandler("/form-auth", HttpMode.POST, new SimpleHandler() {
 			@Override
 			boolean doHandle(Request request, Response response, Callback callback) throws Exception {
-				Fields allParameters = Request.getParameters(request);
-				String username = allParameters.getValue(paramUsername);
-				String password = allParameters.getValue(paramPassword);
+				Fields parameters = Request.getParameters(request);
+				String username = parameters.getValue(paramUsername);
+				String password = parameters.getValue(paramPassword);
 
 				if (!username.equals(valueUsername) || !password.equals(valuePassword)) {
 					response.setStatus(401);
 					return false;
 				}
-				HttpCookie cookie = HttpCookie.build(sessionName, "ok")
-						.build();
+				HttpCookie cookie = HttpCookie.build(sessionName, "ok").build();
 				Response.addCookie(response, cookie);
 				okAllIsWell(response, callback);
 				return true;
@@ -788,7 +782,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		});
 		registerHandler("/test-auth", HttpMode.GET, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) {
 				String jsessionValue = "";
 				List<HttpCookie> cookies = Request.getCookies(request);
 				for (HttpCookie cookie : cookies) {
