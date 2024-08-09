@@ -8,19 +8,25 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Enumeration;
 import java.util.Map;
 
 import javax.servlet.MultipartConfigElement;
+import javax.servlet.ServletException;
 import javax.servlet.http.Part;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
 import org.eclipse.jetty.ee8.nested.MultiPartFormInputStream;
+import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.http.MultiPart;
+import org.eclipse.jetty.http.MultiPartConfig;
+import org.eclipse.jetty.http.MultiPartFormData;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
@@ -294,42 +300,28 @@ public class Registers {
 
 			private static final String MULTIPART_FORMDATA_TYPE = "multipart/form-data";
 
-			private void enableMultipartSupport(Request request, MultipartConfigElement multipartConfig) {
-				request.setAttribute("org.eclipse.jetty.multipartConfig", multipartConfig);
-			}
-
 			private boolean isMultipartRequest(Request request) {
 				return request.getHeaders().get(HttpHeaders.CONTENT_TYPE) != null && request.getHeaders().get(HttpHeaders.CONTENT_TYPE).startsWith(MULTIPART_FORMDATA_TYPE);
 			}
 
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
-				String MULTIPART = "org.eclipse.jetty.servlet.MultiPartFile.multiPartInputStream";
-				MultiPartFormInputStream multipartInputStream = (MultiPartFormInputStream) request.getAttribute(MULTIPART);
-
+			boolean doHandle(Request request, Response response, Callback callback) throws ServletException {
 				assertEquals("POST", request.getMethod());
 				assertTrue(isMultipartRequest(request));
-
-				MultipartConfigElement multipartConfig = new MultipartConfigElement(testFolder.getAbsolutePath());
-				enableMultipartSupport(request, multipartConfig);
-
 				try {
-					if (multipartInputStream != null) {
-						for (Part part : multipartInputStream.getParts()) {
-							if (part.getName().equals("file-name")) {
-								assertNotNull(part);
-								assertEquals(uploadFile.length(), part.getSize());
-								assertEquals(uploadFile.getName(), part.getSubmittedFileName());
-								assertEquals(MimeType.APPLICATION_ZIP.getValue(), part.getContentType());
-							}
+					String contentType = request.getHeaders().get(HttpHeader.CONTENT_TYPE);
+					MultiPartFormData.Parts parts = MultiPartFormData.from(request, request, contentType, new MultiPartConfig.Builder().build()).get();
+					for (MultiPart.Part part : parts) {
+						if (part.getName().equals("file-name")) {
+							assertNotNull(part);
+							assertEquals(uploadFile.length(), part.getLength());
+							assertEquals(uploadFile.getName(), part.getFileName());
+							assertEquals(MimeType.APPLICATION_ZIP.getValue(), part.getHeaders().get(HttpHeader.CONTENT_TYPE));
 						}
 					}
-
 					body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN, responseText, callback);
-				} finally {
-					if (multipartInputStream != null) {
-						multipartInputStream.deleteParts();
-					}
+				} catch (Exception e) {
+					throw new ServletException(e);
 				}
 				return true;
 			}
@@ -342,62 +334,45 @@ public class Registers {
 
 			private static final String MULTIPART_FORMDATA_TYPE = "multipart/form-data";
 
-			private void enableMultipartSupport(Request request,
-					MultipartConfigElement multipartConfig) {
-				request.setAttribute("org.eclipse.jetty.multipartConfig", multipartConfig);
-			}
-
 			private boolean isMultipartRequest(Request request) {
 				return request.getHeaders().get(HttpHeaders.CONTENT_TYPE) != null
 						&& request.getHeaders().get(HttpHeaders.CONTENT_TYPE).startsWith(MULTIPART_FORMDATA_TYPE);
 			}
 
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws IOException {
-				String MULTIPART =
-						"org.eclipse.jetty.servlet.MultiPartFile.multiPartInputStream";
-				MultiPartFormInputStream multipartInputStream =
-						(MultiPartFormInputStream) request.getAttribute(MULTIPART);
+			boolean doHandle(Request request, Response response, Callback callback) throws ServletException {
 				assertEquals("POST", request.getMethod());
 				assertTrue(isMultipartRequest(request));
-
-				MultipartConfigElement multipartConfig =
-						new MultipartConfigElement(testFolder.getAbsolutePath());
-				enableMultipartSupport(request, multipartConfig);
-
 				try {
-					if (multipartInputStream != null) {
-						for (Part part : multipartInputStream.getParts()) {
-							if (part.getName().equals("file1")) {
-								assertNotNull(part);
-								assertEquals(file1.length(), part.getSize());
-								assertEquals(file1.getName(), part.getSubmittedFileName());
-								assertEquals(MimeType.TEXT_PLAIN.getValue(), part.getContentType());
-							}
+					String contentType = request.getHeaders().get(HttpHeader.CONTENT_TYPE);
+					MultiPartFormData.Parts parts = MultiPartFormData.from(request, request, contentType, new MultiPartConfig.Builder().build()).get();
+					for (MultiPart.Part part : parts) {
+						if (part.getName().equals("file1")) {
+							assertNotNull(part);
+							assertEquals(file1.length(), part.getLength());
+							assertEquals(file1.getName(), part.getFileName());
+							assertEquals(MimeType.TEXT_PLAIN.getValue(), part.getHeaders().get(HttpHeader.CONTENT_TYPE));
+						}
 
-							if (part.getName().equals("file2")) {
-								assertNotNull(part);
-								assertEquals(file2.length(), part.getSize());
-								assertEquals(file2.getName(), part.getSubmittedFileName());
-								assertEquals(MimeType.APPLICATION_ZIP.getValue(), part.getContentType());
-							}
+						if (part.getName().equals("file2")) {
+							assertNotNull(part);
+							assertEquals(file2.length(), part.getLength());
+							assertEquals(file2.getName(), part.getFileName());
+							assertEquals(MimeType.APPLICATION_ZIP.getValue(), part.getHeaders().get(HttpHeader.CONTENT_TYPE));
+						}
 
-							if (part.getName().equals("model")) {
-								assertNotNull(part);
-								assertEquals(content,
-										IOUtils.toString(part.getInputStream(), StandardCharsets.UTF_8));
-								assertEquals(MimeType.APPLICATION_JSON.getValue(), part.getContentType());
-							}
+						if (part.getName().equals("model")) {
+							assertNotNull(part);
+							assertEquals(content, part.getContentAsString(StandardCharsets.UTF_8));
+							assertEquals(MimeType.APPLICATION_JSON.getValue(), part.getHeaders().get(HttpHeader.CONTENT_TYPE));
 						}
 					}
 
 					// So far so good
 					body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN,
 							responseText, callback);
-				} finally {
-					if (multipartInputStream != null) {
-						multipartInputStream.deleteParts();
-					}
+				} catch (Exception e) {
+					throw new ServletException(e);
 				}
 				return true;
 			}
