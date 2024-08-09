@@ -32,6 +32,7 @@ import org.apache.http.ProtocolVersion;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHttpResponse;
 import org.eclipse.jetty.http.HttpCookie;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
@@ -778,7 +779,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 				String password = parameters.getValue(paramPassword);
 
 				if (!username.equals(valueUsername) || !password.equals(valuePassword)) {
-					response.setStatus(401);
+					Response.writeError(request, response, callback, HttpStatus.UNAUTHORIZED_401);
 					return true;
 				}
 				HttpCookie cookie = HttpCookie.build(sessionName, "ok").build();
@@ -799,7 +800,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 				}
 
 				if (!jsessionValue.equals("ok")) {
-					response.setStatus(401);
+					Response.writeError(request, response, callback, HttpStatus.UNAUTHORIZED_401);
 					return true;
 				}
 				return okAllIsWell(response, callback);

@@ -1,5 +1,11 @@
 package jenkins.plugins.http_request;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.both;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThan;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -110,6 +116,7 @@ public class HttpRequestTestBase {
 		}
 
 		boolean body(Response response, int status, ContentType contentType, String body, Callback callback) {
+			assertThat(status, is(both(greaterThanOrEqualTo(200)).and(lessThan(300))));
 			if (contentType != null) {
 				response.getHeaders().add(HttpHeader.CONTENT_TYPE, contentType.toString());
 			}

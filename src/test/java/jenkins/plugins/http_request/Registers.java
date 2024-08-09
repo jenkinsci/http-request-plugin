@@ -156,7 +156,8 @@ public class Registers {
 		registerHandler("/formAuthBad", HttpMode.GET, new SimpleHandler() {
 			@Override
 			boolean doHandle(Request request, Response response, Callback callback) {
-				return body(response, HttpStatus.BAD_REQUEST_400, ContentType.TEXT_PLAIN, "Not allowed", callback);
+				Response.writeError(request, response, callback, HttpStatus.BAD_REQUEST_400, "Not allowed");
+				return true;
 			}
 		});
 	}
@@ -224,7 +225,8 @@ public class Registers {
 				String query = request.getHttpURI().getQuery();
 				assertNull(query);
 
-				return body(response, HttpStatus.BAD_REQUEST_400, ContentType.TEXT_PLAIN, "Throwing status 400 for test", callback);
+				Response.writeError(request, response, callback, HttpStatus.BAD_REQUEST_400, "Throwing status 400 for test");
+				return true;
 			}
 		});
 	}
