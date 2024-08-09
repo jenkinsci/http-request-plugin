@@ -57,6 +57,9 @@ THE SOFTWARE.
 		<spotbugs.failOnError>true</spotbugs.failOnError>
 		<spotbugs.threshold>Low</spotbugs.threshold>
 		<hpi.compatibleSinceVersion>1.16</hpi.compatibleSinceVersion>
+		<!-- TODO JENKINS-73339 until in parent POM -->
+		<jenkins-test-harness.version>2250.v03a_1295b_0a_30</jenkins-test-harness.version>
+		<maven.compiler.testRelease>17</maven.compiler.testRelease>
 	</properties>
 
 	<repositories>

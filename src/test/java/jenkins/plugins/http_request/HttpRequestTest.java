@@ -19,22 +19,24 @@ import static jenkins.plugins.http_request.Registers.registerUnwrappedPutFileUpl
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.ServletException;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHttpResponse;
+import org.eclipse.jetty.http.HttpCookie;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
+import org.eclipse.jetty.util.Fields;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Rule;
@@ -766,23 +768,31 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		registerHandler("/form-auth", HttpMode.POST, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
-				String username = request.getParameter(paramUsername);
-				String password = request.getParameter(paramPassword);
-				if (!username.equals(valueUsername) || !password.equals(valuePassword)) {
-					response.setStatus(401);
-					return;
+			boolean doHandle(Request request, Response response, Callback callback) throws ServletException {
+				Fields parameters;
+				try {
+					parameters = Request.getParameters(request);
+				} catch (Exception e) {
+					throw new ServletException(e);
 				}
-				response.addCookie(new Cookie(sessionName, "ok"));
-				okAllIsWell(response);
+				String username = parameters.getValue(paramUsername);
+				String password = parameters.getValue(paramPassword);
+
+				if (!username.equals(valueUsername) || !password.equals(valuePassword)) {
+					Response.writeError(request, response, callback, HttpStatus.UNAUTHORIZED_401);
+					return true;
+				}
+				HttpCookie cookie = HttpCookie.build(sessionName, "ok").build();
+				Response.addCookie(response, cookie);
+				return okAllIsWell(response, callback);
 			}
 		});
 		registerHandler("/test-auth", HttpMode.GET, new SimpleHandler() {
 			@Override
-			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+			boolean doHandle(Request request, Response response, Callback callback) {
 				String jsessionValue = "";
-				Cookie[] cookies = request.getCookies();
-				for (Cookie cookie : cookies) {
+				List<HttpCookie> cookies = Request.getCookies(request);
+				for (HttpCookie cookie : cookies) {
 					if (cookie.getName().equals(sessionName)) {
 						jsessionValue = cookie.getValue();
 						break;
@@ -790,10 +800,10 @@ public class HttpRequestTest extends HttpRequestTestBase {
 				}
 
 				if (!jsessionValue.equals("ok")) {
-					response.setStatus(401);
-					return;
+					Response.writeError(request, response, callback, HttpStatus.UNAUTHORIZED_401);
+					return true;
 				}
-				okAllIsWell(response);
+				return okAllIsWell(response, callback);
 			}
 		});
 
@@ -982,7 +992,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		final File testFolder = folder.newFolder();
 		File uploadFile = File.createTempFile("upload", ".zip", testFolder);
 		String responseText = "File upload successful!";
-		registerFileUpload(testFolder, uploadFile, responseText);
+		registerFileUpload(uploadFile, responseText);
 
 		// Prepare HttpRequest
 		HttpRequest httpRequest = new HttpRequest(baseURL() + "/uploadFile");

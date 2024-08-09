@@ -1,24 +1,33 @@
 package jenkins.plugins.http_request;
 
-import java.io.BufferedReader;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.both;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThan;
+
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.entity.ContentType;
+import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.io.Content;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.DefaultHandler;
+import org.eclipse.jetty.util.Callback;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -31,7 +40,6 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-import org.apache.commons.io.IOUtils;
 
 /**
  * @author Martin d'Anjou
@@ -89,34 +97,35 @@ public class HttpRequestTestBase {
 		}
 	}
 
-	public static abstract class SimpleHandler extends DefaultHandler {
+	public static abstract class SimpleHandler extends Handler.Abstract {
 		@Override
-		public final void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-			doHandle(target, baseRequest, request, response);
-			baseRequest.setHandled(true);
+		public final boolean handle(Request request, Response response, Callback callback) throws IOException, ServletException {
+			return doHandle(request, response, callback);
 		}
 
-		String requestBody(HttpServletRequest request) throws IOException {
-			try (BufferedReader reader = request.getReader()) {
-				return IOUtils.toString(reader);
+		String requestBody(Request request) throws IOException {
+			return Content.Source.asString(request, StandardCharsets.UTF_8);
+		}
+
+		boolean okAllIsWell(Response response, Callback callback) {
+			return okText(response, ALL_IS_WELL, callback);
+		}
+
+		boolean okText(Response response, String body, Callback callback) {
+			return body(response, HttpStatus.OK_200, ContentType.TEXT_PLAIN, body, callback);
+		}
+
+		boolean body(Response response, int status, ContentType contentType, String body, Callback callback) {
+			assertThat(status, is(both(greaterThanOrEqualTo(200)).and(lessThan(300))));
+			if (contentType != null) {
+				response.getHeaders().add(HttpHeader.CONTENT_TYPE, contentType.toString());
 			}
-		}
-
-		void okAllIsWell(HttpServletResponse response) throws IOException {
-			okText(response, ALL_IS_WELL);
-		}
-
-		void okText(HttpServletResponse response, String body) throws IOException {
-			body(response, HttpServletResponse.SC_OK, ContentType.TEXT_PLAIN, body);
-		}
-
-		void body(HttpServletResponse response, int status, ContentType contentType, String body) throws IOException {
-			response.setContentType(contentType != null ? contentType.toString() : "");
 			response.setStatus(status);
-			response.getWriter().append(body);
+			Content.Sink.write(response, true, body, callback);
+			return true;
 		}
 
-		abstract void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException;
+		abstract boolean doHandle(Request request, Response response, Callback callback) throws IOException, ServletException;
 	}
 
 	private static final class ServerRunning {
@@ -134,17 +143,17 @@ public class HttpRequestTestBase {
 			context.setContextPath("/");
 			context.setHandler(new DefaultHandler() {
 				@Override
-				public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				public boolean handle(Request request, Response response, Callback callback) throws Exception {
+					String target = request.getHttpURI().getPath();
 					Map<HttpMode, Handler> handlerByMethod = handlersByMethodByTarget.get(target);
 					if (handlerByMethod != null) {
 						Handler handler = handlerByMethod.get(HttpMode.valueOf(request.getMethod()));
 						if (handler != null) {
-							handler.handle(target, baseRequest, request, response);
-							return;
+							return handler.handle(request, response, callback);
 						}
 					}
 
-					super.handle(target, baseRequest, request, response);
+					return super.handle(request, response, callback);
 				}
 			});
 			server.setHandler(context);

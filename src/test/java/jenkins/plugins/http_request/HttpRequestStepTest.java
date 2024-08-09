@@ -21,12 +21,12 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.entity.ContentType;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -636,11 +636,11 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         //configure server
         registerHandler("/doPostBody", HttpMode.POST, new SimpleHandler() {
             @Override
-            void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+            boolean doHandle(Request request, Response response, Callback callback) throws IOException {
                 assertEquals("POST", request.getMethod());
 
                 String body = requestBody(request);
-                body(response, HttpServletResponse.SC_OK, ContentType.TEXT_PLAIN, body);
+                return body(response, HttpStatus.OK_200, ContentType.TEXT_PLAIN, body, callback);
             }
         });
 
@@ -671,7 +671,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         final File testFolder = folder.newFolder();
         File uploadFile = File.createTempFile("upload", ".zip", testFolder);
         String responseText = "File upload successful!";
-        registerFileUpload(testFolder, uploadFile, responseText);
+        registerFileUpload(uploadFile, responseText);
 
         // Prepare HttpRequest
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "uploadFile");
@@ -700,13 +700,12 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
 	@Test
 	public void testFormData() throws Exception {
-		final File testFolder = folder.newFolder();
 		File projectRoot = Paths.get("").toAbsolutePath().toFile();
 		String responseText = "File upload successful!";
 		String json = "{\"foo\": \"bar\"}";
 		File file1 = new File(projectRoot, "src/test/resources/testdata/readme.txt");
 		File file2 = new File(projectRoot, "src/test/resources/testdata/small.zip");
-		registerFormData(testFolder, json, file1, file2, responseText);
+		registerFormData(json, file1, file2, responseText);
 
 		// Let's upload these files and a JSON
 		String script = "node {\n"
