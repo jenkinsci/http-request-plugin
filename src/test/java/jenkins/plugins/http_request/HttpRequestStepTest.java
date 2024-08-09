@@ -640,8 +640,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
                 assertEquals("POST", request.getMethod());
 
                 String body = requestBody(request);
-                body(response, HttpStatus.OK_200, ContentType.TEXT_PLAIN, body, callback);
-                return true;
+                return body(response, HttpStatus.OK_200, ContentType.TEXT_PLAIN, body, callback);
             }
         });
 

@@ -42,8 +42,7 @@ public class Registers {
 
 				String query = request.getHttpURI().getQuery();
 				assertNull(query);
-				okAllIsWell(response, callback);
-				return true;
+				return okAllIsWell(response, callback);
 			}
 		});
 	}
@@ -68,8 +67,7 @@ public class Registers {
 				String query = request.getHttpURI().getQuery();
 				assertNull(query);
 				String body = responseMessage != null ? responseMessage : requestBody(request);
-				body(response, HttpStatus.OK_200, mimeType.getContentType(), body, callback);
-				return true;
+				return body(response, HttpStatus.OK_200, mimeType.getContentType(), body, callback);
 			}
 		});
 	}
@@ -94,8 +92,7 @@ public class Registers {
 				}
 				String query = request.getHttpURI().getQuery();
 				assertNull(query);
-				okAllIsWell(response, callback);
-				return true;
+				return okAllIsWell(response, callback);
 			}
 		});
 	}
@@ -139,8 +136,7 @@ public class Registers {
 				value = parameters.get("param2");
 				assertEquals(1, value.length);
 				assertEquals("value2", value[0]);
-				okAllIsWell(response, callback);
-				return true;
+				return okAllIsWell(response, callback);
 			}
 		});
 	}
@@ -150,8 +146,7 @@ public class Registers {
 		registerHandler("/formAuth", HttpMode.GET, new SimpleHandler() {
 			@Override
 			boolean doHandle(Request request, Response response, Callback callback) {
-				okAllIsWell(response, callback);
-				return true;
+				return okAllIsWell(response, callback);
 			}
 		});
 	}
@@ -161,8 +156,7 @@ public class Registers {
 		registerHandler("/formAuthBad", HttpMode.GET, new SimpleHandler() {
 			@Override
 			boolean doHandle(Request request, Response response, Callback callback) {
-				body(response, HttpStatus.BAD_REQUEST_400, ContentType.TEXT_PLAIN, "Not allowed", callback);
-				return true;
+				return body(response, HttpStatus.BAD_REQUEST_400, ContentType.TEXT_PLAIN, "Not allowed", callback);
 			}
 		});
 	}
@@ -183,8 +177,7 @@ public class Registers {
 				assertEquals("username1", usernamePassword[0]);
 				assertEquals("password1", usernamePassword[1]);
 
-				okAllIsWell(response, callback);
-				return true;
+				return okAllIsWell(response, callback);
 			}
 		});
 	}
@@ -198,8 +191,7 @@ public class Registers {
 				String requestBody = requestBody(request);
 
 				assertEquals("cleanupDir=D:/continuousIntegration/deployments/Daimler/trunk/standalone", requestBody);
-				okAllIsWell(response, callback);
-				return true;
+				return okAllIsWell(response, callback);
 			}
 		});
 	}
@@ -218,8 +210,7 @@ public class Registers {
 				assertEquals("value1", value1);
 				assertEquals("value2", value2);
 
-				okAllIsWell(response, callback);
-				return true;
+				return okAllIsWell(response, callback);
 			}
 		});
 	}
@@ -233,8 +224,7 @@ public class Registers {
 				String query = request.getHttpURI().getQuery();
 				assertNull(query);
 
-				body(response, HttpStatus.BAD_REQUEST_400, ContentType.TEXT_PLAIN, "Throwing status 400 for test", callback);
-				return true;
+				return body(response, HttpStatus.BAD_REQUEST_400, ContentType.TEXT_PLAIN, "Throwing status 400 for test", callback);
 			}
 		});
 	}
@@ -255,8 +245,7 @@ public class Registers {
 				assertFalse(headers.hasMoreElements());
 				assertEquals("C:/path/to/my/workspace", value);
 
-				okAllIsWell(response, callback);
-				return true;
+				return okAllIsWell(response, callback);
 			}
 		});
 	}
@@ -281,8 +270,7 @@ public class Registers {
 				assertEquals(1, value.length);
 				assertEquals("value", value[0]);
 
-				okAllIsWell(response, callback);
-				return true;
+				return okAllIsWell(response, callback);
 			}
 		});
 	}
@@ -295,8 +283,7 @@ public class Registers {
 				assertEquals("POST", request.getMethod());
 				String requestBody = requestBody(request);
 				assertEquals("TestRequestBody", requestBody);
-				okAllIsWell(response, callback);
-				return true;
+				return okAllIsWell(response, callback);
 			}
 		});
 	}
@@ -329,8 +316,7 @@ public class Registers {
 				assertEquals(uploadFile.getName(), part.getFileName());
 				assertEquals(MimeType.APPLICATION_ZIP.getValue(), part.getHeaders().get(HttpHeader.CONTENT_TYPE));
 
-				body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN, responseText, callback);
-				return true;
+				return body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN, responseText, callback);
 			}
 		});
 	}
@@ -377,9 +363,8 @@ public class Registers {
 				assertEquals(MimeType.APPLICATION_JSON.getValue(), modelPart.getHeaders().get(HttpHeader.CONTENT_TYPE));
 
 				// So far so good
-				body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN,
+				return body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN,
 						responseText, callback);
-				return true;
 			}
 		});
 	}
@@ -399,8 +384,7 @@ public class Registers {
 				assertFalse(isMultipartRequest(request));
 				assertEquals(uploadFile.length(), request.getLength());
 				assertEquals(MimeType.APPLICATION_ZIP.getValue(), request.getHeaders().get(HttpHeader.CONTENT_TYPE));
-				body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN, responseText, callback);
-				return true;
+				return body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN, responseText, callback);
 			}
 		});
 	}

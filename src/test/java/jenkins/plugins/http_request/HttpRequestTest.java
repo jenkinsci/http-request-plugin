@@ -783,8 +783,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 				}
 				HttpCookie cookie = HttpCookie.build(sessionName, "ok").build();
 				Response.addCookie(response, cookie);
-				okAllIsWell(response, callback);
-				return true;
+				return okAllIsWell(response, callback);
 			}
 		});
 		registerHandler("/test-auth", HttpMode.GET, new SimpleHandler() {
@@ -803,8 +802,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 					response.setStatus(401);
 					return true;
 				}
-				okAllIsWell(response, callback);
-				return true;
+				return okAllIsWell(response, callback);
 			}
 		});
 

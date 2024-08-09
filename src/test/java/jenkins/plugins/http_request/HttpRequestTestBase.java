@@ -101,20 +101,21 @@ public class HttpRequestTestBase {
 			return Content.Source.asString(request, StandardCharsets.UTF_8);
 		}
 
-		void okAllIsWell(Response response, Callback callback) {
-			okText(response, ALL_IS_WELL, callback);
+		boolean okAllIsWell(Response response, Callback callback) {
+			return okText(response, ALL_IS_WELL, callback);
 		}
 
-		void okText(Response response, String body, Callback callback) {
-			body(response, HttpStatus.OK_200, ContentType.TEXT_PLAIN, body, callback);
+		boolean okText(Response response, String body, Callback callback) {
+			return body(response, HttpStatus.OK_200, ContentType.TEXT_PLAIN, body, callback);
 		}
 
-		void body(Response response, int status, ContentType contentType, String body, Callback callback) {
+		boolean body(Response response, int status, ContentType contentType, String body, Callback callback) {
 			if (contentType != null) {
 				response.getHeaders().add(HttpHeader.CONTENT_TYPE, contentType.toString());
 			}
 			response.setStatus(status);
 			Content.Sink.write(response, true, body, callback);
+			return true;
 		}
 
 		abstract boolean doHandle(Request request, Response response, Callback callback) throws IOException, ServletException;
