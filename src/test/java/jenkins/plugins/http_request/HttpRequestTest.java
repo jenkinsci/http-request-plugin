@@ -779,7 +779,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 				if (!username.equals(valueUsername) || !password.equals(valuePassword)) {
 					response.setStatus(401);
-					return false;
+					return true;
 				}
 				HttpCookie cookie = HttpCookie.build(sessionName, "ok").build();
 				Response.addCookie(response, cookie);
@@ -801,7 +801,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 				if (!jsessionValue.equals("ok")) {
 					response.setStatus(401);
-					return false;
+					return true;
 				}
 				okAllIsWell(response, callback);
 				return true;

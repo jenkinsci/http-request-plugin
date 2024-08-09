@@ -162,7 +162,7 @@ public class Registers {
 			@Override
 			boolean doHandle(Request request, Response response, Callback callback) {
 				body(response, HttpStatus.BAD_REQUEST_400, ContentType.TEXT_PLAIN, "Not allowed", callback);
-				return false;
+				return true;
 			}
 		});
 	}
@@ -234,7 +234,7 @@ public class Registers {
 				assertNull(query);
 
 				body(response, HttpStatus.BAD_REQUEST_400, ContentType.TEXT_PLAIN, "Throwing status 400 for test", callback);
-				return false;
+				return true;
 			}
 		});
 	}
