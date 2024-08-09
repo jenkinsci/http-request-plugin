@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.ServletException;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.entity.StringEntity;
@@ -765,8 +767,13 @@ public class HttpRequestTest extends HttpRequestTestBase {
 
 		registerHandler("/form-auth", HttpMode.POST, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws Exception {
-				Fields parameters = Request.getParameters(request);
+			boolean doHandle(Request request, Response response, Callback callback) throws ServletException {
+				Fields parameters;
+				try {
+					parameters = Request.getParameters(request);
+				} catch (Exception e) {
+					throw new ServletException(e);
+				}
 				String username = parameters.getValue(paramUsername);
 				String password = parameters.getValue(paramPassword);
 

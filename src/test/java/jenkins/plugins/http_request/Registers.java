@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Enumeration;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import javax.servlet.ServletException;
 
@@ -118,10 +119,15 @@ public class Registers {
 		// Accept the form authentication
 		registerHandler("/reqAction", HttpMode.GET, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws Exception {
+			boolean doHandle(Request request, Response response, Callback callback) throws ServletException {
 				assertEquals("GET", request.getMethod());
 
-				Map<String, String[]> parameters = Request.getParameters(request).toStringArrayMap();
+				Map<String, String[]> parameters;
+				try {
+					parameters = Request.getParameters(request).toStringArrayMap();
+				} catch (Exception e) {
+					throw new ServletException(e);
+				}
 
 				assertEquals(2, parameters.size());
 				assertTrue(parameters.containsKey("param1"));
@@ -259,10 +265,15 @@ public class Registers {
 		// Check that exactly one build parameter is passed
 		registerHandler("/checkBuildParameters", HttpMode.GET, new SimpleHandler() {
 			@Override
-			boolean doHandle(Request request, Response response, Callback callback) throws Exception {
+			boolean doHandle(Request request, Response response, Callback callback) throws ServletException {
 				assertEquals("GET", request.getMethod());
 
-				Map<String, String[]> parameters = Request.getParameters(request).toStringArrayMap();
+				Map<String, String[]> parameters;
+				try {
+					parameters = Request.getParameters(request).toStringArrayMap();
+				} catch (Exception e) {
+					throw new ServletException(e);
+				}
 
 				assertEquals(1, parameters.size());
 				assertTrue(parameters.containsKey("foo"));
@@ -303,21 +314,22 @@ public class Registers {
 			boolean doHandle(Request request, Response response, Callback callback) throws ServletException {
 				assertEquals("POST", request.getMethod());
 				assertTrue(isMultipartRequest(request));
+
+				MultiPartFormData.Parts parts;
 				try {
 					String contentType = request.getHeaders().get(HttpHeader.CONTENT_TYPE);
-					MultiPartFormData.Parts parts = MultiPartFormData.from(request, request, contentType, new MultiPartConfig.Builder().build()).get();
-					for (MultiPart.Part part : parts) {
-						if (part.getName().equals("file-name")) {
-							assertNotNull(part);
-							assertEquals(uploadFile.length(), part.getLength());
-							assertEquals(uploadFile.getName(), part.getFileName());
-							assertEquals(MimeType.APPLICATION_ZIP.getValue(), part.getHeaders().get(HttpHeader.CONTENT_TYPE));
-						}
-					}
-					body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN, responseText, callback);
-				} catch (Exception e) {
+					parts = MultiPartFormData.from(request, request, contentType, new MultiPartConfig.Builder().build()).get();
+				} catch (InterruptedException | ExecutionException e) {
 					throw new ServletException(e);
 				}
+
+				MultiPart.Part part = parts.getFirst("file-name");
+				assertNotNull(part);
+				assertEquals(uploadFile.length(), part.getLength());
+				assertEquals(uploadFile.getName(), part.getFileName());
+				assertEquals(MimeType.APPLICATION_ZIP.getValue(), part.getHeaders().get(HttpHeader.CONTENT_TYPE));
+
+				body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN, responseText, callback);
 				return true;
 			}
 		});
@@ -338,37 +350,35 @@ public class Registers {
 			boolean doHandle(Request request, Response response, Callback callback) throws ServletException {
 				assertEquals("POST", request.getMethod());
 				assertTrue(isMultipartRequest(request));
+
+				MultiPartFormData.Parts parts;
 				try {
 					String contentType = request.getHeaders().get(HttpHeader.CONTENT_TYPE);
-					MultiPartFormData.Parts parts = MultiPartFormData.from(request, request, contentType, new MultiPartConfig.Builder().build()).get();
-					for (MultiPart.Part part : parts) {
-						if (part.getName().equals("file1")) {
-							assertNotNull(part);
-							assertEquals(file1.length(), part.getLength());
-							assertEquals(file1.getName(), part.getFileName());
-							assertEquals(MimeType.TEXT_PLAIN.getValue(), part.getHeaders().get(HttpHeader.CONTENT_TYPE));
-						}
-
-						if (part.getName().equals("file2")) {
-							assertNotNull(part);
-							assertEquals(file2.length(), part.getLength());
-							assertEquals(file2.getName(), part.getFileName());
-							assertEquals(MimeType.APPLICATION_ZIP.getValue(), part.getHeaders().get(HttpHeader.CONTENT_TYPE));
-						}
-
-						if (part.getName().equals("model")) {
-							assertNotNull(part);
-							assertEquals(content, part.getContentAsString(StandardCharsets.UTF_8));
-							assertEquals(MimeType.APPLICATION_JSON.getValue(), part.getHeaders().get(HttpHeader.CONTENT_TYPE));
-						}
-					}
-
-					// So far so good
-					body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN,
-							responseText, callback);
-				} catch (Exception e) {
+					parts = MultiPartFormData.from(request, request, contentType, new MultiPartConfig.Builder().build()).get();
+				} catch (InterruptedException | ExecutionException e) {
 					throw new ServletException(e);
 				}
+
+				MultiPart.Part file1Part = parts.getFirst("file1");
+				assertNotNull(file1Part);
+				assertEquals(file1.length(), file1Part.getLength());
+				assertEquals(file1.getName(), file1Part.getFileName());
+				assertEquals(MimeType.TEXT_PLAIN.getValue(), file1Part.getHeaders().get(HttpHeader.CONTENT_TYPE));
+
+				MultiPart.Part file2Part = parts.getFirst("file2");
+				assertNotNull(file2Part);
+				assertEquals(file2.length(), file2Part.getLength());
+				assertEquals(file2.getName(), file2Part.getFileName());
+				assertEquals(MimeType.APPLICATION_ZIP.getValue(), file2Part.getHeaders().get(HttpHeader.CONTENT_TYPE));
+
+				MultiPart.Part modelPart = parts.getFirst("model");
+				assertNotNull(modelPart);
+				assertEquals(content, modelPart.getContentAsString(StandardCharsets.UTF_8));
+				assertEquals(MimeType.APPLICATION_JSON.getValue(), modelPart.getHeaders().get(HttpHeader.CONTENT_TYPE));
+
+				// So far so good
+				body(response, HttpStatus.CREATED_201, ContentType.TEXT_PLAIN,
+						responseText, callback);
 				return true;
 			}
 		});

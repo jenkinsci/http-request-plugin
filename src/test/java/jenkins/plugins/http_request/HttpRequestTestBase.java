@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.ServletException;
+
 import org.apache.http.entity.ContentType;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpStatus;
@@ -91,7 +93,7 @@ public class HttpRequestTestBase {
 
 	public static abstract class SimpleHandler extends Handler.Abstract {
 		@Override
-		public final boolean handle(Request request, Response response, Callback callback) throws Exception {
+		public final boolean handle(Request request, Response response, Callback callback) throws IOException, ServletException {
 			return doHandle(request, response, callback);
 		}
 
@@ -115,7 +117,7 @@ public class HttpRequestTestBase {
 			Content.Sink.write(response, true, body, callback);
 		}
 
-		abstract boolean doHandle(Request request, Response response, Callback callback) throws Exception;
+		abstract boolean doHandle(Request request, Response response, Callback callback) throws IOException, ServletException;
 	}
 
 	private static final class ServerRunning {
