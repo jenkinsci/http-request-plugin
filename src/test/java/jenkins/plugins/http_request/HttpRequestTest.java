@@ -986,7 +986,7 @@ public class HttpRequestTest extends HttpRequestTestBase {
 		final File testFolder = folder.newFolder();
 		File uploadFile = File.createTempFile("upload", ".zip", testFolder);
 		String responseText = "File upload successful!";
-		registerFileUpload(testFolder, uploadFile, responseText);
+		registerFileUpload(uploadFile, responseText);
 
 		// Prepare HttpRequest
 		HttpRequest httpRequest = new HttpRequest(baseURL() + "/uploadFile");

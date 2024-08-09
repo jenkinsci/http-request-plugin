@@ -672,7 +672,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         final File testFolder = folder.newFolder();
         File uploadFile = File.createTempFile("upload", ".zip", testFolder);
         String responseText = "File upload successful!";
-        registerFileUpload(testFolder, uploadFile, responseText);
+        registerFileUpload(uploadFile, responseText);
 
         // Prepare HttpRequest
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "uploadFile");
@@ -701,13 +701,12 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
 	@Test
 	public void testFormData() throws Exception {
-		final File testFolder = folder.newFolder();
 		File projectRoot = Paths.get("").toAbsolutePath().toFile();
 		String responseText = "File upload successful!";
 		String json = "{\"foo\": \"bar\"}";
 		File file1 = new File(projectRoot, "src/test/resources/testdata/readme.txt");
 		File file2 = new File(projectRoot, "src/test/resources/testdata/small.zip");
-		registerFormData(testFolder, json, file1, file2, responseText);
+		registerFormData(json, file1, file2, responseText);
 
 		// Let's upload these files and a JSON
 		String script = "node {\n"
