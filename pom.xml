@@ -52,7 +52,7 @@ THE SOFTWARE.
 		<changelist>-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/http-request-plugin</gitHubRepo>
                 <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
-                <jenkins.baseline>2.440</jenkins.baseline>
+                <jenkins.baseline>2.426</jenkins.baseline>
                 <jenkins.version>${jenkins.baseline}.3</jenkins.version>
 		<spotbugs.failOnError>true</spotbugs.failOnError>
 		<spotbugs.threshold>Low</spotbugs.threshold>
