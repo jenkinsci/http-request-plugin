@@ -35,6 +35,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
 
+import hudson.model.Descriptor.FormException;
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
@@ -56,7 +57,7 @@ public class HttpRequestTestBase {
 		return SERVER.baseURL;
 	}
 
-	void registerBasicCredential(String id, String username, String password) {
+	void registerBasicCredential(String id, String username, String password) throws FormException {
 		credentials.get(Domain.global()).add(
 				new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL,
 						id, "", username, password));
