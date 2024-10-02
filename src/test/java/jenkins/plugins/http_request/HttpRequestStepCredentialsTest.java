@@ -12,6 +12,7 @@ import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.CertificateCredentialsImpl;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+import hudson.model.Descriptor.FormException;
 import hudson.model.Fingerprint;
 import hudson.model.Result;
 
@@ -55,7 +56,7 @@ public class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
     private File p12simple;
     private File p12trusted;
 
-    private StandardCredentials getInvalidCredential() {
+    private StandardCredentials getInvalidCredential() throws FormException {
         String username = "bad-user";
         String password = "bad-password";
         CredentialsScope scope = CredentialsScope.GLOBAL;
