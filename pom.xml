@@ -27,7 +27,7 @@ THE SOFTWARE.
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>4.88</version>
+		<version>5.1</version>
 		<relativePath />
 	</parent>
 
@@ -52,15 +52,12 @@ THE SOFTWARE.
 		<changelist>-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/http-request-plugin</gitHubRepo>
                 <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
-                <jenkins.baseline>2.440</jenkins.baseline>
-                <jenkins.version>${jenkins.baseline}.3</jenkins.version>
+                <jenkins.baseline>2.452</jenkins.baseline>
+		<jenkins.version>2.479</jenkins.version>
 		<spotbugs.effort>Max</spotbugs.effort>
 		<spotbugs.failOnError>true</spotbugs.failOnError>
 		<spotbugs.threshold>Low</spotbugs.threshold>
 		<hpi.compatibleSinceVersion>1.16</hpi.compatibleSinceVersion>
-		<!-- TODO JENKINS-73339 until in parent POM -->
-		<jenkins-test-harness.version>2250.v03a_1295b_0a_30</jenkins-test-harness.version>
-		<maven.compiler.testRelease>17</maven.compiler.testRelease>
 	</properties>
 
 	<repositories>
