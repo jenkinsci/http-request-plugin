@@ -27,7 +27,7 @@ THE SOFTWARE.
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>5.1</version>
+		<version>5.2</version>
 		<relativePath />
 	</parent>
 
@@ -51,9 +51,9 @@ THE SOFTWARE.
 		<revision>1.20</revision>
 		<changelist>-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/http-request-plugin</gitHubRepo>
-                <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
-                <jenkins.baseline>2.452</jenkins.baseline>
-		<jenkins.version>2.479</jenkins.version>
+		<!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
+		<jenkins.baseline>2.479</jenkins.baseline>
+		<jenkins.version>${jenkins.baseline}.1</jenkins.version>
 		<spotbugs.effort>Max</spotbugs.effort>
 		<spotbugs.failOnError>true</spotbugs.failOnError>
 		<spotbugs.threshold>Low</spotbugs.threshold>
@@ -78,8 +78,8 @@ THE SOFTWARE.
 		<dependencies>
 			<dependency>
 				<groupId>io.jenkins.tools.bom</groupId>
-                                <artifactId>bom-${jenkins.baseline}.x</artifactId>
-                                <version>3413.v0d896b_76a_30d</version>
+				<artifactId>bom-${jenkins.baseline}.x</artifactId>
+				<version>3482.vc10d4f6da_28a_</version>
 				<scope>import</scope>
 				<type>pom</type>
 			</dependency>
