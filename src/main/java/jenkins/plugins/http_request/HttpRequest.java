@@ -75,6 +75,7 @@ public class HttpRequest extends Builder {
     private boolean useNtlm                   = DescriptorImpl.useNtlm;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
     private List<HttpRequestFormDataPart> formData = DescriptorImpl.formData;
+	private boolean followRedirects = DescriptorImpl.followRedirects;
 
 	@DataBoundConstructor
 	public HttpRequest(@NonNull String url) {
@@ -459,6 +460,15 @@ public class HttpRequest extends Builder {
 		this.useNtlm = useNtlm;
 	}
 
+	public boolean isFollowRedirects() {
+		return this.followRedirects;
+	}
+
+	@DataBoundSetter
+	public void setFollowRedirects(boolean followRedirects) {
+		this.followRedirects = followRedirects;
+	}
+
 	@Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 		public static final boolean ignoreSslErrors = false;
@@ -483,6 +493,7 @@ public class HttpRequest extends Builder {
         public static final boolean  useNtlm                   = false;
         public static final List<HttpRequestNameValuePair> customHeaders = Collections.emptyList();
         public static final List<HttpRequestFormDataPart> formData = Collections.emptyList();
+		public static final boolean followRedirects	= true;
 
         public DescriptorImpl() {
             load();
