@@ -352,8 +352,7 @@ public class HttpRequest extends Builder {
 		for (HttpRequestNameValuePair header : customHeaders) {
 			String headerName = envVars.expand(header.getName());
 			String headerValue = envVars.expand(header.getValue());
-			boolean maskValue = headerName.equalsIgnoreCase(HttpHeaders.AUTHORIZATION) ||
-					header.getMaskValue();
+			boolean maskValue = header.getMaskValue();
 
 			headers.add(new HttpRequestNameValuePair(headerName, headerValue, maskValue));
 		}
