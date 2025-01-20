@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -111,6 +113,20 @@ public class ResponseContentSupplier implements Serializable, AutoCloseable {
 		}
 	}
 
+	public String getContentSha1Sum() {
+		try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            byte[] result = md.digest(content.getBytes());
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : result) {
+                hexString.append(String.format("%02x", b));
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+	}
 	@Whitelisted
 	public InputStream getContentStream() {
 		return contentStream;
