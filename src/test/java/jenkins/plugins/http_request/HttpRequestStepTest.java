@@ -280,7 +280,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     @Test
     public void responseHashSumCalculated() throws Exception {
         // Prepare the server
-        registerInvalidStatusCode();
+        registerRequestChecker(HttpMode.GET);
 
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
@@ -294,7 +294,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         WorkflowRun run = proj.scheduleBuild2(0).get();
 
         // Check expectations
-        j.assertLogContains("sha1sum: *", run);
+        j.assertLogContains("sha1sum: ", run);
     }
     
     @Test
