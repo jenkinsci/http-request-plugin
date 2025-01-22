@@ -6,7 +6,7 @@ import java.util.List;
 
 import net.sf.json.JSONObject;
 
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 import hudson.Extension;
 import hudson.XmlFile;
@@ -55,7 +55,7 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
     }
 
     @Override
-    public boolean configure(StaplerRequest req, JSONObject json) {
+    public boolean configure(StaplerRequest2 req, JSONObject json) {
         req.bindJSON(this, json);
         save();
         return true;
