@@ -14,7 +14,7 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
