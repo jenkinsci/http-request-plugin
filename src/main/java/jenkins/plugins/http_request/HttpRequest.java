@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
+import java.util.stream.Collectors;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
@@ -235,10 +236,36 @@ public class HttpRequest extends Builder {
 		return customHeaders;
 	}
 
+//	@DataBoundSetter
+//	public void setCustomHeaders(List<HttpRequestNameValuePair> customHeaders) {
+//		this.customHeaders = customHeaders;
+//	}
+
 	@DataBoundSetter
-	public void setCustomHeaders(List<HttpRequestNameValuePair> customHeaders) {
-		this.customHeaders = customHeaders;
+	public void setCustomHeaders(Object customHeaders) {
+		if (customHeaders instanceof List) {
+			List<?> list = (List<?>) customHeaders;
+			if (!list.isEmpty() && list.get(0) instanceof Map) {
+				this.customHeaders = list.stream()
+						.map(entry -> {
+							Map<String, String> map = (Map<String, String>) entry;
+							return new HttpRequestNameValuePair(map.get("name"), map.get("value"));
+						})
+						.collect(Collectors.toList());
+			} else {
+				this.customHeaders = (List<HttpRequestNameValuePair>) customHeaders;
+			}
+		} else if (customHeaders instanceof Map) {
+			this.customHeaders = ((Map<String, String>) customHeaders)
+					.entrySet()
+					.stream()
+					.map(entry -> new HttpRequestNameValuePair(entry.getKey(), entry.getValue()))
+					.collect(Collectors.toList());
+		} else {
+			throw new IllegalArgumentException("Unsupported type for customHeaders: " + customHeaders.getClass());
+		}
 	}
+
 
 	public List<HttpRequestFormDataPart> getFormData() {
 		return formData;
