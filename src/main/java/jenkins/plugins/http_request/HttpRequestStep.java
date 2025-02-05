@@ -62,6 +62,7 @@ public final class HttpRequestStep extends Step {
 	private List<HttpRequestFormDataPart> formData = DescriptorImpl.formData;
 	private String outputFile = DescriptorImpl.outputFile;
 	private ResponseHandle responseHandle = DescriptorImpl.responseHandle;
+	private boolean followRedirects		  = DescriptorImpl.followRedirects;
 
     @DataBoundConstructor
     public HttpRequestStep(@NonNull String url) {
@@ -272,6 +273,15 @@ public final class HttpRequestStep extends Step {
 		return useNtlm;
 	}
 
+	@DataBoundSetter
+	public void  setFollowRedirects(boolean followRedirects) {
+		this.followRedirects = followRedirects;
+	}
+
+	public boolean isFollowRedirects() {
+		return this.followRedirects;
+	}
+
 	@Override
 	public StepExecution start(StepContext context) {
 		return new Execution(context, this);
@@ -325,6 +335,7 @@ public final class HttpRequestStep extends Step {
         public static final List <HttpRequestFormDataPart> formData = Collections.emptyList();
         public static final String outputFile = "";
 		public static final ResponseHandle responseHandle = ResponseHandle.STRING;
+		public static final boolean followRedirects = HttpRequest.DescriptorImpl.followRedirects;
 
         @Override
         public Set<? extends Class<?>> getRequiredContext() {

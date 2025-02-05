@@ -391,6 +391,18 @@ public class Registers {
 		});
 	}
 
+	static void registerRedirects() {
+		registerHandler("/redirects", HttpMode.HEAD, new SimpleHandler() {
+			@Override
+			void doHandle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+				assertEquals("HEAD", request.getMethod());
+
+				response.sendRedirect(request.getScheme() + "://" +
+						request.getServerName() + ":" + request.getServerPort() + "/doHEAD");
+			}
+		});
+	}
+
 	private static void registerHandler(String target, HttpMode method, SimpleHandler handler) {
 		HttpRequestTestBase.registerHandler(target, method, handler);
 	}
