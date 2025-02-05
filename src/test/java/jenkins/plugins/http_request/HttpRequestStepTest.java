@@ -278,6 +278,26 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
+    public void responseHashSumCalculated() throws Exception {
+        // Prepare the server
+        registerRequestChecker(HttpMode.GET);
+
+        // Configure the build
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        proj.setDefinition(new CpsFlowDefinition(
+            "def response = httpRequest '"+baseURL()+"/doGET'\n" +
+            "    consoleLogResponseBody: true\n" +
+            "println('sha1sum: '+response.getContentSha1Sum())\n",
+            true));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertLogContains("sha1sum: ", run);
+    }
+    
+    @Test
     public void reverseRangeFailsTheBuild() throws Exception {
         // Prepare the server
         registerInvalidStatusCode();
