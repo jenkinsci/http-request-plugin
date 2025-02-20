@@ -1,6 +1,6 @@
 package jenkins.plugins.http_request;
 
-import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -29,34 +29,38 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 
 import org.htmlunit.html.HtmlPage;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  * @author Mark Waite
  */
-public class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
+@WithJenkins
+class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
     // For developers: set to `true` so that pipeline console logs show
     // up in System.out (and/or System.err) of the plugin test run by
     //   mvn test -Dtest="HttpRequestStepCredentialsTest"
-    private boolean verbosePipelines = false;
-    String getLogAsStringPlaintext(WorkflowRun f) throws java.io.IOException {
+    private final boolean verbosePipelines = false;
+
+    private String getLogAsStringPlaintext(WorkflowRun f) throws java.io.IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         f.getLogText().writeLogTo(0, baos);
         return baos.toString();
     }
 
     // From CertificateCredentialImplTest
-    @Rule
-    public TemporaryFolder tmp = new TemporaryFolder();
+    @TempDir
+    private File tmp;
     private File p12simple;
     private File p12trusted;
 
-    private StandardCredentials getInvalidCredential() throws FormException {
+    private CredentialsStore store = null;
+
+    private static StandardCredentials getInvalidCredential() throws FormException {
         String username = "bad-user";
         String password = "bad-password";
         CredentialsScope scope = CredentialsScope.GLOBAL;
@@ -68,12 +72,12 @@ public class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         if (p12simple == null) {
             // Contains a private key + openvpn certs,
             // as alias named "1" (according to keytool)
-            p12simple = tmp.newFile("test.p12");
+            p12simple = File.createTempFile("test.p12", null, tmp);
             FileUtils.copyURLToFile(HttpRequestStepCredentialsTest.class.getResource("test.p12"), p12simple);
         }
 
-        SecretBytes uploadedKeystore = SecretBytes.fromBytes(Files.readAllBytes(p12simple.toPath()));
-        CertificateCredentialsImpl.UploadedKeyStoreSource storeSource = new CertificateCredentialsImpl.UploadedKeyStoreSource(uploadedKeystore);
+        SecretBytes uploadedKeystore = SecretBytes.fromRawBytes(Files.readAllBytes(p12simple.toPath()));
+        CertificateCredentialsImpl.UploadedKeyStoreSource storeSource = new CertificateCredentialsImpl.UploadedKeyStoreSource(null, uploadedKeystore);
         return new CertificateCredentialsImpl(null, "cred_cert_simple", null, "password", storeSource);
     }
 
@@ -81,19 +85,17 @@ public class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         if (p12trusted == null) {
             // Contains a private key + openvpn certs as alias named "1",
             // and another alias named "ca" with trustedKeyEntry for CA
-            p12trusted = tmp.newFile("testTrusted.p12");
+            p12trusted = File.createTempFile("testTrusted.p12", null, tmp);
             FileUtils.copyURLToFile(HttpRequestStepCredentialsTest.class.getResource("testTrusted.p12"), p12trusted);
         }
 
-        SecretBytes uploadedKeystore = SecretBytes.fromBytes(Files.readAllBytes(p12trusted.toPath()));
-        CertificateCredentialsImpl.UploadedKeyStoreSource storeSource = new CertificateCredentialsImpl.UploadedKeyStoreSource(uploadedKeystore);
+        SecretBytes uploadedKeystore = SecretBytes.fromRawBytes(Files.readAllBytes(p12trusted.toPath()));
+        CertificateCredentialsImpl.UploadedKeyStoreSource storeSource = new CertificateCredentialsImpl.UploadedKeyStoreSource(null, uploadedKeystore);
         return new CertificateCredentialsImpl(null, "cred_cert_with_ca", null, "password", storeSource);
     }
 
-    private CredentialsStore store = null;
-
-    @Before
-    public void enableSystemCredentialsProvider() throws Exception {
+    @BeforeEach
+    void enableSystemCredentialsProvider() {
         SystemCredentialsProvider.getInstance()
                 .setDomainCredentialsMap(
                         Collections.singletonMap(Domain.global(), Collections.emptyList()));
@@ -107,7 +109,7 @@ public class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void trackCredentials() throws Exception {
+    void trackCredentials() throws Exception {
         StandardCredentials credential = getInvalidCredential();
         store.addCredentials(Domain.global(), credential);
 
@@ -169,7 +171,7 @@ public class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
     // it is usable further. It would be a separate effort to mock up a web
     // server protected by HTTPS and using certificates for login (possibly
     // user and server backed by two different CA's), and query that.
-    String cpsScriptCredentialTestHttpRequest(String id, String runnerTag) {
+    private static String cpsScriptCredentialTestHttpRequest(String id, String runnerTag) {
         // Note: we accept any outcome (for the plugin, unresolved host is HTTP-404)
         // but it may not crash making use of the credential
         // Note: cases withLocalCertLookup also need cpsScriptCredentialTestImports()
@@ -201,7 +203,7 @@ public class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
 
     @Test
     @Issue({"JENKINS-70000", "JENKINS-70101"})
-    public void testCertSimpleHttpRequestOnController() throws Exception {
+    void testCertSimpleHttpRequestOnController() throws Exception {
         // Check that credentials are usable with pipeline script
         // running without a node{}
         StandardCredentials credential = getCertificateCredentialSimple();
@@ -232,7 +234,7 @@ public class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
 
     @Test
     @Issue({"JENKINS-70000", "JENKINS-70101"})
-    public void testCertSimpleHttpRequestOnNodeLocal() throws Exception {
+    void testCertSimpleHttpRequestOnNodeLocal() throws Exception {
         // Check that credentials are usable with pipeline script
         // running on a node{} (provided by the controller)
         StandardCredentials credential = getCertificateCredentialSimple();
@@ -265,7 +267,7 @@ public class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
 
     @Test
     @Issue({"JENKINS-70000", "JENKINS-70101"})
-    public void testCertTrustedHttpRequestOnController() throws Exception {
+    void testCertTrustedHttpRequestOnController() throws Exception {
         // Check that credentials are usable with pipeline script
         // running without a node{}
         StandardCredentials credential = getCertificateCredentialTrusted();
@@ -293,7 +295,7 @@ public class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
 
     @Test
     @Issue({"JENKINS-70000", "JENKINS-70101"})
-    public void testCertTrustedHttpRequestOnNodeLocal() throws Exception {
+    void testCertTrustedHttpRequestOnNodeLocal() throws Exception {
         // Check that credentials are usable with pipeline script
         // running on a node{} (provided by the controller)
         StandardCredentials credential = getCertificateCredentialTrusted();

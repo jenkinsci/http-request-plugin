@@ -28,12 +28,12 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.util.Callback;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import hudson.model.Descriptor.FormException;
 import com.cloudbees.plugins.credentials.Credentials;
@@ -45,123 +45,125 @@ import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 /**
  * @author Martin d'Anjou
  */
-public class HttpRequestTestBase {
+@WithJenkins
+class HttpRequestTestBase {
 
-	private static ServerRunning SERVER;
-	static final String ALL_IS_WELL = "All is well";
-	@Rule
-	public JenkinsRule j = new JenkinsRule();
-	private Map<Domain, List<Credentials>> credentials;
+    private static ServerRunning SERVER;
+    static final String ALL_IS_WELL = "All is well";
+    protected JenkinsRule j;
 
-	final String baseURL() {
-		return SERVER.baseURL;
-	}
+    private Map<Domain, List<Credentials>> credentials;
 
-	void registerBasicCredential(String id, String username, String password) throws FormException {
-		credentials.get(Domain.global()).add(
-				new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL,
-						id, "", username, password));
-		SystemCredentialsProvider.getInstance().setDomainCredentialsMap(credentials);
-	}
+    final String baseURL() {
+        return SERVER.baseURL;
+    }
 
-	static void registerHandler(String target, HttpMode method, SimpleHandler handler) {
-		Map<HttpMode, Handler> handlerByMethod = SERVER.handlersByMethodByTarget.computeIfAbsent(target, k -> new HashMap<>());
-		handlerByMethod.put(method, handler);
-	}
+    void registerBasicCredential(String id, String username, String password) throws FormException {
+        credentials.get(Domain.global()).add(
+                new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL,
+                        id, "", username, password));
+        SystemCredentialsProvider.getInstance().setDomainCredentialsMap(credentials);
+    }
 
-	@BeforeClass
-	public static void beforeClass() throws Exception {
-		if (SERVER != null) {
-			return;
-		}
-		SERVER = new ServerRunning();
-	}
+    static void registerHandler(String target, HttpMode method, SimpleHandler handler) {
+        Map<HttpMode, Handler> handlerByMethod = SERVER.handlersByMethodByTarget.computeIfAbsent(target, k -> new HashMap<>());
+        handlerByMethod.put(method, handler);
+    }
 
-	@AfterClass
-	public static void afterClass() throws Exception {
-		if (SERVER != null) {
-			SERVER.server.stop();
-			SERVER = null;
-		}
-	}
+    @BeforeAll
+    static void beforeClass() throws Exception {
+        if (SERVER != null) {
+            return;
+        }
+        SERVER = new ServerRunning();
+    }
 
-	@Before
-	public void init() {
-		credentials = new HashMap<>();
-		credentials.put(Domain.global(), new ArrayList<>());
-	}
+    @AfterAll
+    static void afterClass() throws Exception {
+        if (SERVER != null) {
+            SERVER.server.stop();
+            SERVER = null;
+        }
+    }
 
-	@After
-	public void cleanHandlers() {
-		if (SERVER != null) {
-			SERVER.handlersByMethodByTarget.clear();
-		}
-	}
+    @BeforeEach
+    void init(JenkinsRule j) {
+        this.j = j;
+        credentials = new HashMap<>();
+        credentials.put(Domain.global(), new ArrayList<>());
+    }
 
-	public static abstract class SimpleHandler extends Handler.Abstract {
-		@Override
-		public final boolean handle(Request request, Response response, Callback callback) throws IOException, ServletException {
-			return doHandle(request, response, callback);
-		}
+    @AfterEach
+    void cleanHandlers() {
+        if (SERVER != null) {
+            SERVER.handlersByMethodByTarget.clear();
+        }
+    }
 
-		String requestBody(Request request) throws IOException {
-			return Content.Source.asString(request, StandardCharsets.UTF_8);
-		}
+    protected abstract static class SimpleHandler extends Handler.Abstract {
+        @Override
+        public final boolean handle(Request request, Response response, Callback callback) throws IOException, ServletException {
+            return doHandle(request, response, callback);
+        }
 
-		boolean okAllIsWell(Response response, Callback callback) {
-			return okText(response, ALL_IS_WELL, callback);
-		}
+        String requestBody(Request request) throws IOException {
+            return Content.Source.asString(request, StandardCharsets.UTF_8);
+        }
 
-		boolean okText(Response response, String body, Callback callback) {
-			return body(response, HttpStatus.OK_200, ContentType.TEXT_PLAIN, body, callback);
-		}
+        boolean okAllIsWell(Response response, Callback callback) {
+            return okText(response, ALL_IS_WELL, callback);
+        }
 
-		boolean body(Response response, int status, ContentType contentType, String body, Callback callback) {
-			assertThat(status, is(both(greaterThanOrEqualTo(200)).and(lessThan(300))));
-			if (contentType != null) {
-				response.getHeaders().add(HttpHeader.CONTENT_TYPE, contentType.toString());
-			}
-			response.setStatus(status);
-			Content.Sink.write(response, true, body, callback);
-			return true;
-		}
+        boolean okText(Response response, String body, Callback callback) {
+            return body(response, HttpStatus.OK_200, ContentType.TEXT_PLAIN, body, callback);
+        }
 
-		abstract boolean doHandle(Request request, Response response, Callback callback) throws IOException, ServletException;
-	}
+        boolean body(Response response, int status, ContentType contentType, String body, Callback callback) {
+            assertThat(status, is(both(greaterThanOrEqualTo(200)).and(lessThan(300))));
+            if (contentType != null) {
+                response.getHeaders().add(HttpHeader.CONTENT_TYPE, contentType.toString());
+            }
+            response.setStatus(status);
+            Content.Sink.write(response, true, body, callback);
+            return true;
+        }
 
-	private static final class ServerRunning {
-		private final Server server;
-		private final int port;
-		private final String baseURL;
-		private final Map<String, Map<HttpMode, Handler>> handlersByMethodByTarget = new HashMap<>();
+        abstract boolean doHandle(Request request, Response response, Callback callback) throws IOException, ServletException;
+    }
 
-		private ServerRunning() throws Exception {
-			server = new Server();
-			ServerConnector connector = new ServerConnector(server);
-			server.setConnectors(new Connector[]{connector});
+    private static final class ServerRunning {
+        private final Server server;
+        private final int port;
+        private final String baseURL;
+        private final Map<String, Map<HttpMode, Handler>> handlersByMethodByTarget = new HashMap<>();
 
-			ContextHandler context = new ContextHandler();
-			context.setContextPath("/");
-			context.setHandler(new DefaultHandler() {
-				@Override
-				public boolean handle(Request request, Response response, Callback callback) throws Exception {
-					String target = request.getHttpURI().getPath();
-					Map<HttpMode, Handler> handlerByMethod = handlersByMethodByTarget.get(target);
-					if (handlerByMethod != null) {
-						Handler handler = handlerByMethod.get(HttpMode.valueOf(request.getMethod()));
-						if (handler != null) {
-							return handler.handle(request, response, callback);
-						}
-					}
+        private ServerRunning() throws Exception {
+            server = new Server();
+            ServerConnector connector = new ServerConnector(server);
+            server.setConnectors(new Connector[]{connector});
 
-					return super.handle(request, response, callback);
-				}
-			});
-			server.setHandler(context);
+            ContextHandler context = new ContextHandler();
+            context.setContextPath("/");
+            context.setHandler(new DefaultHandler() {
+                @Override
+                public boolean handle(Request request, Response response, Callback callback) throws Exception {
+                    String target = request.getHttpURI().getPath();
+                    Map<HttpMode, Handler> handlerByMethod = handlersByMethodByTarget.get(target);
+                    if (handlerByMethod != null) {
+                        Handler handler = handlerByMethod.get(HttpMode.valueOf(request.getMethod()));
+                        if (handler != null) {
+                            return handler.handle(request, response, callback);
+                        }
+                    }
 
-			server.start();
-			port = connector.getLocalPort();
-			baseURL = "http://localhost:" + port;
-		}
-	}
+                    return super.handle(request, response, callback);
+                }
+            });
+            server.setHandler(context);
+
+            server.start();
+            port = connector.getLocalPort();
+            baseURL = "http://localhost:" + port;
+        }
+    }
 }

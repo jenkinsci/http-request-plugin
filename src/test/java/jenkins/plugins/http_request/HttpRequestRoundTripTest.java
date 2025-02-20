@@ -1,12 +1,13 @@
 package jenkins.plugins.http_request;
 
-import org.junit.Rule;
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.Test;
 
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import java.net.URL;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,51 +18,49 @@ import jenkins.plugins.http_request.util.RequestAction;
 /**
  * @author Martin d'Anjou
  */
-public class HttpRequestRoundTripTest {
+@WithJenkins
+class HttpRequestRoundTripTest {
 
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
-
-    public static HttpRequest before = new HttpRequest("http://domain/");
+    private static final HttpRequest before = new HttpRequest("http://domain/");
 
     @Test
-    public void configRoundtripGroup1() throws Exception {
-        configRoundTrip(before);
+    void configRoundtripGroup1(JenkinsRule j) throws Exception {
+        configRoundTrip(j);
         before.setHttpMode(HttpMode.GET);
-        configRoundTrip(before);
+        configRoundTrip(j);
         before.setPassBuildParameters(true);
-        configRoundTrip(before);
+        configRoundTrip(j);
         before.setPassBuildParameters(false);
-        configRoundTrip(before);
+        configRoundTrip(j);
     }
 
     @Test
-    public void configRoundTripGroup1b() throws Exception {
+    void configRoundTripGroup1b(JenkinsRule j) throws Exception {
         before.setValidResponseCodes("100:599");
-        configRoundTrip(before);
+        configRoundTrip(j);
         before.setValidResponseContent("some content we want to see");
-        configRoundTrip(before);
+        configRoundTrip(j);
         before.setAcceptType(MimeType.TEXT_HTML);
-        configRoundTrip(before);
+        configRoundTrip(j);
         before.setContentType(MimeType.TEXT_HTML);
-        configRoundTrip(before);
+        configRoundTrip(j);
     }
 
     @Test
-    public void configRoundtripGroup2() throws Exception {
+    void configRoundtripGroup2(JenkinsRule j) throws Exception {
         before.setOutputFile("myfile.txt");
-        configRoundTrip(before);
+        configRoundTrip(j);
         before.setTimeout(12);
-        configRoundTrip(before);
+        configRoundTrip(j);
         before.setConsoleLogResponseBody(true);
-        configRoundTrip(before);
+        configRoundTrip(j);
         before.setConsoleLogResponseBody(false);
-        configRoundTrip(before);
+        configRoundTrip(j);
     }
 
     @Test
-    public void configRoundtripGroup3() throws Exception {
-        configRoundTrip(before);
+    void configRoundtripGroup3(JenkinsRule j) throws Exception {
+        configRoundTrip(j);
 
         List<HttpRequestNameValuePair> params = new ArrayList<>();
         params.add(new HttpRequestNameValuePair("param1","value1"));
@@ -76,27 +75,27 @@ public class HttpRequestRoundTripTest {
         formAuthList.add(formAuth);
 
         HttpRequestGlobalConfig.get().setFormAuthentications(formAuthList);
-        configRoundTrip(before);
+        configRoundTrip(j);
 
         List<HttpRequestNameValuePair> customHeaders = new ArrayList<>();
         customHeaders.add(new HttpRequestNameValuePair("param1","value1"));
         before.setCustomHeaders(customHeaders);
-        configRoundTrip(before);
+        configRoundTrip(j);
     }
 
     @Test
-    public void configRoundtripGroup4() throws Exception {
+    void configRoundtripGroup4(JenkinsRule j) throws Exception {
         before.setUploadFile("upload.txt");
-        configRoundTrip(before);
+        configRoundTrip(j);
         before.setMultipartName("filename");
-        configRoundTrip(before);
+        configRoundTrip(j);
     }
 
-    private void configRoundTrip(HttpRequest before) throws Exception {
+    private static void configRoundTrip(JenkinsRule j) throws Exception {
         HttpRequest after = j.configRoundtrip(before);
         j.assertEqualBeans(before, after, "httpMode,passBuildParameters");
         j.assertEqualBeans(before, after, "url");
-        j.assertEqualBeans(before, after, "validResponseCodes,validResponseContent");
+        j.assertEqualBeans(HttpRequestRoundTripTest.before, after, "validResponseCodes,validResponseContent");
         j.assertEqualBeans(before, after, "acceptType,contentType");
         j.assertEqualBeans(before, after, "uploadFile,multipartName");
         j.assertEqualBeans(before, after, "outputFile,timeout");
