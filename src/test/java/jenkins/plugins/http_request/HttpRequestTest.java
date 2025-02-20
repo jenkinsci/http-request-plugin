@@ -29,10 +29,12 @@ import java.util.regex.Pattern;
 
 import jakarta.servlet.ServletException;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicHttpResponse;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpResponseAdapter;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
+import org.apache.hc.core5.http.message.BasicHttpResponse;
 import org.eclipse.jetty.http.HttpCookie;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
@@ -946,8 +948,8 @@ class HttpRequestTest extends HttpRequestTestBase {
     @Test
     void responseContentSupplierHeadersFilling() throws Exception {
         // Prepare test context
-        HttpResponse response = new BasicHttpResponse(new ProtocolVersion("HTTP", 1, 1), 200, "OK");
-        response.setEntity(new StringEntity("TEST"));
+		CloseableHttpResponse response = HttpResponseAdapter.adapt(new BasicClassicHttpResponse(200, "OK"));
+		response.setEntity(new StringEntity("TEST"));
         response.setHeader("Server", "Jenkins");
         response.setHeader("Set-Cookie", "JSESSIONID=123456789");
         response.addHeader("Set-Cookie", "JSESSIONID=abcdefghijk");
@@ -975,8 +977,8 @@ class HttpRequestTest extends HttpRequestTestBase {
     @Test
     void responseContentSupplierHeadersCaseInsensitivity() throws Exception {
         // Prepare test context
-        HttpResponse response = new BasicHttpResponse(new ProtocolVersion("HTTP", 1, 1), 200, "OK");
-        response.setEntity(new StringEntity("TEST"));
+		CloseableHttpResponse response = HttpResponseAdapter.adapt(new BasicClassicHttpResponse(200, "OK"));
+		response.setEntity(new StringEntity("TEST"));
         response.setHeader("Server", "Jenkins");
         // Run test
         ResponseContentSupplier respSupplier = new ResponseContentSupplier(ResponseHandle.STRING, response);

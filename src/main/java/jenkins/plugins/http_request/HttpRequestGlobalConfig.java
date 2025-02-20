@@ -61,22 +61,22 @@ public class HttpRequestGlobalConfig extends GlobalConfiguration {
         return true;
     }
 
-	public static FormValidation validateKeyName(String value) {
-		List<Authenticator> list = HttpRequestGlobalConfig.get().getAuthentications();
+    public static FormValidation validateKeyName(String value) {
+        List<Authenticator> list = HttpRequestGlobalConfig.get().getAuthentications();
 
-		int count = 0;
-		for (Authenticator basicAuthentication : list) {
-			if (basicAuthentication.getKeyName().equals(value)) {
-				count++;
-			}
-		}
+        int count = 0;
+        for (Authenticator basicAuthentication : list) {
+            if (basicAuthentication.getKeyName().equals(value)) {
+                count++;
+            }
+        }
 
-		if (count > 1) {
-			return FormValidation.error("The Key Name must be unique");
-		}
+        if (count > 1) {
+            return FormValidation.error("The Key Name must be unique");
+        }
 
-		return FormValidation.validateRequired(value);
-	}
+        return FormValidation.validateRequired(value);
+    }
 
     public static HttpRequestGlobalConfig get() {
         return GlobalConfiguration.all().get(HttpRequestGlobalConfig.class);
