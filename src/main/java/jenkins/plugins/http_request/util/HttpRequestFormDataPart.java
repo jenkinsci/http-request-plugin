@@ -1,5 +1,6 @@
 package jenkins.plugins.http_request.util;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.AbstractDescribableImpl;
@@ -9,11 +10,13 @@ import hudson.util.FormValidation;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 public class HttpRequestFormDataPart extends AbstractDescribableImpl<HttpRequestFormDataPart>
         implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final String contentType;
     private final String body;
@@ -66,6 +69,7 @@ public class HttpRequestFormDataPart extends AbstractDescribableImpl<HttpRequest
 
     @Extension
     public static class FormDataDescriptor extends Descriptor<HttpRequestFormDataPart> {
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Multipart Form Data Entry";

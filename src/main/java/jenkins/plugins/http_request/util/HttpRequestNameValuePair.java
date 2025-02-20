@@ -1,8 +1,9 @@
 package jenkins.plugins.http_request.util;
 
+import java.io.Serial;
 import java.io.Serializable;
 
-import org.apache.http.NameValuePair;
+import org.apache.hc.core5.http.NameValuePair;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -18,8 +19,9 @@ import hudson.util.FormValidation;
 public class HttpRequestNameValuePair extends AbstractDescribableImpl<HttpRequestNameValuePair>
         implements NameValuePair, Serializable {
 
-	private static final long serialVersionUID = -5179602567301232134L;
-	private final String name;
+    @Serial
+    private static final long serialVersionUID = -5179602567301232134L;
+    private final String name;
     private final String value;
     private final boolean maskValue;
 
