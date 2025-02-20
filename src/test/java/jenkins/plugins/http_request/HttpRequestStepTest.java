@@ -12,7 +12,7 @@ import static jenkins.plugins.http_request.Registers.registerInvalidStatusCode;
 import static jenkins.plugins.http_request.Registers.registerReqAction;
 import static jenkins.plugins.http_request.Registers.registerRequestChecker;
 import static jenkins.plugins.http_request.Registers.registerTimeout;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,9 +30,9 @@ import org.eclipse.jetty.util.Callback;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import hudson.model.Result;
 
@@ -43,13 +43,14 @@ import jenkins.plugins.http_request.util.RequestAction;
 /**
  * @author Martin d'Anjou
  */
-public class HttpRequestStepTest extends HttpRequestTestBase {
+@WithJenkins
+class HttpRequestStepTest extends HttpRequestTestBase {
 
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
+    @TempDir
+    private File folder;
 
     @Test
-    public void simpleGetTest() throws Exception {
+    void simpleGetTest() throws Exception {
         // Prepare the server
         registerRequestChecker(HttpMode.GET);
 
@@ -72,7 +73,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void quietTest() throws Exception {
+    void quietTest() throws Exception {
         // Prepare the server
         registerRequestChecker(HttpMode.GET);
 
@@ -98,10 +99,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void canDetectActualContent() throws Exception {
-        // Setup the expected pattern
-        String findMe = ALL_IS_WELL;
-
+    void canDetectActualContent() throws Exception {
         // Prepare the server
         registerRequestChecker(HttpMode.GET);
 
@@ -117,12 +115,12 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatusSuccess(run);
-        j.assertLogContains(findMe,run);
+        j.assertLogContains(ALL_IS_WELL, run);
         j.assertLogContains("Success: Status code 200 is in the accepted range: 100:399", run);
     }
 
     @Test
-    public void badContentFailsTheBuild() throws Exception {
+    void badContentFailsTheBuild() throws Exception {
         // Prepare the server
         registerRequestChecker(HttpMode.GET);
 
@@ -147,7 +145,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void responseMatchAcceptedMimeType() throws Exception {
+    void responseMatchAcceptedMimeType() throws Exception {
         // Prepare the server
         registerRequestChecker(HttpMode.GET);
 
@@ -171,7 +169,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void responseDoesNotMatchAcceptedMimeTypeDoesNotFailTheBuild() throws Exception {
+    void responseDoesNotMatchAcceptedMimeTypeDoesNotFailTheBuild() throws Exception {
         // Prepare the server
         registerRequestChecker(HttpMode.GET);
 
@@ -195,7 +193,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void doAllRequestTypes() throws Exception {
+    void doAllRequestTypes() throws Exception {
         for (HttpMode mode: HttpMode.values()) {
             // Prepare the server
             registerRequestChecker(mode);
@@ -205,7 +203,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         }
     }
 
-    public void doRequest(final HttpMode mode) throws Exception {
+    private void doRequest(final HttpMode mode) throws Exception {
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj"+mode.toString());
         proj.setDefinition(new CpsFlowDefinition(
@@ -229,7 +227,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void invalidResponseCodeFailsTheBuild() throws Exception {
+    void invalidResponseCodeFailsTheBuild() throws Exception {
         // Prepare the server
         registerInvalidStatusCode();
 
@@ -253,7 +251,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void invalidResponseCodeIsAccepted() throws Exception {
+    void invalidResponseCodeIsAccepted() throws Exception {
         // Prepare the server
         registerInvalidStatusCode();
 
@@ -278,7 +276,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void reverseRangeFailsTheBuild() throws Exception {
+    void reverseRangeFailsTheBuild() throws Exception {
         // Prepare the server
         registerInvalidStatusCode();
 
@@ -301,7 +299,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void notANumberRangeValueFailsTheBuild() throws Exception {
+    void notANumberRangeValueFailsTheBuild() throws Exception {
         // Prepare the server
         registerInvalidStatusCode();
 
@@ -324,7 +322,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void rangeWithTextFailsTheBuild() throws Exception {
+    void rangeWithTextFailsTheBuild() throws Exception {
         // Prepare the server
         registerInvalidStatusCode();
 
@@ -347,7 +345,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void invalidRangeFailsTheBuild() throws Exception {
+    void invalidRangeFailsTheBuild() throws Exception {
         // Prepare the server
         registerInvalidStatusCode();
 
@@ -370,7 +368,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void sendAllContentTypes() throws Exception {
+    void sendAllContentTypes() throws Exception {
         for (MimeType mimeType : MimeType.values()) {
             // Prepare the server
             registerContentTypeRequestChecker(mimeType, HttpMode.GET, ALL_IS_WELL);
@@ -380,7 +378,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         }
     }
 
-    public void sendContentType(final MimeType mimeType) throws Exception {
+    private void sendContentType(final MimeType mimeType) throws Exception {
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj"+mimeType.toString());
         proj.setDefinition(new CpsFlowDefinition(
@@ -401,7 +399,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void sendAllAcceptTypes() throws Exception {
+    void sendAllAcceptTypes() throws Exception {
         for (MimeType mimeType : MimeType.values()) {
             // Prepare the server
             registerAcceptedTypeRequestChecker(mimeType);
@@ -411,7 +409,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         }
     }
 
-    public void sendAcceptType(final MimeType mimeType) throws Exception {
+    private void sendAcceptType(final MimeType mimeType) throws Exception {
         // Configure the build
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj"+mimeType.toString());
         proj.setDefinition(new CpsFlowDefinition(
@@ -432,7 +430,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void timeoutFailsTheBuild() throws Exception {
+    void timeoutFailsTheBuild() throws Exception {
         // Prepare the server
         registerTimeout();
 
@@ -455,7 +453,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void canDoCustomHeaders() throws Exception {
+    void canDoCustomHeaders() throws Exception {
         // Prepare the server
         registerCustomHeaders();
 
@@ -477,7 +475,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void nonExistentBasicAuthFailsTheBuild() throws Exception {
+    void nonExistentBasicAuthFailsTheBuild() throws Exception {
         // Prepare the server
         registerBasicAuth();
 
@@ -499,7 +497,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void canDoBasicDigestAuthentication() throws Exception {
+    void canDoBasicDigestAuthentication() throws Exception {
         // Prepare the server
         registerBasicAuth();
 
@@ -525,7 +523,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void canDoFormAuthentication() throws Exception {
+    void canDoFormAuthentication() throws Exception {
         // Prepare the server
         registerReqAction();
         registerFormAuth();
@@ -562,7 +560,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void rejectedFormCredentialsFailTheBuild() throws Exception {
+    void rejectedFormCredentialsFailTheBuild() throws Exception {
         // Prepare the server
         registerFormAuthBad();
 
@@ -598,7 +596,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void invalidKeyFormAuthenticationFailsTheBuild() throws Exception {
+    void invalidKeyFormAuthenticationFailsTheBuild() throws Exception {
         // Prepare the authentication
         List<HttpRequestNameValuePair> params = new ArrayList<>();
         params.add(new HttpRequestNameValuePair("param1","value1"));
@@ -632,7 +630,7 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void testPostBody() throws Exception {
+    void testPostBody() throws Exception {
         //configure server
         registerHandler("/doPostBody", HttpMode.POST, new SimpleHandler() {
             @Override
@@ -666,9 +664,9 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
     }
 
     @Test
-    public void testFileUpload() throws Exception {
+    void testFileUpload() throws Exception {
         // Prepare the server
-        final File testFolder = folder.newFolder();
+        final File testFolder = newFolder(folder, "junit");
         File uploadFile = File.createTempFile("upload", ".zip", testFolder);
         String responseText = "File upload successful!";
         registerFileUpload(uploadFile, responseText);
@@ -698,40 +696,40 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         j.assertLogContains("Success: Status code 201 is in the accepted range: 201", run);
     }
 
-	@Test
-	public void testFormData() throws Exception {
-		File projectRoot = Paths.get("").toAbsolutePath().toFile();
-		String responseText = "File upload successful!";
-		String json = "{\"foo\": \"bar\"}";
-		File file1 = new File(projectRoot, "src/test/resources/testdata/readme.txt");
-		File file2 = new File(projectRoot, "src/test/resources/testdata/small.zip");
-		registerFormData(json, file1, file2, responseText);
+    @Test
+    void testFormData() throws Exception {
+        File projectRoot = Paths.get("").toAbsolutePath().toFile();
+        String responseText = "File upload successful!";
+        String json = "{\"foo\": \"bar\"}";
+        File file1 = new File(projectRoot, "src/test/resources/testdata/readme.txt");
+        File file2 = new File(projectRoot, "src/test/resources/testdata/small.zip");
+        registerFormData(json, file1, file2, responseText);
 
-		// Let's upload these files and a JSON
-		String script = "node {\n"
-				+ "def response = httpRequest httpMode: 'POST', validResponseCodes: '201', "
-				+ "consoleLogResponseBody: true, acceptType: '" + MimeType.TEXT_PLAIN.toString()
-				+ "', url: '" + baseURL() + "/formData', "
-				+ "formData: [[contentType: 'application/json', body: '" + json
-				+ "', name: 'model'], [contentType: 'text/plain', name: 'file1', fileName: 'readme.txt', uploadFile: '"
-				+ FilenameUtils.separatorsToUnix(file1.getPath()) // Developing on windows is a	joyride
-				+ "'], [contentType: 'application/zip', name: 'file2', fileName: 'small.zip', uploadFile: '"
-				+ FilenameUtils.separatorsToUnix(file2.getPath()) + "']]\n}";
+        // Let's upload these files and a JSON
+        String script = "node {\n"
+                + "def response = httpRequest httpMode: 'POST', validResponseCodes: '201', "
+                + "consoleLogResponseBody: true, acceptType: '" + MimeType.TEXT_PLAIN
+                + "', url: '" + baseURL() + "/formData', "
+                + "formData: [[contentType: 'application/json', body: '" + json
+                + "', name: 'model'], [contentType: 'text/plain', name: 'file1', fileName: 'readme.txt', uploadFile: '"
+                + FilenameUtils.separatorsToUnix(file1.getPath()) // Developing on windows is a	joyride
+                + "'], [contentType: 'application/zip', name: 'file2', fileName: 'small.zip', uploadFile: '"
+                + FilenameUtils.separatorsToUnix(file2.getPath()) + "']]\n}";
 
-		// Prepare HttpRequest
-		WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "formData");
-		proj.setDefinition(new CpsFlowDefinition(script, true));
+        // Prepare HttpRequest
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "formData");
+        proj.setDefinition(new CpsFlowDefinition(script, true));
 
-		// Execute the build
-		WorkflowRun run = proj.scheduleBuild2(0).get();
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
 
-		// Check expectations
-		j.assertBuildStatusSuccess(run);
-		j.assertLogContains(responseText, run);
-	}
+        // Check expectations
+        j.assertBuildStatusSuccess(run);
+        j.assertLogContains(responseText, run);
+    }
 
     @Test
-    public void nonExistentProxyAuthFailsTheBuild() throws Exception {
+    void nonExistentProxyAuthFailsTheBuild() throws Exception {
         // Prepare the server
         registerBasicAuth();
 
@@ -751,5 +749,14 @@ public class HttpRequestStepTest extends HttpRequestTestBase {
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
         j.assertLogContains("Proxy authentication 'invalid' doesn't exist anymore or is not a username/password credential type", run);
+    }
+
+    private static File newFolder(File root, String... subDirs) throws IOException {
+        String subFolder = String.join("/", subDirs);
+        File result = new File(root, subFolder);
+        if (!result.mkdirs()) {
+            throw new IOException("Couldn't create folders " + root);
+        }
+        return result;
     }
 }
