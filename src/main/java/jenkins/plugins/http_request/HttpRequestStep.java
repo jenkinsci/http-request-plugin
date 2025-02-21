@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
@@ -27,6 +29,7 @@ import hudson.Launcher;
 import hudson.model.Item;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.model.Descriptor;
 import hudson.remoting.VirtualChannel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -199,12 +202,38 @@ public final class HttpRequestStep extends Step {
 		return useSystemProperties;
 	}
 
-    @DataBoundSetter
-    public void setCustomHeaders(List<HttpRequestNameValuePair> customHeaders) {
-        this.customHeaders = customHeaders;
-    }
+//    @DataBoundSetter
+//    public void setCustomHeaders(List<HttpRequestNameValuePair> customHeaders) {
+//        this.customHeaders = customHeaders;
+//    }
 
-    public List<HttpRequestNameValuePair> getCustomHeaders() {
+	@DataBoundSetter
+	public void setCustomHeaders(Object customHeaders) {
+		if (customHeaders instanceof List) {
+			List<?> list = (List<?>) customHeaders;
+			if (!list.isEmpty() && list.get(0) instanceof Map) {
+				this.customHeaders = list.stream()
+						.map(entry -> {
+							Map<String, String> map = (Map<String, String>) entry;
+							return new HttpRequestNameValuePair(map.get("name"), map.get("value"));
+						})
+						.collect(Collectors.toList());
+			} else {
+				this.customHeaders = (List<HttpRequestNameValuePair>) customHeaders;
+			}
+		} else if (customHeaders instanceof Map) {
+			this.customHeaders = ((Map<String, String>) customHeaders)
+					.entrySet()
+					.stream()
+					.map(entry -> new HttpRequestNameValuePair(entry.getKey(), entry.getValue()))
+					.collect(Collectors.toList());
+		} else {
+			throw new IllegalArgumentException("Unsupported type for customHeaders: " + customHeaders.getClass());
+		}
+	}
+
+
+	public List<HttpRequestNameValuePair> getCustomHeaders() {
         return customHeaders;
     }
 
