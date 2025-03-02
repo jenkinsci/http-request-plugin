@@ -1,19 +1,18 @@
 package jenkins.plugins.http_request.util;
 
+import java.io.Serial;
 import java.net.URI;
 
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
-public class HttpMkcol extends HttpEntityEnclosingRequestBase {
-	public final static String METHOD_NAME = "MKCOL";
+public class HttpMkcol extends HttpUriRequestBase {
 
-	public HttpMkcol(final String uri) {
-		super();
-		setURI(URI.create(uri));
-	}
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-	@Override
-	public String getMethod() {
-		return METHOD_NAME;
-	}
+    public static final  String METHOD_NAME = "MKCOL";
+
+    public HttpMkcol(final String uri) {
+        super(METHOD_NAME, URI.create(uri));
+    }
 }
