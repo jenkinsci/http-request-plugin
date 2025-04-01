@@ -207,7 +207,7 @@ public final class HttpRequestStep extends Step {
 
     /**
      * Set custom headers from a Map to support headers with special characters in their names.
-     * This is an alternative to using the List<HttpRequestNameValuePair> that makes it easier
+     * This is an alternative to using the List&lt;HttpRequestNameValuePair&gt; that makes it easier
      * to define headers with special characters in the name such as hyphens.
      * 
      * @param headerMap Map of header names to values
