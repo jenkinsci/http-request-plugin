@@ -150,6 +150,29 @@ def response =  httpRequest customHeaders: [[maskValue: true, name: 'foo', value
                             url: 'https://api.github.com/orgs/${orgName}'
 ----
 
+You can set custom headers with special characters in their names (such as hyphens) using a Map:
+
+[source,groovy]
+----
+def headerMap = ['my-custom-header-with-hyphen-separator': 'headerValue']
+def response = httpRequest headersMap: headerMap, 
+                           url: 'https://api.github.com/orgs/${orgName}'
+----
+
+Alternatively, you can use the static factory method:
+
+[source,groovy]
+----
+import jenkins.plugins.http_request.util.HttpRequestNameValuePair
+
+def headers = [
+  HttpRequestNameValuePair.create('my-custom-header-with-hyphen-separator', 'value1', false),
+  HttpRequestNameValuePair.create('another-header', 'value2', true) // true to mask the value
+]
+def response = httpRequest customHeaders: headers,
+                           url: 'https://api.github.com/orgs/${orgName}'
+----
+
 You can send ``multipart/form-data`` forms:
 
 [source,groovy]

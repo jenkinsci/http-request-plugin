@@ -2,6 +2,11 @@ package jenkins.plugins.http_request;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -238,6 +243,24 @@ public class HttpRequest extends Builder {
 	@DataBoundSetter
 	public void setCustomHeaders(List<HttpRequestNameValuePair> customHeaders) {
 		this.customHeaders = customHeaders;
+	}
+
+	/**
+	 * Set custom headers from a Map to support headers with special characters in their names.
+	 * This is an alternative to using the List<HttpRequestNameValuePair> that makes it easier
+	 * to define headers with special characters in the name such as hyphens.
+	 * 
+	 * @param headerMap Map of header names to values
+	 */
+	@DataBoundSetter
+	public void setHeadersMap(Map<String, String> headerMap) {
+		List<HttpRequestNameValuePair> headers = new ArrayList<>();
+		if (headerMap != null) {
+			for (Map.Entry<String, String> entry : headerMap.entrySet()) {
+				headers.add(new HttpRequestNameValuePair(entry));
+			}
+		}
+		this.customHeaders = headers;
 	}
 
 	public List<HttpRequestFormDataPart> getFormData() {
