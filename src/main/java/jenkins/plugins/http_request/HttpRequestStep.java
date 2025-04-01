@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -202,6 +203,24 @@ public final class HttpRequestStep extends Step {
     @DataBoundSetter
     public void setCustomHeaders(List<HttpRequestNameValuePair> customHeaders) {
         this.customHeaders = customHeaders;
+    }
+
+    /**
+     * Set custom headers from a Map to support headers with special characters in their names.
+     * This is an alternative to using the List&lt;HttpRequestNameValuePair&gt; that makes it easier
+     * to define headers with special characters in the name such as hyphens.
+     * 
+     * @param headerMap Map of header names to values
+     */
+    @DataBoundSetter
+    public void setHeadersMap(Map<String, String> headerMap) {
+        List<HttpRequestNameValuePair> headers = new ArrayList<>();
+        if (headerMap != null) {
+            for (Map.Entry<String, String> entry : headerMap.entrySet()) {
+                headers.add(new HttpRequestNameValuePair(entry));
+            }
+        }
+        this.customHeaders = headers;
     }
 
     public List<HttpRequestNameValuePair> getCustomHeaders() {
