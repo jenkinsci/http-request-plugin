@@ -10,7 +10,7 @@ import java.util.stream.IntStream;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
-import org.apache.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpHeaders;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -52,11 +52,11 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
  */
 public class HttpRequest extends Builder {
 
-	private final @NonNull String url;
-	private Boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
-	private HttpMode httpMode                 = DescriptorImpl.httpMode;
-	private String httpProxy                  = DescriptorImpl.httpProxy;
-	private String proxyAuthentication        = DescriptorImpl.proxyAuthentication;
+    private final @NonNull String url;
+    private Boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
+    private HttpMode httpMode                 = DescriptorImpl.httpMode;
+    private String httpProxy                  = DescriptorImpl.httpProxy;
+    private String proxyAuthentication        = DescriptorImpl.proxyAuthentication;
     private Boolean passBuildParameters       = DescriptorImpl.passBuildParameters;
     private String validResponseCodes         = DescriptorImpl.validResponseCodes;
     private String validResponseContent       = DescriptorImpl.validResponseContent;
@@ -76,395 +76,395 @@ public class HttpRequest extends Builder {
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
     private List<HttpRequestFormDataPart> formData = DescriptorImpl.formData;
 
-	@DataBoundConstructor
-	public HttpRequest(@NonNull String url) {
-		this.url = url;
-	}
+    @DataBoundConstructor
+    public HttpRequest(@NonNull String url) {
+        this.url = url;
+    }
 
-	@NonNull
-	public String getUrl() {
-		return url;
-	}
+    @NonNull
+    public String getUrl() {
+        return url;
+    }
 
-	public Boolean getIgnoreSslErrors() {
-		return ignoreSslErrors;
-	}
+    public Boolean getIgnoreSslErrors() {
+        return ignoreSslErrors;
+    }
 
-	@DataBoundSetter
-	public void setIgnoreSslErrors(Boolean ignoreSslErrors) {
-		this.ignoreSslErrors = ignoreSslErrors;
-	}
+    @DataBoundSetter
+    public void setIgnoreSslErrors(Boolean ignoreSslErrors) {
+        this.ignoreSslErrors = ignoreSslErrors;
+    }
 
-	public HttpMode getHttpMode() {
-		return httpMode;
-	}
+    public HttpMode getHttpMode() {
+        return httpMode;
+    }
 
-	@DataBoundSetter
-	public void setHttpMode(HttpMode httpMode) {
-		this.httpMode = httpMode;
-	}
+    @DataBoundSetter
+    public void setHttpMode(HttpMode httpMode) {
+        this.httpMode = httpMode;
+    }
 
-	public String getHttpProxy() {
-		return httpProxy;
-	}
+    public String getHttpProxy() {
+        return httpProxy;
+    }
 
-	@DataBoundSetter
-	public void setHttpProxy(String httpProxy) {
-		this.httpProxy = httpProxy;
-	}
+    @DataBoundSetter
+    public void setHttpProxy(String httpProxy) {
+        this.httpProxy = httpProxy;
+    }
 
-	public Boolean getPassBuildParameters() {
-		return passBuildParameters;
-	}
+    public Boolean getPassBuildParameters() {
+        return passBuildParameters;
+    }
 
-	@DataBoundSetter
-	public void setPassBuildParameters(Boolean passBuildParameters) {
-		this.passBuildParameters = passBuildParameters;
-	}
+    @DataBoundSetter
+    public void setPassBuildParameters(Boolean passBuildParameters) {
+        this.passBuildParameters = passBuildParameters;
+    }
 
-	@NonNull
-	public String getValidResponseCodes() {
-		return validResponseCodes;
-	}
+    @NonNull
+    public String getValidResponseCodes() {
+        return validResponseCodes;
+    }
 
-	@DataBoundSetter
-	public void setValidResponseCodes(String validResponseCodes) {
-		this.validResponseCodes = validResponseCodes;
-	}
+    @DataBoundSetter
+    public void setValidResponseCodes(String validResponseCodes) {
+        this.validResponseCodes = validResponseCodes;
+    }
 
-	public String getValidResponseContent() {
-		return validResponseContent;
-	}
+    public String getValidResponseContent() {
+        return validResponseContent;
+    }
 
-	@DataBoundSetter
-	public void setValidResponseContent(String validResponseContent) {
-		this.validResponseContent = validResponseContent;
-	}
+    @DataBoundSetter
+    public void setValidResponseContent(String validResponseContent) {
+        this.validResponseContent = validResponseContent;
+    }
 
-	public MimeType getAcceptType() {
-		return acceptType;
-	}
+    public MimeType getAcceptType() {
+        return acceptType;
+    }
 
-	@DataBoundSetter
-	public void setAcceptType(MimeType acceptType) {
-		this.acceptType = acceptType;
-	}
+    @DataBoundSetter
+    public void setAcceptType(MimeType acceptType) {
+        this.acceptType = acceptType;
+    }
 
-	public MimeType getContentType() {
-		return contentType;
-	}
+    public MimeType getContentType() {
+        return contentType;
+    }
 
-	@DataBoundSetter
-	public void setContentType(MimeType contentType) {
-		this.contentType = contentType;
-	}
+    @DataBoundSetter
+    public void setContentType(MimeType contentType) {
+        this.contentType = contentType;
+    }
 
-	public String getOutputFile() {
-		return outputFile;
-	}
+    public String getOutputFile() {
+        return outputFile;
+    }
 
-	@DataBoundSetter
-	public void setOutputFile(String outputFile) {
-		this.outputFile = outputFile;
-	}
+    @DataBoundSetter
+    public void setOutputFile(String outputFile) {
+        this.outputFile = outputFile;
+    }
 
-	public Integer getTimeout() {
-		return timeout;
-	}
+    public Integer getTimeout() {
+        return timeout;
+    }
 
-	@DataBoundSetter
-	public void setTimeout(Integer timeout) {
-		this.timeout = timeout;
-	}
+    @DataBoundSetter
+    public void setTimeout(Integer timeout) {
+        this.timeout = timeout;
+    }
 
-	public Boolean getConsoleLogResponseBody() {
-		return consoleLogResponseBody;
-	}
+    public Boolean getConsoleLogResponseBody() {
+        return consoleLogResponseBody;
+    }
 
-	@DataBoundSetter
-	public void setConsoleLogResponseBody(Boolean consoleLogResponseBody) {
-		this.consoleLogResponseBody = consoleLogResponseBody;
-	}
+    @DataBoundSetter
+    public void setConsoleLogResponseBody(Boolean consoleLogResponseBody) {
+        this.consoleLogResponseBody = consoleLogResponseBody;
+    }
 
-	public Boolean getQuiet() {
-		return quiet;
-	}
+    public Boolean getQuiet() {
+        return quiet;
+    }
 
-	@DataBoundSetter
-	public void setQuiet(Boolean quiet) {
-		this.quiet = quiet;
-	}
+    @DataBoundSetter
+    public void setQuiet(Boolean quiet) {
+        this.quiet = quiet;
+    }
 
-	public String getAuthentication() {
-		return authentication;
-	}
+    public String getAuthentication() {
+        return authentication;
+    }
 
-	@DataBoundSetter
-	public void setAuthentication(String authentication) {
-		this.authentication = authentication;
-	}
+    @DataBoundSetter
+    public void setAuthentication(String authentication) {
+        this.authentication = authentication;
+    }
 
-	public String getProxyAuthentication() {
-		return proxyAuthentication;
-	}
+    public String getProxyAuthentication() {
+        return proxyAuthentication;
+    }
 
-	@DataBoundSetter
-	public void setProxyAuthentication(String proxyAuthentication) {
-		this.proxyAuthentication = proxyAuthentication;
-	}
+    @DataBoundSetter
+    public void setProxyAuthentication(String proxyAuthentication) {
+        this.proxyAuthentication = proxyAuthentication;
+    }
 
-	public String getRequestBody() {
-		return requestBody;
-	}
+    public String getRequestBody() {
+        return requestBody;
+    }
 
-	@DataBoundSetter
-	public void setRequestBody(String requestBody) {
-		this.requestBody = requestBody;
-	}
+    @DataBoundSetter
+    public void setRequestBody(String requestBody) {
+        this.requestBody = requestBody;
+    }
 
-	public Boolean getUseSystemProperties() {
-		return useSystemProperties;
-	}
+    public Boolean getUseSystemProperties() {
+        return useSystemProperties;
+    }
 
-	@DataBoundSetter
-	public void setUseSystemProperties(Boolean useSystemProperties) {
-		this.useSystemProperties = useSystemProperties;
-	}
+    @DataBoundSetter
+    public void setUseSystemProperties(Boolean useSystemProperties) {
+        this.useSystemProperties = useSystemProperties;
+    }
 
-	public List<HttpRequestNameValuePair> getCustomHeaders() {
-		return customHeaders;
-	}
+    public List<HttpRequestNameValuePair> getCustomHeaders() {
+        return customHeaders;
+    }
 
-	@DataBoundSetter
-	public void setCustomHeaders(List<HttpRequestNameValuePair> customHeaders) {
-		this.customHeaders = customHeaders;
-	}
+    @DataBoundSetter
+    public void setCustomHeaders(List<HttpRequestNameValuePair> customHeaders) {
+        this.customHeaders = customHeaders;
+    }
 
-	public List<HttpRequestFormDataPart> getFormData() {
-		return formData;
-	}
+    public List<HttpRequestFormDataPart> getFormData() {
+        return formData;
+    }
 
-	@DataBoundSetter
-	public void setFormData(List<HttpRequestFormDataPart> formData) {
-		this.formData = Collections.unmodifiableList(formData);
-	}
+    @DataBoundSetter
+    public void setFormData(List<HttpRequestFormDataPart> formData) {
+        this.formData = Collections.unmodifiableList(formData);
+    }
 
-	public String getUploadFile() {
-		return uploadFile;
-	}
+    public String getUploadFile() {
+        return uploadFile;
+    }
 
-	@DataBoundSetter
-	public void setUploadFile(String uploadFile) {
-		this.uploadFile = uploadFile;
-	}
+    @DataBoundSetter
+    public void setUploadFile(String uploadFile) {
+        this.uploadFile = uploadFile;
+    }
 
-	public String getMultipartName() {
-		return multipartName;
-	}
+    public String getMultipartName() {
+        return multipartName;
+    }
 
-	@DataBoundSetter
-	public void setMultipartName(String multipartName) {
-		this.multipartName = multipartName;
-	}
+    @DataBoundSetter
+    public void setMultipartName(String multipartName) {
+        this.multipartName = multipartName;
+    }
 
-	public Boolean getWrapAsMultipart() {
-		return wrapAsMultipart;
-	}
+    public Boolean getWrapAsMultipart() {
+        return wrapAsMultipart;
+    }
 
-	@DataBoundSetter
-	public void setWrapAsMultipart(Boolean wrapAsMultipart) {
-		this.wrapAsMultipart = wrapAsMultipart;
-	}
+    @DataBoundSetter
+    public void setWrapAsMultipart(Boolean wrapAsMultipart) {
+        this.wrapAsMultipart = wrapAsMultipart;
+    }
 
-	@Initializer(before = InitMilestone.PLUGINS_STARTED)
-	public static void xStreamCompatibility() {
-		Items.XSTREAM2.aliasField("logResponseBody", HttpRequest.class, "consoleLogResponseBody");
-		Items.XSTREAM2.aliasField("consoleLogResponseBody", HttpRequest.class, "consoleLogResponseBody");
-		Items.XSTREAM2.alias("pair", HttpRequestNameValuePair.class);
-	}
+    @Initializer(before = InitMilestone.PLUGINS_STARTED)
+    public static void xStreamCompatibility() {
+        Items.XSTREAM2.aliasField("logResponseBody", HttpRequest.class, "consoleLogResponseBody");
+        Items.XSTREAM2.aliasField("consoleLogResponseBody", HttpRequest.class, "consoleLogResponseBody");
+        Items.XSTREAM2.alias("pair", HttpRequestNameValuePair.class);
+    }
 
-	protected Object readResolve() {
-		if (customHeaders == null) {
-			customHeaders = DescriptorImpl.customHeaders;
-		}
-		if (formData == null) {
-			formData = DescriptorImpl.formData;
-		}
-		if (validResponseCodes == null || validResponseCodes.trim().isEmpty()) {
-			validResponseCodes = DescriptorImpl.validResponseCodes;
-		}
-		if (ignoreSslErrors == null) {
-			//default for new job false(DescriptorImpl.ignoreSslErrors) for old ones true to keep same behavior
-			ignoreSslErrors = true;
-		}
-		if (quiet == null) {
-			quiet = DescriptorImpl.quiet;
-		}
-		if (useSystemProperties == null) {
-			// old jobs use it (for compatibility), new jobs doesn't (jelly was not reading the default)
-			useSystemProperties = !DescriptorImpl.useSystemProperties;
-		}
+    protected Object readResolve() {
+        if (customHeaders == null) {
+            customHeaders = DescriptorImpl.customHeaders;
+        }
+        if (formData == null) {
+            formData = DescriptorImpl.formData;
+        }
+        if (validResponseCodes == null || validResponseCodes.trim().isEmpty()) {
+            validResponseCodes = DescriptorImpl.validResponseCodes;
+        }
+        if (ignoreSslErrors == null) {
+            //default for new job false(DescriptorImpl.ignoreSslErrors) for old ones true to keep same behavior
+            ignoreSslErrors = true;
+        }
+        if (quiet == null) {
+            quiet = DescriptorImpl.quiet;
+        }
+        if (useSystemProperties == null) {
+            // old jobs use it (for compatibility), new jobs doesn't (jelly was not reading the default)
+            useSystemProperties = !DescriptorImpl.useSystemProperties;
+        }
 
-		if(wrapAsMultipart == null) {
-			wrapAsMultipart = DescriptorImpl.wrapAsMultipart;
-		}
-		return this;
-	}
+        if(wrapAsMultipart == null) {
+            wrapAsMultipart = DescriptorImpl.wrapAsMultipart;
+        }
+        return this;
+    }
 
-	private List<HttpRequestNameValuePair> createParams(EnvVars envVars, AbstractBuild<?, ?> build, TaskListener listener) {
-		Map<String, String> buildVariables = build.getBuildVariables();
-		if (buildVariables.isEmpty()) {
-			return Collections.emptyList();
-		}
-		PrintStream logger = listener.getLogger();
-		logger.println("Parameters: ");
+    private List<HttpRequestNameValuePair> createParams(EnvVars envVars, AbstractBuild<?, ?> build, TaskListener listener) {
+        Map<String, String> buildVariables = build.getBuildVariables();
+        if (buildVariables.isEmpty()) {
+            return Collections.emptyList();
+        }
+        PrintStream logger = listener.getLogger();
+        logger.println("Parameters: ");
 
-		List<HttpRequestNameValuePair> l = new ArrayList<>();
-		for (Map.Entry<String, String> entry : buildVariables.entrySet()) {
-			String value = envVars.expand(entry.getValue());
-			logger.println("  " + entry.getKey() + " = " + value);
+        List<HttpRequestNameValuePair> l = new ArrayList<>();
+        for (Map.Entry<String, String> entry : buildVariables.entrySet()) {
+            String value = envVars.expand(entry.getValue());
+            logger.println("  " + entry.getKey() + " = " + value);
 
-			l.add(new HttpRequestNameValuePair(entry.getKey(), value));
-		}
-		return l;
-	}
+            l.add(new HttpRequestNameValuePair(entry.getKey(), value));
+        }
+        return l;
+    }
 
-	String resolveUrl(EnvVars envVars,
-					  AbstractBuild<?, ?> build, TaskListener listener) throws IOException {
-		String url = envVars.expand(getUrl());
-		if (Boolean.TRUE.equals(getPassBuildParameters()) && getHttpMode() == HttpMode.GET) {
-			List<HttpRequestNameValuePair> params = createParams(envVars, build, listener);
-			if (!params.isEmpty()) {
-				url = HttpClientUtil.appendParamsToUrl(url, params);
-			}
-		}
-		return url;
-	}
+    String resolveUrl(EnvVars envVars,
+                      AbstractBuild<?, ?> build, TaskListener listener) throws IOException {
+        String url = envVars.expand(getUrl());
+        if (Boolean.TRUE.equals(getPassBuildParameters()) && getHttpMode() == HttpMode.GET) {
+            List<HttpRequestNameValuePair> params = createParams(envVars, build, listener);
+            if (!params.isEmpty()) {
+                url = HttpClientUtil.appendParamsToUrl(url, params);
+            }
+        }
+        return url;
+    }
 
-	List<HttpRequestNameValuePair> resolveHeaders(EnvVars envVars) {
-		final List<HttpRequestNameValuePair> headers = new ArrayList<>();
-		if (contentType != null && contentType != MimeType.NOT_SET) {
-			headers.add(new HttpRequestNameValuePair(HttpHeaders.CONTENT_TYPE, contentType.getContentType().toString()));
-		}
-		if (acceptType != null && acceptType != MimeType.NOT_SET) {
-			headers.add(new HttpRequestNameValuePair(HttpHeaders.ACCEPT, acceptType.getValue()));
-		}
-		for (HttpRequestNameValuePair header : customHeaders) {
-			String headerName = envVars.expand(header.getName());
-			String headerValue = envVars.expand(header.getValue());
-			boolean maskValue = headerName.equalsIgnoreCase(HttpHeaders.AUTHORIZATION) ||
-					header.getMaskValue();
+    List<HttpRequestNameValuePair> resolveHeaders(EnvVars envVars) {
+        final List<HttpRequestNameValuePair> headers = new ArrayList<>();
+        if (contentType != null && contentType != MimeType.NOT_SET) {
+            headers.add(new HttpRequestNameValuePair(HttpHeaders.CONTENT_TYPE, contentType.getContentType().toString()));
+        }
+        if (acceptType != null && acceptType != MimeType.NOT_SET) {
+            headers.add(new HttpRequestNameValuePair(HttpHeaders.ACCEPT, acceptType.getValue()));
+        }
+        for (HttpRequestNameValuePair header : customHeaders) {
+            String headerName = envVars.expand(header.getName());
+            String headerValue = envVars.expand(header.getValue());
+            boolean maskValue = headerName.equalsIgnoreCase(HttpHeaders.AUTHORIZATION) ||
+                    header.getMaskValue();
 
-			headers.add(new HttpRequestNameValuePair(headerName, headerValue, maskValue));
-		}
-		return headers;
-	}
+            headers.add(new HttpRequestNameValuePair(headerName, headerValue, maskValue));
+        }
+        return headers;
+    }
 
-	String resolveBody(EnvVars envVars,
-					  AbstractBuild<?, ?> build, TaskListener listener) throws IOException {
-		String body = envVars.expand(getRequestBody());
-		if ((body == null || body.isEmpty()) && Boolean.TRUE.equals(getPassBuildParameters())) {
-			List<HttpRequestNameValuePair> params = createParams(envVars, build, listener);
-			if (!params.isEmpty()) {
-				body = HttpClientUtil.paramsToString(params);
-			}
-		}
-		return body;
-	}
+    String resolveBody(EnvVars envVars,
+                      AbstractBuild<?, ?> build, TaskListener listener) throws IOException {
+        String body = envVars.expand(getRequestBody());
+        if ((body == null || body.isEmpty()) && Boolean.TRUE.equals(getPassBuildParameters())) {
+            List<HttpRequestNameValuePair> params = createParams(envVars, build, listener);
+            if (!params.isEmpty()) {
+                body = HttpClientUtil.paramsToString(params);
+            }
+        }
+        return body;
+    }
 
-	FilePath resolveOutputFile(EnvVars envVars, AbstractBuild<?,?> build) {
-		if (outputFile == null || outputFile.trim().isEmpty()) {
-			return null;
-		}
-		String filePath = envVars.expand(outputFile);
-		FilePath workspace = build.getWorkspace();
-		if (workspace == null) {
-			throw new IllegalStateException("Could not find workspace to save file outputFile: " + outputFile);
-		}
-		return workspace.child(filePath);
-	}
+    FilePath resolveOutputFile(EnvVars envVars, AbstractBuild<?,?> build) {
+        if (outputFile == null || outputFile.trim().isEmpty()) {
+            return null;
+        }
+        String filePath = envVars.expand(outputFile);
+        FilePath workspace = build.getWorkspace();
+        if (workspace == null) {
+            throw new IllegalStateException("Could not find workspace to save file outputFile: " + outputFile);
+        }
+        return workspace.child(filePath);
+    }
 
-	FilePath resolveUploadFile(EnvVars envVars, AbstractBuild<?, ?> build) {
-		return resolveUploadFileInternal(uploadFile, envVars, build);
-	}
+    FilePath resolveUploadFile(EnvVars envVars, AbstractBuild<?, ?> build) {
+        return resolveUploadFileInternal(uploadFile, envVars, build);
+    }
 
-	private static FilePath resolveUploadFileInternal(String path, EnvVars envVars, AbstractBuild<?, ?> build) {
-		if (path == null || path.trim().isEmpty()) {
-			return null;
-		}
-		String filePath = envVars.expand(path);
-		try {
-			FilePath workspace = build.getWorkspace();
-			if (workspace == null) {
-				throw new IllegalStateException(
-						"Could not find workspace to check existence of upload file: " + path
-								+ ". You should use it inside a 'node' block");
-			}
-			FilePath uploadFilePath = workspace.child(filePath);
-			if (!uploadFilePath.exists()) {
-				throw new IllegalStateException("Could not find upload file: " + path);
-			}
-			return uploadFilePath;
-		} catch (IOException | InterruptedException e) {
-			throw new IllegalStateException(e);
-		}
-	}
+    private static FilePath resolveUploadFileInternal(String path, EnvVars envVars, AbstractBuild<?, ?> build) {
+        if (path == null || path.trim().isEmpty()) {
+            return null;
+        }
+        String filePath = envVars.expand(path);
+        try {
+            FilePath workspace = build.getWorkspace();
+            if (workspace == null) {
+                throw new IllegalStateException(
+                        "Could not find workspace to check existence of upload file: " + path
+                                + ". You should use it inside a 'node' block");
+            }
+            FilePath uploadFilePath = workspace.child(filePath);
+            if (!uploadFilePath.exists()) {
+                throw new IllegalStateException("Could not find upload file: " + path);
+            }
+            return uploadFilePath;
+        } catch (IOException | InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
-	List<HttpRequestFormDataPart> resolveFormDataParts(EnvVars envVars, AbstractBuild<?, ?> build) {
-		if (formData == null || formData.isEmpty()) {
-			return Collections.emptyList();
-		}
+    List<HttpRequestFormDataPart> resolveFormDataParts(EnvVars envVars, AbstractBuild<?, ?> build) {
+        if (formData == null || formData.isEmpty()) {
+            return Collections.emptyList();
+        }
 
-		List<HttpRequestFormDataPart> resolved = new ArrayList<>(formData.size());
+        List<HttpRequestFormDataPart> resolved = new ArrayList<>(formData.size());
 
-		for (HttpRequestFormDataPart part : formData) {
-			String name = envVars.expand(part.getName());
-			String fileName = envVars.expand(part.getFileName());
-			FilePath resolvedUploadFile =
-					resolveUploadFileInternal(part.getUploadFile(), envVars, build);
-			String body = envVars.expand(part.getBody());
+        for (HttpRequestFormDataPart part : formData) {
+            String name = envVars.expand(part.getName());
+            String fileName = envVars.expand(part.getFileName());
+            FilePath resolvedUploadFile =
+                    resolveUploadFileInternal(part.getUploadFile(), envVars, build);
+            String body = envVars.expand(part.getBody());
 
-			HttpRequestFormDataPart newPart = new HttpRequestFormDataPart(part.getUploadFile(),
-					name, fileName, part.getContentType(), body);
-			newPart.setResolvedUploadFile(resolvedUploadFile);
-			resolved.add(newPart);
-		}
+            HttpRequestFormDataPart newPart = new HttpRequestFormDataPart(part.getUploadFile(),
+                    name, fileName, part.getContentType(), body);
+            newPart.setResolvedUploadFile(resolvedUploadFile);
+            resolved.add(newPart);
+        }
 
-		return resolved;
-	}
+        return resolved;
+    }
 
     @Override
     public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener)
     throws InterruptedException, IOException
     {
-		EnvVars envVars = build.getEnvironment(listener);
-		envVars.putAll(build.getBuildVariables());
+        EnvVars envVars = build.getEnvironment(listener);
+        envVars.putAll(build.getBuildVariables());
 
-		HttpRequestExecution exec = HttpRequestExecution.from(this, envVars, build,
-				this.getQuiet() ? TaskListener.NULL : listener);
-		VirtualChannel channel = launcher.getChannel();
-		if (channel == null) {
-			throw new IllegalStateException("Launcher doesn't support remoting but it is required");
-		}
-		channel.call(exec);
+        HttpRequestExecution exec = HttpRequestExecution.from(this, envVars, build,
+                this.getQuiet() ? TaskListener.NULL : listener);
+        VirtualChannel channel = launcher.getChannel();
+        if (channel == null) {
+            throw new IllegalStateException("Launcher doesn't support remoting but it is required");
+        }
+        channel.call(exec);
 
         return true;
     }
 
-	public boolean isUseNtlm() {
-		return useNtlm;
-	}
+    public boolean isUseNtlm() {
+        return useNtlm;
+    }
 
-	public void setUseNtlm(boolean useNtlm) {
-		this.useNtlm = useNtlm;
-	}
+    public void setUseNtlm(boolean useNtlm) {
+        this.useNtlm = useNtlm;
+    }
 
-	@Extension
+    @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
-		public static final boolean ignoreSslErrors = false;
-		public static final HttpMode httpMode                  = HttpMode.GET;
-		public static final String   httpProxy                 = "";
-		public static final String proxyAuthentication         = "";
+        public static final boolean ignoreSslErrors = false;
+        public static final HttpMode httpMode                  = HttpMode.GET;
+        public static final String   httpProxy                 = "";
+        public static final String proxyAuthentication         = "";
         public static final Boolean  passBuildParameters       = false;
         public static final String   validResponseCodes        = "100:399";
         public static final String   validResponseContent      = "";
@@ -512,40 +512,40 @@ public class HttpRequest extends Builder {
         }
 
         public ListBoxModel doFillAuthenticationItems(@AncestorInPath Item project,
-													  @QueryParameter String url) {
+                                                      @QueryParameter String url) {
             return fillAuthenticationItems(project, url);
         }
 
         public ListBoxModel doFillProxyAuthenticationItems(@AncestorInPath Item project,
-														   @QueryParameter String url) {
-			if (project == null || !project.hasPermission(Item.CONFIGURE)) {
-				return new StandardListBoxModel();
-			} else {
-				return new StandardListBoxModel()
-						.includeEmptyValue()
-						.includeAs(ACL.SYSTEM,
-								project, StandardUsernamePasswordCredentials.class,
-								URIRequirementBuilder.fromUri(url).build());
-			}
-		}
+                                                           @QueryParameter String url) {
+            if (project == null || !project.hasPermission(Item.CONFIGURE)) {
+                return new StandardListBoxModel();
+            } else {
+                return new StandardListBoxModel()
+                        .includeEmptyValue()
+                        .includeAs(ACL.SYSTEM2,
+                                project, StandardUsernamePasswordCredentials.class,
+                                URIRequirementBuilder.fromUri(url).build());
+            }
+        }
 
         public static ListBoxModel fillAuthenticationItems(Item project, String url) {
-			if (project == null || !project.hasPermission(Item.CONFIGURE)) {
-				return new StandardListBoxModel();
-			}
+            if (project == null || !project.hasPermission(Item.CONFIGURE)) {
+                return new StandardListBoxModel();
+            }
 
-			List<Option> options = new ArrayList<>();
+            List<Option> options = new ArrayList<>();
 
             for (FormAuthentication formAuthentication : HttpRequestGlobalConfig.get().getFormAuthentications()) {
-				options.add(new Option(formAuthentication.getKeyName()));
-			}
+                options.add(new Option(formAuthentication.getKeyName()));
+            }
 
-			AbstractIdCredentialsListBoxModel<StandardListBoxModel, StandardCredentials> items = new StandardListBoxModel()
-					.includeEmptyValue()
-					.includeAs(ACL.SYSTEM,
-							project, StandardUsernamePasswordCredentials.class,
-							URIRequirementBuilder.fromUri(url).build());
-			items.addMissing(options);
+            AbstractIdCredentialsListBoxModel<StandardListBoxModel, StandardCredentials> items = new StandardListBoxModel()
+                    .includeEmptyValue()
+                    .includeAs(ACL.SYSTEM2,
+                            project, StandardUsernamePasswordCredentials.class,
+                            URIRequirementBuilder.fromUri(url).build());
+            items.addMissing(options);
             return items;
         }
 

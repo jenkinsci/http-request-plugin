@@ -1,12 +1,14 @@
 package jenkins.plugins.http_request.auth;
 
 import java.io.PrintStream;
+import java.io.Serial;
+import java.net.URISyntaxException;
 
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.utils.URIUtils;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.protocol.HttpContext;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.client5.http.utils.URIUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -25,9 +27,10 @@ import jenkins.plugins.http_request.HttpRequestGlobalConfig;
 @Deprecated
 public class BasicDigestAuthentication extends AbstractDescribableImpl<BasicDigestAuthentication>
         implements Authenticator {
-	private static final long serialVersionUID = 4818288270720177069L;
+    @Serial
+    private static final long serialVersionUID = 4818288270720177069L;
 
-	private final String keyName;
+    private final String keyName;
     private final String userName;
     private final String password;
 
@@ -51,12 +54,16 @@ public class BasicDigestAuthentication extends AbstractDescribableImpl<BasicDige
         return password;
     }
 
-	@Override
-	public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpContext context,
-											HttpRequestBase requestBase, PrintStream logger) {
-		CredentialBasicAuthentication.auth(clientBuilder, context, URIUtils.extractHost(requestBase.getURI()), userName, password);
-		return clientBuilder.build();
-	}
+    @Override
+    public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpClientContext context,
+                                            HttpUriRequestBase requestBase, PrintStream logger) {
+        try {
+            CredentialBasicAuthentication.auth(clientBuilder, context, URIUtils.extractHost(requestBase.getUri()), userName, password, null);
+            return clientBuilder.build();
+        } catch (URISyntaxException ex) {
+            throw new IllegalArgumentException(ex);
+        }
+    }
 
     @Extension
     public static class BasicDigestAuthenticationDescriptor extends Descriptor<BasicDigestAuthentication> {
