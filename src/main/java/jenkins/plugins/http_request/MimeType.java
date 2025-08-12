@@ -1,6 +1,6 @@
 package jenkins.plugins.http_request;
 
-import org.apache.http.entity.ContentType;
+import org.apache.hc.core5.http.ContentType;
 
 import hudson.util.ListBoxModel;
 

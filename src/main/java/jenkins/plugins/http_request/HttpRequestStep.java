@@ -1,6 +1,7 @@
 package jenkins.plugins.http_request;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -10,7 +11,7 @@ import java.util.Set;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
-import org.apache.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpHeaders;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -40,8 +41,8 @@ import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
 public final class HttpRequestStep extends Step {
 
     private final @NonNull String url;
-	private boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
-	private HttpMode httpMode                 = DescriptorImpl.httpMode;
+    private boolean ignoreSslErrors = DescriptorImpl.ignoreSslErrors;
+    private HttpMode httpMode                 = DescriptorImpl.httpMode;
     private String httpProxy                  = DescriptorImpl.httpProxy;
     private String proxyAuthentication        = DescriptorImpl.proxyAuthentication;
     private String validResponseCodes         = DescriptorImpl.validResponseCodes;
@@ -59,30 +60,30 @@ public final class HttpRequestStep extends Step {
     private Boolean useSystemProperties       = DescriptorImpl.useSystemProperties;
     private boolean useNtlm                   = DescriptorImpl.useNtlm;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
-	private List<HttpRequestFormDataPart> formData = DescriptorImpl.formData;
-	private String outputFile = DescriptorImpl.outputFile;
-	private ResponseHandle responseHandle = DescriptorImpl.responseHandle;
+    private List<HttpRequestFormDataPart> formData = DescriptorImpl.formData;
+    private String outputFile = DescriptorImpl.outputFile;
+    private ResponseHandle responseHandle = DescriptorImpl.responseHandle;
 
     @DataBoundConstructor
     public HttpRequestStep(@NonNull String url) {
         this.url = url;
     }
 
-	@NonNull
-	public String getUrl() {
-		return url;
-	}
+    @NonNull
+    public String getUrl() {
+        return url;
+    }
 
-	public boolean isIgnoreSslErrors() {
-		return ignoreSslErrors;
-	}
+    public boolean isIgnoreSslErrors() {
+        return ignoreSslErrors;
+    }
 
-	@DataBoundSetter
-	public void setIgnoreSslErrors(boolean ignoreSslErrors) {
-		this.ignoreSslErrors = ignoreSslErrors;
-	}
+    @DataBoundSetter
+    public void setIgnoreSslErrors(boolean ignoreSslErrors) {
+        this.ignoreSslErrors = ignoreSslErrors;
+    }
 
-	@DataBoundSetter
+    @DataBoundSetter
     public void setHttpMode(HttpMode httpMode) {
         this.httpMode = httpMode;
     }
@@ -172,16 +173,16 @@ public final class HttpRequestStep extends Step {
         return authentication;
     }
 
-	@DataBoundSetter
-	public void setProxyAuthentication(String proxyAuthentication) {
-		this.proxyAuthentication = proxyAuthentication;
-	}
+    @DataBoundSetter
+    public void setProxyAuthentication(String proxyAuthentication) {
+        this.proxyAuthentication = proxyAuthentication;
+    }
 
-	public String getProxyAuthentication() {
-		return proxyAuthentication;
-	}
+    public String getProxyAuthentication() {
+        return proxyAuthentication;
+    }
 
-	@DataBoundSetter
+    @DataBoundSetter
     public void setRequestBody(String requestBody) {
         this.requestBody = requestBody;
     }
@@ -190,14 +191,14 @@ public final class HttpRequestStep extends Step {
         return requestBody;
     }
 
-	@DataBoundSetter
-	public void setUseSystemProperties(Boolean useSystemProperties) {
-		this.useSystemProperties = useSystemProperties;
-	}
+    @DataBoundSetter
+    public void setUseSystemProperties(Boolean useSystemProperties) {
+        this.useSystemProperties = useSystemProperties;
+    }
 
-	public Boolean getUseSystemProperties() {
-		return useSystemProperties;
-	}
+    public Boolean getUseSystemProperties() {
+        return useSystemProperties;
+    }
 
     @DataBoundSetter
     public void setCustomHeaders(List<HttpRequestNameValuePair> customHeaders) {
@@ -208,100 +209,100 @@ public final class HttpRequestStep extends Step {
         return customHeaders;
     }
 
-	public List<HttpRequestFormDataPart> getFormData() {
-		return formData;
-	}
+    public List<HttpRequestFormDataPart> getFormData() {
+        return formData;
+    }
 
-	@DataBoundSetter
-	public void setFormData(List<HttpRequestFormDataPart> formData) {
-		this.formData = Collections.unmodifiableList(formData);
-	}
+    @DataBoundSetter
+    public void setFormData(List<HttpRequestFormDataPart> formData) {
+        this.formData = Collections.unmodifiableList(formData);
+    }
 
-	public String getOutputFile() {
-		return outputFile;
-	}
+    public String getOutputFile() {
+        return outputFile;
+    }
 
-	@DataBoundSetter
-	public void setOutputFile(String outputFile) {
-		this.outputFile = outputFile;
-	}
+    @DataBoundSetter
+    public void setOutputFile(String outputFile) {
+        this.outputFile = outputFile;
+    }
 
-	public ResponseHandle getResponseHandle() {
-		return responseHandle;
-	}
+    public ResponseHandle getResponseHandle() {
+        return responseHandle;
+    }
 
 
-	@DataBoundSetter
-	public void setResponseHandle(ResponseHandle responseHandle) {
-		this.responseHandle = responseHandle;
-	}
+    @DataBoundSetter
+    public void setResponseHandle(ResponseHandle responseHandle) {
+        this.responseHandle = responseHandle;
+    }
 
-	public String getUploadFile() {
-		return uploadFile;
-	}
+    public String getUploadFile() {
+        return uploadFile;
+    }
 
-	@DataBoundSetter
-	public void setUploadFile(String uploadFile) {
-		this.uploadFile = uploadFile;
-	}
+    @DataBoundSetter
+    public void setUploadFile(String uploadFile) {
+        this.uploadFile = uploadFile;
+    }
 
-	public String getMultipartName() {
-		return multipartName;
-	}
+    public String getMultipartName() {
+        return multipartName;
+    }
 
-	@DataBoundSetter
-	public void setMultipartName(String multipartName) {
-		this.multipartName = multipartName;
-	}
+    @DataBoundSetter
+    public void setMultipartName(String multipartName) {
+        this.multipartName = multipartName;
+    }
 
-	public boolean isWrapAsMultipart() {
-		return wrapAsMultipart;
-	}
+    public boolean isWrapAsMultipart() {
+        return wrapAsMultipart;
+    }
 
-	@DataBoundSetter
-	public void setWrapAsMultipart(boolean wrapAsMultipart) {
-		this.wrapAsMultipart = wrapAsMultipart;
-	}
-	
-	@DataBoundSetter
-	public void setUseNtlm(boolean useNtlm) {
-		this.useNtlm = useNtlm;
-	}
+    @DataBoundSetter
+    public void setWrapAsMultipart(boolean wrapAsMultipart) {
+        this.wrapAsMultipart = wrapAsMultipart;
+    }
 
-	public boolean isUseNtlm() {
-		return useNtlm;
-	}
+    @DataBoundSetter
+    public void setUseNtlm(boolean useNtlm) {
+        this.useNtlm = useNtlm;
+    }
 
-	@Override
-	public StepExecution start(StepContext context) {
-		return new Execution(context, this);
-	}
+    public boolean isUseNtlm() {
+        return useNtlm;
+    }
 
-	@Override
+    @Override
+    public StepExecution start(StepContext context) {
+        return new Execution(context, this);
+    }
+
+    @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) super.getDescriptor();
     }
 
-	List<HttpRequestNameValuePair> resolveHeaders() {
-		final List<HttpRequestNameValuePair> headers = new ArrayList<>();
-		if (contentType != null && contentType != MimeType.NOT_SET) {
-			headers.add(new HttpRequestNameValuePair(HttpHeaders.CONTENT_TYPE, contentType.getContentType().toString()));
-		}
-		if (acceptType != null && acceptType != MimeType.NOT_SET) {
-			headers.add(new HttpRequestNameValuePair(HttpHeaders.ACCEPT, acceptType.getValue()));
-		}
-		for (HttpRequestNameValuePair header : customHeaders) {
-			String headerName = header.getName();
-			String headerValue = header.getValue();
-			boolean maskValue = headerName.equalsIgnoreCase(HttpHeaders.AUTHORIZATION) ||
-					header.getMaskValue();
+    List<HttpRequestNameValuePair> resolveHeaders() {
+        final List<HttpRequestNameValuePair> headers = new ArrayList<>();
+        if (contentType != null && contentType != MimeType.NOT_SET) {
+            headers.add(new HttpRequestNameValuePair(HttpHeaders.CONTENT_TYPE, contentType.getContentType().toString()));
+        }
+        if (acceptType != null && acceptType != MimeType.NOT_SET) {
+            headers.add(new HttpRequestNameValuePair(HttpHeaders.ACCEPT, acceptType.getValue()));
+        }
+        for (HttpRequestNameValuePair header : customHeaders) {
+            String headerName = header.getName();
+            String headerValue = header.getValue();
+            boolean maskValue = headerName.equalsIgnoreCase(HttpHeaders.AUTHORIZATION) ||
+                    header.getMaskValue();
 
-			headers.add(new HttpRequestNameValuePair(headerName, headerValue, maskValue));
-		}
-		return headers;
-	}
+            headers.add(new HttpRequestNameValuePair(headerName, headerValue, maskValue));
+        }
+        return headers;
+    }
 
-	@Extension
+    @Extension
     public static final class DescriptorImpl extends StepDescriptor {
         public static final boolean ignoreSslErrors = HttpRequest.DescriptorImpl.ignoreSslErrors;
         public static final HttpMode httpMode                  = HttpRequest.DescriptorImpl.httpMode;
@@ -324,7 +325,7 @@ public final class HttpRequestStep extends Step {
         public static final List <HttpRequestNameValuePair> customHeaders = Collections.emptyList();
         public static final List <HttpRequestFormDataPart> formData = Collections.emptyList();
         public static final String outputFile = "";
-		public static final ResponseHandle responseHandle = ResponseHandle.STRING;
+        public static final ResponseHandle responseHandle = ResponseHandle.STRING;
 
         @Override
         public Set<? extends Class<?>> getRequiredContext() {
@@ -333,7 +334,7 @@ public final class HttpRequestStep extends Step {
             return Collections.unmodifiableSet(context);
         }
 
-		@Override
+        @Override
         public String getFunctionName() {
             return "httpRequest";
         }
@@ -356,25 +357,25 @@ public final class HttpRequestStep extends Step {
             return MimeType.getContentTypeFillItems();
         }
 
-		public ListBoxModel doFillResponseHandleItems() {
-			ListBoxModel items = new ListBoxModel();
-			for (ResponseHandle responseHandle : ResponseHandle.values()) {
-				items.add(responseHandle.name());
-			}
-			return items;
-		}
+        public ListBoxModel doFillResponseHandleItems() {
+            ListBoxModel items = new ListBoxModel();
+            for (ResponseHandle responseHandle : ResponseHandle.values()) {
+                items.add(responseHandle.name());
+            }
+            return items;
+        }
 
         public ListBoxModel doFillAuthenticationItems(@AncestorInPath Item project,
-													  @QueryParameter String url) {
+                                                      @QueryParameter String url) {
             return HttpRequest.DescriptorImpl.fillAuthenticationItems(project, url);
         }
 
-		public ListBoxModel doFillProxyAuthenticationItems(@AncestorInPath Item project,
-														   @QueryParameter String url) {
-			return HttpRequest.DescriptorImpl.fillAuthenticationItems(project, url);
-		}
+        public ListBoxModel doFillProxyAuthenticationItems(@AncestorInPath Item project,
+                                                           @QueryParameter String url) {
+            return HttpRequest.DescriptorImpl.fillAuthenticationItems(project, url);
+        }
 
-		public FormValidation doCheckValidResponseCodes(@QueryParameter String value) {
+        public FormValidation doCheckValidResponseCodes(@QueryParameter String value) {
             return HttpRequest.DescriptorImpl.checkValidResponseCodes(value);
         }
 
@@ -384,94 +385,95 @@ public final class HttpRequestStep extends Step {
 
         private final transient HttpRequestStep step;
 
-		Execution(@NonNull StepContext context, HttpRequestStep step) {
-			super(context);
-			this.step = step;
-		}
+        Execution(@NonNull StepContext context, HttpRequestStep step) {
+            super(context);
+            this.step = step;
+        }
 
-		@Override
-		protected ResponseContentSupplier run() throws Exception {
-			HttpRequestExecution exec = HttpRequestExecution.from(step,
-					step.getQuiet() ? TaskListener.NULL : Objects.requireNonNull(getContext().get(TaskListener.class)),
-					this);
+        @Override
+        protected ResponseContentSupplier run() throws Exception {
+            HttpRequestExecution exec = HttpRequestExecution.from(step,
+                    step.getQuiet() ? TaskListener.NULL : Objects.requireNonNull(getContext().get(TaskListener.class)),
+                    this);
 
-			Launcher launcher = getContext().get(Launcher.class);
-			if (launcher != null) {
-				VirtualChannel channel = launcher.getChannel();
-				if (channel == null) {
-					throw new IllegalStateException("Launcher doesn't support remoting but it is required");
-				}
-				return channel.call(exec);
-			}
+            Launcher launcher = getContext().get(Launcher.class);
+            if (launcher != null) {
+                VirtualChannel channel = launcher.getChannel();
+                if (channel == null) {
+                    throw new IllegalStateException("Launcher doesn't support remoting but it is required");
+                }
+                return channel.call(exec);
+            }
 
-			return exec.call();
-		}
+            return exec.call();
+        }
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
-		FilePath resolveOutputFile() {
-			String outputFile = step.getOutputFile();
-			if (outputFile == null || outputFile.trim().isEmpty()) {
-				return null;
-			}
+        FilePath resolveOutputFile() {
+            String outputFile = step.getOutputFile();
+            if (outputFile == null || outputFile.trim().isEmpty()) {
+                return null;
+            }
 
-			try {
-				FilePath workspace = getContext().get(FilePath.class);
-				if (workspace == null) {
-					throw new IllegalStateException("Could not find workspace to save file outputFile: " + outputFile +
-							". You should use it inside a 'node' block");
-				}
-				return workspace.child(outputFile);
-			} catch (IOException | InterruptedException e) {
-				throw new IllegalStateException(e);
-			}
-		}
+            try {
+                FilePath workspace = getContext().get(FilePath.class);
+                if (workspace == null) {
+                    throw new IllegalStateException("Could not find workspace to save file outputFile: " + outputFile +
+                            ". You should use it inside a 'node' block");
+                }
+                return workspace.child(outputFile);
+            } catch (IOException | InterruptedException e) {
+                throw new IllegalStateException(e);
+            }
+        }
 
-		FilePath resolveUploadFile() {
-			return resolveUploadFileInternal(step.getUploadFile());
-		}
+        FilePath resolveUploadFile() {
+            return resolveUploadFileInternal(step.getUploadFile());
+        }
 
-		public Item getProject() throws IOException, InterruptedException {
-			return Objects.requireNonNull(getContext().get(Run.class)).getParent();
-		}
+        public Item getProject() throws IOException, InterruptedException {
+            return Objects.requireNonNull(getContext().get(Run.class)).getParent();
+        }
 
-		private FilePath resolveUploadFileInternal(String path) {
-			if (path == null || path.trim().isEmpty()) {
-				return null;
-			}
+        private FilePath resolveUploadFileInternal(String path) {
+            if (path == null || path.trim().isEmpty()) {
+                return null;
+            }
 
-			try {
-				FilePath workspace = getContext().get(FilePath.class);
-				if (workspace == null) {
-					throw new IllegalStateException("Could not find workspace to check existence of upload file: " + path +
-							". You should use it inside a 'node' block");
-				}
-				FilePath uploadFilePath = workspace.child(path);
-				if (!uploadFilePath.exists()) {
-					throw new IllegalStateException("Could not find upload file: " + path);
-				}
-				return uploadFilePath;
-			} catch (IOException | InterruptedException e) {
-				throw new IllegalStateException(e);
-			}
-		}
+            try {
+                FilePath workspace = getContext().get(FilePath.class);
+                if (workspace == null) {
+                    throw new IllegalStateException("Could not find workspace to check existence of upload file: " + path +
+                            ". You should use it inside a 'node' block");
+                }
+                FilePath uploadFilePath = workspace.child(path);
+                if (!uploadFilePath.exists()) {
+                    throw new IllegalStateException("Could not find upload file: " + path);
+                }
+                return uploadFilePath;
+            } catch (IOException | InterruptedException e) {
+                throw new IllegalStateException(e);
+            }
+        }
 
-		List<HttpRequestFormDataPart> resolveFormDataParts() {
-			List<HttpRequestFormDataPart> formData = step.getFormData();
-			if (formData == null || formData.isEmpty()) {
-				return Collections.emptyList();
-			}
+        List<HttpRequestFormDataPart> resolveFormDataParts() {
+            List<HttpRequestFormDataPart> formData = step.getFormData();
+            if (formData == null || formData.isEmpty()) {
+                return Collections.emptyList();
+            }
 
-			List<HttpRequestFormDataPart> resolved = new ArrayList<>(formData.size());
+            List<HttpRequestFormDataPart> resolved = new ArrayList<>(formData.size());
 
-			for (HttpRequestFormDataPart part : formData) {
-				HttpRequestFormDataPart newPart = new HttpRequestFormDataPart(part.getUploadFile(),
-						part.getName(), part.getFileName(), part.getContentType(), part.getBody());
-				newPart.setResolvedUploadFile(resolveUploadFileInternal(part.getUploadFile()));
-				resolved.add(newPart);
-			}
+            for (HttpRequestFormDataPart part : formData) {
+                HttpRequestFormDataPart newPart = new HttpRequestFormDataPart(part.getUploadFile(),
+                        part.getName(), part.getFileName(), part.getContentType(), part.getBody());
+                newPart.setResolvedUploadFile(resolveUploadFileInternal(part.getUploadFile()));
+                resolved.add(newPart);
+            }
 
-			return resolved;
-		}
-	}
+            return resolved;
+        }
+    }
 }

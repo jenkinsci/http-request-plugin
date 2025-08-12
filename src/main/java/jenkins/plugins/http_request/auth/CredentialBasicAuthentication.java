@@ -1,22 +1,24 @@
 package jenkins.plugins.http_request.auth;
 
 import java.io.PrintStream;
+import java.io.Serial;
+import java.net.URISyntaxException;
 import java.util.Hashtable;
 import java.util.Map;
 
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.client.AuthCache;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.client.utils.URIUtils;
-import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.BasicAuthCache;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.protocol.HttpContext;
+import org.apache.hc.client5.http.auth.AuthCache;
+import org.apache.hc.client5.http.auth.Credentials;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.auth.BasicAuthCache;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.client5.http.utils.URIUtils;
+import org.apache.hc.client5.http.impl.auth.BasicScheme;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 
@@ -24,6 +26,7 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
  * @author Janario Oliveira
  */
 public class CredentialBasicAuthentication implements Authenticator {
+    @Serial
     private static final long serialVersionUID = 8034231374732499786L;
 
     private final StandardUsernamePasswordCredentials credential;
@@ -46,48 +49,51 @@ public class CredentialBasicAuthentication implements Authenticator {
     }
 
     @Override
-    public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpContext context, HttpRequestBase requestBase, PrintStream logger) {
+    public CloseableHttpClient authenticate(HttpClientBuilder clientBuilder, HttpClientContext context, HttpUriRequestBase requestBase, PrintStream logger) {
         prepare(clientBuilder, context, requestBase);
         return clientBuilder.build();
     }
 
-    public void prepare(HttpClientBuilder clientBuilder, HttpContext context, HttpRequestBase requestBase) {
-        prepare(clientBuilder, context, URIUtils.extractHost(requestBase.getURI()));
+    public void prepare(HttpClientBuilder clientBuilder, HttpClientContext context, HttpUriRequestBase requestBase) {
+        try {
+            prepare(clientBuilder, context, URIUtils.extractHost(requestBase.getUri()));
+        } catch (URISyntaxException ex) {
+            throw new IllegalArgumentException(ex);
+        }
     }
 
-    public void prepare(HttpClientBuilder clientBuilder, HttpContext context, HttpHost targetHost) {
+    public void prepare(HttpClientBuilder clientBuilder, HttpClientContext context, HttpHost targetHost) {
         auth(clientBuilder, context, targetHost,
                 credential.getUsername(), credential.getPassword().getPlainText(), extraCredentials);
     }
 
-    static void auth(HttpClientBuilder clientBuilder, HttpContext context, HttpHost targetHost,
-                     String username, String password) {
-        auth(clientBuilder, context, targetHost, username, password, null);
-    }
-
-    static void auth(HttpClientBuilder clientBuilder, HttpContext context, HttpHost targetHost,
+    static void auth(HttpClientBuilder clientBuilder, HttpClientContext context, HttpHost targetHost,
                      String username, String password, Map<HttpHost, StandardUsernamePasswordCredentials> extraCreds) {
-        CredentialsProvider provider = new BasicCredentialsProvider();
+        BasicCredentialsProvider provider = new BasicCredentialsProvider();
         AuthCache authCache = new BasicAuthCache();
 
-        provider.setCredentials(new AuthScope(targetHost.getHostName(), targetHost.getPort()),
-                new org.apache.http.auth.UsernamePasswordCredentials(username, password));
-        authCache.put(targetHost, new BasicScheme());
+        Credentials mainCredentials = new UsernamePasswordCredentials(username, password.toCharArray());
+        setCredentials(targetHost, provider, authCache, mainCredentials);
 
         if (extraCreds != null && !extraCreds.isEmpty()) {
             for (Map.Entry<HttpHost, StandardUsernamePasswordCredentials> creds : extraCreds.entrySet()) {
-                provider.setCredentials(
-                        new AuthScope(creds.getKey().getHostName(), creds.getKey().getPort()),
-                        new org.apache.http.auth.UsernamePasswordCredentials(
-                                creds.getValue().getUsername(),
-                                creds.getValue().getPassword().getPlainText()
-                        )
-                );
-                authCache.put(creds.getKey(), new BasicScheme());
+                Credentials extraCredentials = new UsernamePasswordCredentials(
+                        creds.getValue().getUsername(),
+                        creds.getValue().getPassword().getPlainText().toCharArray());
+                setCredentials(creds.getKey(), provider, authCache, extraCredentials);
             }
         }
 
         clientBuilder.setDefaultCredentialsProvider(provider);
-        context.setAttribute(HttpClientContext.AUTH_CACHE, authCache);
+        context.setAuthCache(authCache);
+        context.setCredentialsProvider(provider);
+    }
+
+    static void setCredentials(HttpHost targetHost, BasicCredentialsProvider provider, AuthCache authCache, Credentials credentials) {
+        provider.setCredentials(new AuthScope(targetHost), credentials);
+
+        BasicScheme basicScheme = new BasicScheme();
+        basicScheme.initPreemptive(credentials);
+        authCache.put(targetHost, basicScheme);
     }
 }

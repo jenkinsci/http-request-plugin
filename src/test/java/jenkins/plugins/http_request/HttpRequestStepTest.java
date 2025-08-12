@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.core5.http.ContentType;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;

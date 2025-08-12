@@ -11,8 +11,8 @@ import java.util.Map;
 
 import jakarta.servlet.ServletException;
 
-import org.apache.http.HttpHeaders;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpHeaders;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.http.MultiPart;
