@@ -27,7 +27,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedTrustManager;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
@@ -194,9 +193,9 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
         this.httpMode = httpMode;
         this.ignoreSslErrors = ignoreSslErrors;
 
-        if (StringUtils.isNotBlank(httpProxy)) {
-            this.httpProxy = HttpHost.create(URI.create(httpProxy));
-            if (StringUtils.isNotBlank(proxyAuthentication)) {
+		if (httpProxy != null && !httpProxy.isBlank()) {
+			this.httpProxy = HttpHost.create(URI.create(httpProxy));
+			if (proxyAuthentication != null && !proxyAuthentication.isBlank()) {
 
                 StandardCredentials credential = CredentialsMatchers.firstOrNull(
                         CredentialsProvider.lookupCredentialsInItem(
