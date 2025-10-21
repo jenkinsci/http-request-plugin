@@ -32,7 +32,7 @@ THE SOFTWARE.
 	</parent>
 
 	<artifactId>http_request</artifactId>
-	<version>${revision}${changelist}</version>
+	<version>1.21</version>
 	<packaging>hpi</packaging>
 	<name>HTTP Request Plugin</name>
 	<description>
@@ -138,7 +138,7 @@ THE SOFTWARE.
 		<connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
 		<developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
 		<url>https://github.com/${gitHubRepo}</url>
-		<tag>${scmTag}</tag>
+		<tag>http_request-1.21</tag>
 	</scm>
 	<developers>
 		<developer>
