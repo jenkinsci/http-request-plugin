@@ -53,10 +53,14 @@ class Registers {
                     assertFalse(headers.hasMoreElements());
                 } else {
                     assertTrue(headers.hasMoreElements());
-                    String value = headers.nextElement();
+                    String actual = headers.nextElement();
                     assertFalse(headers.hasMoreElements());
 
-                    assertEquals(mimeType.getContentType().toString(), value);
+                    // ContentType charset value changed from UTF-8 to utf-8 in Jetty 12.1
+                    // Use a case insensitive comparison of the Content-Type header
+                    // https://www.rfc-editor.org/rfc/rfc9110#name-charset - charset names are matched case-insensitively
+                    String expected = mimeType.getContentType().toString();
+                    assertTrue(expected.equalsIgnoreCase(actual), "Content-Type mismatch, expected '" + expected + "', but was '" + actual + "'");
                 }
 
                 String query = request.getHttpURI().getQuery();
