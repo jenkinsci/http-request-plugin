@@ -991,6 +991,18 @@ class HttpRequestTest extends HttpRequestTestBase {
     }
 
     @Test
+    void responseContentSupplierHandlesNoContentTypeHeader() throws Exception {
+        // Prepare test context - 204 No Content response without Content-Type header
+        CloseableHttpResponse response = HttpResponseAdapter.adapt(new BasicClassicHttpResponse(204, "No Content"));
+        // Don't set entity or Content-Type header to simulate GitHub API 204 response
+        // Run test
+        ResponseContentSupplier respSupplier = new ResponseContentSupplier(ResponseHandle.NONE, response);
+        // Check expectations - should not throw NullPointerException
+        assertEquals(204, respSupplier.getStatus());
+        respSupplier.close();
+    }
+
+    @Test
     void testFileUpload() throws Exception {
         // Prepare the server
         final File testFolder = newFolder(folder, "junit");

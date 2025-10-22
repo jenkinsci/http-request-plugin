@@ -124,9 +124,10 @@ public class ResponseContentSupplier implements Serializable, AutoCloseable {
     private void readCharset(ClassicHttpResponse response) {
         Charset charset = null;
 
+        Header contentTypeHeader = response.getFirstHeader(HttpHeaders.CONTENT_TYPE);
         ContentType contentType = ContentType.parse(response.getEntity() != null ?
                         response.getEntity().getContentType() :
-                        response.getFirstHeader(HttpHeaders.CONTENT_TYPE).getValue());
+                        (contentTypeHeader != null ? contentTypeHeader.getValue() : null));
         if (contentType != null) {
             charset = contentType.getCharset();
             if (charset == null) {
