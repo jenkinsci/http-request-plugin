@@ -376,7 +376,13 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
                 httpRequestBase.setHeader(HttpHeaders.CONTENT_ENCODING, entity.getContentEncoding());
             }
 
+			// default configuration
             HttpClientContext context = HttpClientContext.create();
+			RequestConfig config = RequestConfig.custom().setRedirectsEnabled(false).build();
+
+			clientBuilder.setDefaultRequestConfig(config);
+			context.setRequestConfig(config);
+
             httpclient = auth(clientBuilder, httpRequestBase, context);
 
             ResponseContentSupplier response = executeRequest(httpclient, clientUtil, httpRequestBase, context);
