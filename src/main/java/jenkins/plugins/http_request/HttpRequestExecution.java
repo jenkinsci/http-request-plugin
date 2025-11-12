@@ -411,20 +411,33 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
             connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
         }
 
-        //timeout
-        if (timeout > 0) {
-            int t = timeout * 1000;
-            RequestConfig config = RequestConfig.custom()
-                    .setResponseTimeout(t, TimeUnit.MILLISECONDS)
-                    .setConnectionRequestTimeout(t, TimeUnit.MILLISECONDS)
-                    .build();
-            clientBuilder.setDefaultRequestConfig(config);
+    //timeout
+    if (timeout > 0) {
+        int t = timeout * 1000;
+        RequestConfig config = RequestConfig.custom()
+                .setResponseTimeout(t, TimeUnit.MILLISECONDS)
+                .setConnectionRequestTimeout(t, TimeUnit.MILLISECONDS)
+                .build();
+        clientBuilder.setDefaultRequestConfig(config);
 
-            ConnectionConfig connectionConfig = ConnectionConfig.custom()
-                    .setConnectTimeout(t, TimeUnit.MILLISECONDS)
-                    .build();
-            connectionManager.setDefaultConnectionConfig(connectionConfig);
-        }
+        ConnectionConfig connectionConfig = ConnectionConfig.custom()
+                .setConnectTimeout(t, TimeUnit.MILLISECONDS)
+                .build();
+        connectionManager.setDefaultConnectionConfig(connectionConfig);
+    } else {
+        // timeout is 0 or not provided, meaning "no timeout" per documentation
+        // Explicitly set to DISABLED to prevent httpclient5 from using its 5-minute default
+        RequestConfig config = RequestConfig.custom()
+                .setResponseTimeout(org.apache.hc.core5.util.Timeout.DISABLED)
+                .setConnectionRequestTimeout(org.apache.hc.core5.util.Timeout.DISABLED)
+                .build();
+        clientBuilder.setDefaultRequestConfig(config);
+
+        ConnectionConfig connectionConfig = ConnectionConfig.custom()
+                .setConnectTimeout(org.apache.hc.core5.util.Timeout.DISABLED)
+                .build();
+        connectionManager.setDefaultConnectionConfig(connectionConfig);
+    }
 
         clientBuilder.setConnectionManager(connectionManager);
     }
