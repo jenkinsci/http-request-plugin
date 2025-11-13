@@ -2,14 +2,21 @@ package jenkins.plugins.http_request.auth;
 
 import java.io.PrintStream;
 import java.net.URISyntaxException;
+import java.util.List;
 
+import org.apache.hc.client5.http.auth.AuthSchemeFactory;
+import org.apache.hc.client5.http.auth.StandardAuthScheme;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.apache.hc.client5.http.auth.AuthScope;
 import org.apache.hc.client5.http.auth.NTCredentials;
+import org.apache.hc.client5.http.impl.auth.NTLMSchemeFactory;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.config.Lookup;
+import org.apache.hc.core5.http.config.RegistryBuilder;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 
@@ -59,8 +66,21 @@ public class CredentialNtlmAuthentication implements Authenticator {
                     new AuthScope(requestBase.getUri().getHost(), requestBase.getUri().getPort()),
                     new NTCredentials(username, password.toCharArray(), requestBase.getUri().getHost(), domain));
 
-            clientBuilder.setDefaultCredentialsProvider(provider);
+			// register NTLM authentication support explicitly
+			Lookup<AuthSchemeFactory> authRegistry = RegistryBuilder.<AuthSchemeFactory>create()
+					.register(StandardAuthScheme.NTLM, NTLMSchemeFactory.INSTANCE)
+					.build();
+			RequestConfig config = RequestConfig.custom().setTargetPreferredAuthSchemes(List.of(StandardAuthScheme.NTLM))
+					.build();
+
+            clientBuilder
+					.setDefaultRequestConfig(config)
+					.setDefaultCredentialsProvider(provider)
+					.setDefaultAuthSchemeRegistry(authRegistry);
+
+			context.setRequestConfig(config);
             context.setCredentialsProvider(provider);
+			context.setAuthSchemeRegistry(authRegistry);
 
             return clientBuilder.build();
         } catch (URISyntaxException ex) {
