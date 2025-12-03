@@ -309,6 +309,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
         CloseableHttpClient httpclient = null;
         try {
             HttpClientBuilder clientBuilder = HttpClientBuilder.create();
+			clientBuilder.disableRedirectHandling();
 
             if (useSystemProperties) {
                 clientBuilder.useSystemProperties();
