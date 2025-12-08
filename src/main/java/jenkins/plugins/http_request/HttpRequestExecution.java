@@ -502,6 +502,18 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
                 return;
             }
         }
+        // Log response body to help debug errors from REST APIs (only if not already logged)
+        if (!consoleLogResponseBody) {
+            try {
+                String content = response.getContent();
+                if (content != null && !content.isEmpty()) {
+                    logger().println("Response: \n" + content);
+                }
+            } catch (Exception e) {
+                // Ignore errors when trying to read response content
+                logger().println("Unable to read response body: " + e.getMessage());
+            }
+        }
         throw new AbortException("Fail: Status code " + response.getStatus() + " is not in the accepted range: " + validResponseCodes + " while calling " + url);
     }
 
