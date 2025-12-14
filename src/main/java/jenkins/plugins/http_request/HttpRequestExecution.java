@@ -29,6 +29,7 @@ import javax.net.ssl.X509ExtendedTrustManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.impl.LaxRedirectStrategy;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
@@ -76,6 +77,7 @@ import jenkins.plugins.http_request.auth.Authenticator;
 import jenkins.plugins.http_request.auth.CertificateAuthentication;
 import jenkins.plugins.http_request.auth.CredentialBasicAuthentication;
 import jenkins.plugins.http_request.auth.CredentialNtlmAuthentication;
+import jenkins.plugins.http_request.util.BackWardCompatibleRedirectStrategy;
 import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.HttpRequestFormDataPart;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
@@ -310,7 +312,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
         try {
             HttpClientBuilder clientBuilder = HttpClientBuilder.create();
 			clientBuilder.disableAutomaticRetries();
-			clientBuilder.disableRedirectHandling();
+			clientBuilder.setRedirectStrategy(new BackWardCompatibleRedirectStrategy());
 
             if (useSystemProperties) {
                 clientBuilder.useSystemProperties();
