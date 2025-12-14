@@ -17,6 +17,7 @@ import static jenkins.plugins.http_request.Registers.registerRequestChecker;
 import static jenkins.plugins.http_request.Registers.registerTimeout;
 import static jenkins.plugins.http_request.Registers.registerUnwrappedPutFileUpload;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -31,16 +32,17 @@ import jakarta.servlet.ServletException;
 
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpResponseAdapter;
-import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
-import org.apache.hc.core5.http.message.BasicHttpResponse;
 import org.eclipse.jetty.http.HttpCookie;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.Fields;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -1089,4 +1091,82 @@ class HttpRequestTest extends HttpRequestTestBase {
         return result;
     }
 
+	private static class RedirectStatus {
+		boolean called = false;
+		boolean redirected = false;
+	};
+
+	@Test
+	void noRedirectOnPOSTOn302() throws Exception {
+		final RedirectStatus redirectStatus = new RedirectStatus();
+
+		registerHandler("/redirected", HttpMode.GET, new SimpleHandler() {
+			@Override
+			boolean doHandle(Request request, Response response, Callback callback) {
+				redirectStatus.called = true;
+				return okAllIsWell(response, callback);
+			}
+		});
+		registerHandler("/redirectPOST", HttpMode.POST, new SimpleHandler() {
+			@Override
+			boolean doHandle(Request request, Response response, Callback callback) {
+				redirectStatus.redirected = true;
+				Response.sendRedirect(request, response, callback, 302, "/redirected", false);
+				return true;
+			}
+		});
+		String body = "send-body-workflow";
+		WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "postBody");
+		proj.setDefinition(new CpsFlowDefinition(
+				"def response = httpRequest" +
+						" httpMode: 'POST'," +
+						" requestBody: '" + body + "'," +
+						" url: '" + baseURL() + "/redirectPOST'\n" +
+						"println('Response: ' + response.content)\n",
+				true));
+
+		WorkflowRun run = proj.scheduleBuild2(0).get();
+
+		// Check expectations
+		j.assertBuildStatusSuccess(run);
+		assertTrue(redirectStatus.redirected);
+		assertFalse(redirectStatus.called);
+	}
+
+	@Test
+	void redirectOnGETOn302() throws Exception {
+		final RedirectStatus redirectStatus = new RedirectStatus();
+
+		registerHandler("/redirected", HttpMode.GET, new SimpleHandler() {
+			@Override
+			boolean doHandle(Request request, Response response, Callback callback) {
+				redirectStatus.called = true;
+				return okAllIsWell(response, callback);
+			}
+		});
+		registerHandler("/redirectGET", HttpMode.GET, new SimpleHandler() {
+			@Override
+			boolean doHandle(Request request, Response response, Callback callback) {
+				redirectStatus.redirected = true;
+				Response.sendRedirect(request, response, callback, 302, "/redirected", false);
+				return true;
+			}
+		});
+		String body = "send-body-workflow";
+		WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "postBody");
+		proj.setDefinition(new CpsFlowDefinition(
+				"def response = httpRequest" +
+						" httpMode: 'GET'," +
+						" requestBody: '" + body + "'," +
+						" url: '" + baseURL() + "/redirectGET'\n" +
+						"println('Response: ' + response.content)\n",
+				true));
+
+		WorkflowRun run = proj.scheduleBuild2(0).get();
+
+		// Check expectations
+		j.assertBuildStatusSuccess(run);
+		assertTrue(redirectStatus.redirected);
+		assertTrue(redirectStatus.called);
+	}
 }
