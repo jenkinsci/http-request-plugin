@@ -76,6 +76,7 @@ import jenkins.plugins.http_request.auth.Authenticator;
 import jenkins.plugins.http_request.auth.CertificateAuthentication;
 import jenkins.plugins.http_request.auth.CredentialBasicAuthentication;
 import jenkins.plugins.http_request.auth.CredentialNtlmAuthentication;
+import jenkins.plugins.http_request.util.BackWardCompatibleRedirectStrategy;
 import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.HttpRequestFormDataPart;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
@@ -310,7 +311,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
         try {
             HttpClientBuilder clientBuilder = HttpClientBuilder.create();
 			clientBuilder.disableAutomaticRetries();
-			clientBuilder.disableRedirectHandling();
+			clientBuilder.setRedirectStrategy(new BackWardCompatibleRedirectStrategy());
 
             if (useSystemProperties) {
                 clientBuilder.useSystemProperties();
