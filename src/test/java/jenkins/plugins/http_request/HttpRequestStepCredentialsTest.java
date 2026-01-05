@@ -2,6 +2,7 @@ package jenkins.plugins.http_request;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
@@ -12,8 +13,12 @@ import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.CertificateCredentialsImpl;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+
+import hudson.model.Descriptor;
 import hudson.model.Descriptor.FormException;
 import hudson.model.Fingerprint;
+import hudson.model.Label;
+import hudson.model.Node;
 import hudson.model.Result;
 
 import java.io.ByteArrayOutputStream;
@@ -21,6 +26,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Collections;
+
+import hudson.model.Slave;
 import jenkins.model.Jenkins;
 
 import org.apache.commons.io.FileUtils;
@@ -66,6 +73,15 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
      */
     private final boolean verbosePipelines = false;
 
+    // Data for build agent setup
+    /** Build agent label expected by test cases for remote logic execution
+     * and data transfer [JENKINS-70101] */
+    private final static String agentLabelString = "cred-test-worker";
+    // Can this be reused for many test cases?
+    private Slave agent = null;
+    /** Tri-state Unknown/started/not usable [JENKINS-70101] */
+    private Boolean agentUsable = null;
+
     // From CertificateCredentialImplTest in credentials-plugin
     /** Temporary location for keystore files.
      * @see #p12simple
@@ -92,6 +108,34 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
      *  before each test case.
      */
     private CredentialsStore store = null;
+
+    /** True if we can use remote agent tests, and the credentials plugin version
+     *  here is expected to transfer secret data across the Channel correctly
+     *  (assuming issue JENKINS-70101 is fixed in that plugin).
+     */
+    static private Boolean credentialsPluginDoesSnapshotsRight = null;
+    static {
+        try {
+            Class.forName(
+                    "com.cloudbees.plugins.credentials.impl.CertificateCredentialsSnapshotTaker",
+                    false, HttpRequestStepCredentialsTest.class.getClassLoader());
+            credentialsPluginDoesSnapshotsRight = true;
+        } catch (ClassNotFoundException ignored) {
+            credentialsPluginDoesSnapshotsRight = false;
+        } catch (ExceptionInInitializerError ignored) {
+            // Per https://www.baeldung.com/java-check-class-exists the Class.forName()
+            // calls a static initializer which may fail (at least for the default
+            // single-argument version of the method), but still -- if we get that far,
+            // the class exists so we are probably running the version of plugin with
+            // https://github.com/jenkinsci/credentials-plugin/pull/391
+            credentialsPluginDoesSnapshotsRight = true;
+        }
+    }
+    /** Honour the check via {@link #credentialsPluginDoesSnapshotsRight} [false],
+     *  or try (and possibly fail) with any implementation/version of the
+     *  credentials plugin [true]?
+     */
+    private Boolean credentialsPluginTestRemoteAlways = false;
 
     private static StandardCredentials getInvalidCredential() throws FormException {
         String username = "bad-user";
@@ -166,6 +210,9 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
             }
         }
         assertThat("The system credentials provider is enabled", store, notNullValue());
+
+        // Primarily needed for remote-agent tests per JENKINS-70101?
+        j.jenkins.setCrumbIssuer(null);
     }
 
     /////////////////////////////////////////////////////////////////
@@ -352,9 +399,10 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
     /////////////////////////////////////////////////////////////////
 
     // A set of tests with certificate credentials in different contexts
-    // TODO: Test on remote agent as in https://github.com/jenkinsci/credentials-plugin/pull/391
-    //  but this requires that PR to be merged first, so credentials-plugin
-    //  processes snapshot() and readable keystore data gets to remote agent.
+    // NOTE: Test cases on remote agent require the PR
+    //  https://github.com/jenkinsci/credentials-plugin/pull/391
+    //  to be merged first, so credentials-plugin processes snapshot()
+    //  and readable keystore data gets to remote agent.
     // Note that the tests below focus on ability of the plugin to load and
     // process the key store specified by the credential, rather than that
     // it is usable further. It would be a separate effort to mock up a web
@@ -491,6 +539,86 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         j.assertLogContains("Treating UnknownHostException", run);
     }
 
+    /////////////////////////////////////////////////////////////////
+    // Helpers for pipeline tests with remote agents
+    /////////////////////////////////////////////////////////////////
+
+    private Boolean isAvailableAgent() {
+        // Can be used to skip optional tests if we know we could not set up an agent
+        if (agent == null)
+            return false;
+        return agentUsable;
+    }
+
+    private Boolean setupAgent() throws OutOfMemoryError, Exception {
+        if (isAvailableAgent())
+            return true;
+
+        // See how credentialsPluginTestRemoteAlways is determined above
+        // and revise if the ultimately merged fix that started as
+        // https://github.com/jenkinsci/credentials-plugin/pull/391
+        // gets changed before the merge or later on...
+        String msg_70101 = "This test needs a version of credentials-plugin with a fix for JENKINS-70101, and that does not seem to be deployed here";
+        if (!credentialsPluginTestRemoteAlways)
+            assumeTrue(credentialsPluginDoesSnapshotsRight, msg_70101);
+
+        // else: credentialsPluginTestRemoteAlways, even if we fail
+        if (!credentialsPluginDoesSnapshotsRight) {
+            System.err.println("WARNING: " + msg_70101 + "; this test run was configured to try remote agents anyway");
+            // return false;
+        }
+
+        // Note we anticipate this might fail e.g. due to system resources;
+        // it should not block the whole test suite from running
+        // (we would just dynamically skip certain test cases)
+        try {
+            // Define a "Permanent Agent"
+            Label agentLabel = Label.get(agentLabelString);
+            agent = j.createOnlineSlave(agentLabel);
+            agent.setNodeDescription("Worker in another JVM, remoting used");
+            agent.setNumExecutors(1);
+            agent.setMode(Node.Mode.EXCLUSIVE);
+            ///agent.setRetentionStrategy(new RetentionStrategy.Always());
+
+/*
+            // Add node envvars
+            List<Entry> env = new ArrayList<Entry>();
+            env.add(new Entry("key1","value1"));
+            env.add(new Entry("key2","value2"));
+            EnvironmentVariablesNodeProperty envPro = new EnvironmentVariablesNodeProperty(env);
+            agent.getNodeProperties().add(envPro);
+*/
+
+            String agentLog = null;
+            agentUsable = false;
+            for (long i = 0; i < 5; i++) {
+                Thread.sleep(1000);
+                agentLog = agent.getComputer().getLog();
+                if (i == 2 && (agentLog == null || agentLog.isEmpty())) {
+                    // Give it a little time to autostart, then kick it up if needed:
+                    agent.getComputer().connect(true); // "always" should have started it; avoid duplicate runs
+                }
+                if (agentLog != null && agentLog.contains("Agent successfully connected and online")) {
+                    agentUsable = true;
+                    break;
+                }
+            }
+            System.out.println("Spawned build agent " +
+                    "usability: " + agentUsable.toString() +
+                    "; connection log:" + (agentLog == null ? " <null>" : "\n" + agentLog));
+        } catch (Descriptor.FormException | NullPointerException e) {
+            agentUsable = false;
+        }
+
+        return agentUsable;
+    }
+
+    /////////////////////////////////////////////////////////////////
+    // Certificate credentials retrievability by http-request-plugin
+    // in a set of local+remote JVMs (should work with versions of
+    // credentials plugin where issue JENKINS-70101 is fixed)
+    /////////////////////////////////////////////////////////////////
+
     /** Simplified version of simple/trusted tests with "myCert" credential id,
      *  transplanted from https://github.com/jenkinsci/credentials-plugin/pull/391 :
      *  Check that Certificate credentials are usable with pipeline script
@@ -547,5 +675,137 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         // Got to the end?
         j.assertLogContains("HTTP Request Plugin Response: ", run);
         j.assertLogContains("Using authentication: myCert", run);
+    }
+
+    /**
+     * Check that Certificate credentials are usable with pipeline script
+     * running on a remote {@code node{}} with separate JVM (e.g.
+     * check that remoting and credential snapshot work properly).
+     */
+    @Test
+    @Issue("JENKINS-70101")
+    void testCertHttpRequestOnNodeRemote() throws Exception {
+        assumeTrue(this.setupAgent() == true, "This test needs a separate build agent");
+
+        prepareUploadedKeystore();
+
+        // Configure the build to use the credential
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        String script =
+                cpsScriptCredentialTestImports() +
+                "node(\"" + agentLabelString + "\") {\n" +
+                cpsScriptCertCredentialTestHttpRequest("REMOTE NODE") +
+                "}\n";
+        proj.setDefinition(new CpsFlowDefinition(script, false));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+        if (verbosePipelines) System.out.println(getLogAsStringPlaintext(run));
+
+        // Check expectations
+        j.assertBuildStatus(Result.SUCCESS, run);
+        // Got to the end?
+        j.assertLogContains("HTTP Request Plugin Response: ", run);
+    }
+
+    /////////////////////////////////////////////////////////////////
+    // User/pass credentials tests
+    /////////////////////////////////////////////////////////////////
+
+    // Partially from UsernamePasswordCredentialsImplTest setup()
+    private void prepareUsernamePassword() throws IOException, FormException {
+        UsernamePasswordCredentialsImpl credentials =
+                new UsernamePasswordCredentialsImpl(null,
+                        "abc123", "Bob’s laptop",
+                        "bob", "s3cr3t");
+        SystemCredentialsProvider.getInstance().getCredentials().add(credentials);
+        SystemCredentialsProvider.getInstance().save();
+    }
+
+    private String cpsScriptUsernamePasswordCredentialTestHttpRequest(String runnerTag) {
+        return cpsScriptCredentialTestHttpRequest("abc123", runnerTag, false);
+    }
+
+    /** Check that Username credentials are usable with pipeline script
+     * running without a {@code node{}} block.
+     */
+    @Test
+    @Issue("JENKINS-70101")
+    void testUsernamePasswordHttpRequestOnController() throws Exception {
+        prepareUsernamePassword();
+
+        // Configure the build to use the credential
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        String script =
+                cpsScriptUsernamePasswordCredentialTestHttpRequest("CONTROLLER BUILT-IN");
+        proj.setDefinition(new CpsFlowDefinition(script, false));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+        if (verbosePipelines) System.out.println(getLogAsStringPlaintext(run));
+
+        // Check expectations
+        j.assertBuildStatus(Result.SUCCESS, run);
+        // Got to the end?
+        j.assertLogContains("HTTP Request Plugin Response: ", run);
+    }
+
+    /** Check that Username credentials are usable with pipeline script
+     *  running on a {@code node{}} (provided by the controller JVM).
+     */
+    @Test
+    @Issue("JENKINS-70101")
+    void testUsernamePasswordHttpRequestOnNodeLocal() throws Exception {
+        prepareUsernamePassword();
+
+        // Configure the build to use the credential
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        String script =
+                "node {\n" +
+                        cpsScriptUsernamePasswordCredentialTestHttpRequest("CONTROLLER NODE") +
+                "}\n";
+        proj.setDefinition(new CpsFlowDefinition(script, false));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+        if (verbosePipelines) System.out.println(getLogAsStringPlaintext(run));
+
+        // Check expectations
+        j.assertBuildStatus(Result.SUCCESS, run);
+        // Got to the end?
+        j.assertLogContains("HTTP Request Plugin Response: ", run);
+    }
+
+    /**
+     * Check that Username credentials are usable with pipeline script
+     * running on a remote {@code node{}} with separate JVM (e.g.
+     * check that remoting and credential snapshot work properly).
+     */
+    @Test
+    @Issue("JENKINS-70101")
+    void testUsernamePasswordHttpRequestOnNodeRemote() throws Exception {
+        // Check that credentials are usable with pipeline script
+        // running on a remote node{} with separate JVM (check
+        // that remoting/snapshot work properly)
+        assumeTrue(this.setupAgent() == true, "This test needs a separate build agent");
+
+        prepareUsernamePassword();
+
+        // Configure the build to use the credential
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        String script =
+                "node(\"" + agentLabelString + "\") {\n" +
+                        cpsScriptUsernamePasswordCredentialTestHttpRequest("REMOTE NODE") +
+                "}\n";
+        proj.setDefinition(new CpsFlowDefinition(script, false));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+        if (verbosePipelines) System.out.println(getLogAsStringPlaintext(run));
+
+        // Check expectations
+        j.assertBuildStatus(Result.SUCCESS, run);
+        // Got to the end?
+        j.assertLogContains("HTTP Request Plugin Response: ", run);
     }
 }
