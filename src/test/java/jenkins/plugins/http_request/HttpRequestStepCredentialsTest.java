@@ -102,6 +102,10 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
     }
 
     private StandardCredentials getCertificateCredentialSimple() throws IOException {
+        return getCertificateCredentialSimple("cred_cert_simple", "password");
+    }
+
+    private StandardCredentials getCertificateCredentialSimple(String id, String password) throws IOException {
         if (p12simple == null) {
             // Contains a private key + openvpn certs,
             // as alias named "1" (according to keytool)
@@ -111,10 +115,14 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
 
         SecretBytes uploadedKeystore = SecretBytes.fromRawBytes(Files.readAllBytes(p12simple.toPath()));
         CertificateCredentialsImpl.UploadedKeyStoreSource storeSource = new CertificateCredentialsImpl.UploadedKeyStoreSource(null, uploadedKeystore);
-        return new CertificateCredentialsImpl(null, "cred_cert_simple", null, "password", storeSource);
+        return new CertificateCredentialsImpl(null, id, null, password, storeSource);
     }
 
     private StandardCredentials getCertificateCredentialTrusted() throws IOException {
+        return getCertificateCredentialTrusted("cred_cert_with_ca", "password");
+    }
+
+    private StandardCredentials getCertificateCredentialTrusted(String id, String password) throws IOException {
         if (p12trusted == null) {
             // Contains a private key + openvpn certs as alias named "1",
             // and another alias named "ca" with trustedKeyEntry for CA
@@ -124,7 +132,26 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
 
         SecretBytes uploadedKeystore = SecretBytes.fromRawBytes(Files.readAllBytes(p12trusted.toPath()));
         CertificateCredentialsImpl.UploadedKeyStoreSource storeSource = new CertificateCredentialsImpl.UploadedKeyStoreSource(null, uploadedKeystore);
-        return new CertificateCredentialsImpl(null, "cred_cert_with_ca", null, "password", storeSource);
+        return new CertificateCredentialsImpl(null, id, null, password, storeSource);
+    }
+
+    /** Get a new CertificateCredentialsImpl() and save it into the {@link #store} */
+    private void prepareUploadedKeystore(String id, String password, Boolean useSimple) throws IOException {
+        StandardCredentials c = (useSimple
+                ? getCertificateCredentialSimple(id, password)
+                : getCertificateCredentialTrusted(id, password)
+        );
+        SystemCredentialsProvider.getInstance().getCredentials().add(c);
+        SystemCredentialsProvider.getInstance().save();
+    }
+
+    private void prepareUploadedKeystore(String id, String password) throws IOException {
+        prepareUploadedKeystore(id, password, true);
+    }
+
+    // Partially from certificate-plugin CertificateCredentialImplTest setup()
+    private void prepareUploadedKeystore() throws IOException {
+        prepareUploadedKeystore("myCert", "password");
     }
 
     @BeforeEach
@@ -313,6 +340,12 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         return cpsScriptCredentialTestHttpRequest(id, runnerTag, true, verbosePipelines);
     }
 
+    /** Wrapper for {@link #cpsScriptCredentialTestHttpRequest(String, String, Boolean, Boolean)}
+     *  to use a certificate credential {@code id="myCert"} and trace {@code withLocalCertLookup=true} */
+    private String cpsScriptCertCredentialTestHttpRequest(String runnerTag) {
+        return cpsScriptCredentialTestHttpRequest("myCert", runnerTag, false, true);
+    }
+
     /////////////////////////////////////////////////////////////////
     // Certificate credentials retrievability by http-request-plugin
     // in a local JVM (should work with all versions of credentials plugin)
@@ -340,7 +373,8 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         // Configure the build to use the credential
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         String script =
-                cpsScriptCredentialTestHttpRequest("cred_cert_simple", "CONTROLLER BUILT-IN");
+                cpsScriptCredentialTestImports() +
+                cpsScriptCredentialTestHttpRequest("cred_cert_simple", "CONTROLLER BUILT-IN", true, true);
         proj.setDefinition(new CpsFlowDefinition(script, false));
 
         // Execute the build
@@ -372,8 +406,9 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         // Configure the build to use the credential
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         String script =
+                cpsScriptCredentialTestImports() +
                 "node {\n" +
-                cpsScriptCredentialTestHttpRequest("cred_cert_simple", "CONTROLLER NODE") +
+                cpsScriptCredentialTestHttpRequest("cred_cert_simple", "CONTROLLER NODE", true, true) +
                 "}\n";
         proj.setDefinition(new CpsFlowDefinition(script, false));
 
@@ -406,7 +441,8 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         // Configure the build to use the credential
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         String script =
-                cpsScriptCredentialTestHttpRequest("cred_cert_with_ca", "CONTROLLER BUILT-IN");
+                cpsScriptCredentialTestImports() +
+                cpsScriptCredentialTestHttpRequest("cred_cert_with_ca", "CONTROLLER BUILT-IN", true, true);
         proj.setDefinition(new CpsFlowDefinition(script, false));
 
         // Execute the build
@@ -435,8 +471,9 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         // Configure the build to use the credential
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         String script =
+                cpsScriptCredentialTestImports() +
                 "node {\n" +
-                cpsScriptCredentialTestHttpRequest("cred_cert_with_ca", "CONTROLLER NODE") +
+                cpsScriptCredentialTestHttpRequest("cred_cert_with_ca", "CONTROLLER NODE", true, true) +
                 "}\n";
         proj.setDefinition(new CpsFlowDefinition(script, false));
 
@@ -454,4 +491,61 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         j.assertLogContains("Treating UnknownHostException", run);
     }
 
+    /** Simplified version of simple/trusted tests with "myCert" credential id,
+     *  transplanted from https://github.com/jenkinsci/credentials-plugin/pull/391 :
+     *  Check that Certificate credentials are usable with pipeline script
+     *  running without a {@code node{}} block.
+     */
+    @Test
+    @Issue("JENKINS-70101")
+    void testCertHttpRequestOnController() throws Exception {
+        prepareUploadedKeystore();
+
+        // Configure the build to use the credential
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        String script =
+                cpsScriptCredentialTestImports() +
+                cpsScriptCertCredentialTestHttpRequest("CONTROLLER BUILT-IN");
+        proj.setDefinition(new CpsFlowDefinition(script, false));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+        if (verbosePipelines) System.out.println(getLogAsStringPlaintext(run));
+
+        // Check expectations
+        j.assertBuildStatus(Result.SUCCESS, run);
+        // Got to the end?
+        j.assertLogContains("HTTP Request Plugin Response: ", run);
+        j.assertLogContains("Using authentication: myCert", run);
+    }
+
+    /** Simplified version of simple/trusted tests with "myCert" credential id,
+     *  transplanted from https://github.com/jenkinsci/credentials-plugin/pull/391 :
+     *  Check that Certificate credentials are usable with pipeline script
+     *  running on a {@code node{}} (provided by the controller)
+     */
+    @Test
+    @Issue("JENKINS-70101")
+    void testCertHttpRequestOnNodeLocal() throws Exception {
+        prepareUploadedKeystore();
+
+        // Configure the build to use the credential
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        String script =
+                cpsScriptCredentialTestImports() +
+                "node {\n" +
+                cpsScriptCertCredentialTestHttpRequest("CONTROLLER NODE") +
+                "}\n";
+        proj.setDefinition(new CpsFlowDefinition(script, false));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+        if (verbosePipelines) System.out.println(getLogAsStringPlaintext(run));
+
+        // Check expectations
+        j.assertBuildStatus(Result.SUCCESS, run);
+        // Got to the end?
+        j.assertLogContains("HTTP Request Plugin Response: ", run);
+        j.assertLogContains("Using authentication: myCert", run);
+    }
 }
