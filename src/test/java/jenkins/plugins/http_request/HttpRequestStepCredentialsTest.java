@@ -211,6 +211,21 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         return baos.toString();
     }
 
+    /** Returns a String with prepared part of the pipeline script with imports used by some other snippet generators */
+    private String cpsScriptCredentialTestImports() {
+        return  "import com.cloudbees.plugins.credentials.CredentialsMatchers;\n" +
+                "import com.cloudbees.plugins.credentials.CredentialsProvider;\n" +
+                "import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;\n" +
+                "import com.cloudbees.plugins.credentials.common.StandardCredentials;\n" +
+                "import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;\n" +
+                "import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;\n" +
+                "import com.cloudbees.plugins.credentials.impl.CertificateCredentialsImpl;\n" +
+                "import com.cloudbees.plugins.credentials.impl.CertificateCredentialsImpl.KeyStoreSource;\n" +
+                "import hudson.security.ACL;\n" +
+                "import java.security.KeyStore;\n" +
+                "\n";
+    }
+
     /** Returns a String with prepared part of the pipeline script with a request
      *  (to non-existent site) using a credential named by "id" parameter.<br/>
      *
@@ -223,12 +238,39 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
      *
      * @param id    Credential ID, saved earlier into the store
      * @param runnerTag Currently not used
+     * @param withReentrability If true, generate a second request with same credential,
+     *                          to make sure it is not garbled etc. by first use.
+     * @param withLocalCertLookup If true, add lookup and logging of keystore data
+     *                           (into the pipeline build console, optionally also system streams).
+     *                            Note: test cases {@code withLocalCertLookup} need to
+     *                            generate {@link #cpsScriptCredentialTestImports} into
+     *                            their pipelines first.
      * @return String with prepared part of pipeline script
      */
-    private String cpsScriptCredentialTestHttpRequest(String id, String runnerTag) {
+    private String cpsScriptCredentialTestHttpRequest(String id, String runnerTag, Boolean withReentrability, Boolean withLocalCertLookup) {
         return  "def authentication='" + id + "';\n"
                 + "\n"
                 + "def msg\n"
+                + (withLocalCertLookup ? (
+                        "if (true) { // scoping\n"
+                        + "  msg = \"Finding credential...\"\n"
+                        + "  echo msg;" + (verbosePipelines ? " System.out.println(msg); System.err.println(msg)" : "" ) + ";\n"
+                        + "  StandardCredentials credential = CredentialsMatchers.firstOrNull(\n"
+                        + "    CredentialsProvider.lookupCredentials(\n"
+                        + "        StandardCredentials.class,\n"
+                        + "        Jenkins.instance, null, null),\n"
+                        + "    CredentialsMatchers.withId(authentication));\n"
+                        + "  msg = \"Getting keystore...\"\n"
+                        + "  echo msg;" + (verbosePipelines ? " System.out.println(msg); System.err.println(msg)" : "" ) + ";\n"
+                        + "  KeyStore keyStore = credential.getKeyStore();\n"
+                        + "  msg = \"Getting keystore source...\"\n"
+                        + "  echo msg;" + (verbosePipelines ? " System.out.println(msg); System.err.println(msg)" : "" ) + ";\n"
+                        + "  KeyStoreSource kss = ((CertificateCredentialsImpl) credential).getKeyStoreSource();\n"
+                        + "  msg = \"Getting keystore source bytes...\"\n"
+                        + "  echo msg;" + (verbosePipelines ? " System.out.println(msg); System.err.println(msg)" : "" ) + ";\n"
+                        + "  byte[] kssb = kss.getKeyStoreBytes();\n"
+                        + "}\n" )
+                : "" )
                 + "\n"
                 + "msg = \"Querying HTTPS with credential...\"\n"
                 + "echo msg;" + (verbosePipelines ? " System.out.println(msg); System.err.println(msg)" : "" ) + ";\n"
@@ -239,21 +281,36 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
                 + "                 contentType : 'APPLICATION_FORM',\n"
                 + "                 validResponseCodes: '100:599',\n"
                 + "                 quiet: false)\n"
-                + "println('First HTTP Request Plugin Status: '+ response.getStatus())\n"
-                + "println('First HTTP Request Plugin Response: '+ response.getContent())\n"
+                + "println('" + (withReentrability ? "First " : "") + "HTTP Request Plugin Status: '+ response.getStatus())\n"
+                + "println('" + (withReentrability ? "First " : "") + "First HTTP Request Plugin Response: '+ response.getContent())\n"
                 + "\n"
-                + "msg = \"Querying HTTPS with credential again (reentrability)...\"\n"
-                + "echo msg;" + (verbosePipelines ? " System.out.println(msg); System.err.println(msg)" : "" ) + ";\n"
-                + "response = httpRequest(url: 'https://github.xcom/api/v3',\n"
-                + "                 httpMode: 'GET',\n"
-                + "                 authentication: authentication,\n"
-                + "                 consoleLogResponseBody: true,\n"
-                + "                 contentType : 'APPLICATION_FORM',\n"
-                + "                 validResponseCodes: '100:599',\n"
-                + "                 quiet: false)\n"
-                + "println('Second HTTP Request Plugin Status: '+ response.getStatus())\n"
-                + "println('Second HTTP Request Plugin Response: '+ response.getContent())\n"
-                + "\n";
+                + (withReentrability ? (
+                        "msg = \"Querying HTTPS with credential again (reentrability)...\"\n"
+                        + "echo msg;" + (verbosePipelines ? " System.out.println(msg); System.err.println(msg)" : "" ) + ";\n"
+                        + "response = httpRequest(url: 'https://github.xcom/api/v3',\n"
+                        + "                 httpMode: 'GET',\n"
+                        + "                 authentication: authentication,\n"
+                        + "                 consoleLogResponseBody: true,\n"
+                        + "                 contentType : 'APPLICATION_FORM',\n"
+                        + "                 validResponseCodes: '100:599',\n"
+                        + "                 quiet: false)\n"
+                        + "println('Second HTTP Request Plugin Status: '+ response.getStatus())\n"
+                        + "println('Second HTTP Request Plugin Response: '+ response.getContent())\n"
+                        + "\n" )
+                : "" );
+    }
+
+    /** Wrapper for {@link #cpsScriptCredentialTestHttpRequest(String, String, Boolean, Boolean)}
+     *  to MAYBE trace {@code withLocalCertLookup=verbosePipelines} by default */
+    private String cpsScriptCredentialTestHttpRequest(String id, String runnerTag, Boolean withReentrability) {
+        return cpsScriptCredentialTestHttpRequest(id, runnerTag, withReentrability, verbosePipelines);
+    }
+
+    /** Wrapper for {@link #cpsScriptCredentialTestHttpRequest(String, String, Boolean, Boolean)}
+     *  to MAYBE trace {@code withLocalCertLookup=verbosePipelines}
+     *   and enable {@code withReentrability=true} by default */
+    private String cpsScriptCredentialTestHttpRequest(String id, String runnerTag) {
+        return cpsScriptCredentialTestHttpRequest(id, runnerTag, true, verbosePipelines);
     }
 
     /////////////////////////////////////////////////////////////////
