@@ -280,7 +280,7 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
                 + "def msg\n"
                 + (withLocalCertLookup ? (
                         "if (true) { // scoping\n"
-                        + "  msg = \"Finding credential...\"\n"
+                        + "  msg = \"Finding credential with id='${authentication}'...\"\n"
                         + "  echo msg;" + (verbosePipelines ? " System.out.println(msg); System.err.println(msg)" : "" ) + ";\n"
                         + "  StandardCredentials credential = CredentialsMatchers.firstOrNull(\n"
                         + "    CredentialsProvider.lookupCredentials(\n"
