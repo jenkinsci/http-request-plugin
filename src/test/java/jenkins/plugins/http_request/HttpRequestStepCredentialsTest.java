@@ -37,27 +37,60 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
+ * The HttpRequestStepCredentialsTest suite prepares pipeline scripts to
+ * retrieve some previously saved credentials, on the controller,
+ * on a node provided by it, and on a worker agent in separate JVM.
+ * This picks known-working test cases and their setup from other
+ * test classes which address those credential types in more detail.<br/>
+ *
+ * Initially tied to JENKINS-70101 research, and tests on remote agent
+ * would require
+ * <a href="https://github.com/jenkinsci/credentials-plugin/pull/391"> PR credentials-plugin#391</a>
+ * to be merged first, so credentials-plugin processes {@code snapshot()}
+ * properly and readable keystore data gets to remote agent.<br/>
+ *
+ * So part of this is a mixed test suite of two plugins, making sure that
+ * the chosen versions do cooperate correctly for our ultimate needs.<br/>
+ *
  * @author Mark Waite
+ * @author Jim Klimov
  */
 @WithJenkins
 class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
-    // For developers: set to `true` so that pipeline console logs show
-    // up in System.out (and/or System.err) of the plugin test run by
-    //   mvn test -Dtest="HttpRequestStepCredentialsTest"
+    /** For developers: set to `true` so that pipeline console logs show
+     * up in {@link System#out} (and/or {@link System#err}) of the plugin
+     * test run executed by:
+     * <pre>
+     *   mvn test -Dtest="HttpRequestStepCredentialsTest"
+     * </pre>
+     */
     private final boolean verbosePipelines = false;
 
-    private String getLogAsStringPlaintext(WorkflowRun f) throws java.io.IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        f.getLogText().writeLogTo(0, baos);
-        return baos.toString();
-    }
-
-    // From CertificateCredentialImplTest
+    // From CertificateCredentialImplTest in credentials-plugin
+    /** Temporary location for keystore files.
+     * @see #p12simple
+     * @see #p12trusted
+     */
     @TempDir
     private File tmp;
+
+    /** A temporary (randomly-named) file with a PKCS#12 key/cert store which
+     *  contains a private key + openvpn certs, as alias named "1"
+     *  (according to keytool).
+     */
     private File p12simple;
+
+    /** A temporary (randomly-named) file with a PKCS#12 key/cert store which
+     *  contains a private key + openvpn certs as alias named "1",
+     *  and another alias named "ca" with trustedKeyEntry for CA
+     *  (according to keytool).
+     */
     private File p12trusted;
 
+    /** Reference to the system credentials provider, prepared by
+     *  {@link #enableSystemCredentialsProvider} method
+     *  before each test case.
+     */
     private CredentialsStore store = null;
 
     private static StandardCredentials getInvalidCredential() throws FormException {
@@ -108,6 +141,11 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         assertThat("The system credentials provider is enabled", store, notNullValue());
     }
 
+    /////////////////////////////////////////////////////////////////
+    // Test cases
+    /////////////////////////////////////////////////////////////////
+
+    /** A credentials tracking test */
     @Test
     void trackCredentials() throws Exception {
         StandardCredentials credential = getInvalidCredential();
@@ -162,19 +200,28 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         assertThat(page.getAnchorByText(proj.getFullDisplayName()), notNullValue());
     }
 
-    // A set of tests with certificate credentials in different contexts
-    // TODO: Test on remote agent as in https://github.com/jenkinsci/credentials-plugin/pull/391
-    //  but this requires that PR to be merged first, so credentials-plugin
-    //  processes snapshot() and readable keystore data gets to remote agent.
-    // Note that the tests below focus on ability of the plugin to load and
-    // process the key store specified by the credential, rather than that
-    // it is usable further. It would be a separate effort to mock up a web
-    // server protected by HTTPS and using certificates for login (possibly
-    // user and server backed by two different CA's), and query that.
+    /////////////////////////////////////////////////////////////////
+    // Helpers for pipeline tests about credentials retrievability
+    // by http-request-plugin (on same or remote JVM)
+    /////////////////////////////////////////////////////////////////
+
+    private String getLogAsStringPlaintext(WorkflowRun f) throws java.io.IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        f.getLogText().writeLogTo(0, baos);
+        return baos.toString();
+    }
+
+    /** Returns a String with prepared part of the pipeline script with a request
+     *  (to non-existent site) using a credential named by "id" parameter.<br/>
+     *
+     *  Note: we accept any outcome for the HTTP request (for this plugin, unresolved
+     *  host is HTTP-404) but it may not crash making use of the credential.<br/>
+     *
+     * @param id    Credential ID, saved earlier into the store
+     * @param runnerTag Currently not used
+     * @return String with prepared part of pipeline script
+     */
     private static String cpsScriptCredentialTestHttpRequest(String id, String runnerTag) {
-        // Note: we accept any outcome (for the plugin, unresolved host is HTTP-404)
-        // but it may not crash making use of the credential
-        // Note: cases withLocalCertLookup also need cpsScriptCredentialTestImports()
         return  "def authentication='" + id + "';\n"
                 + "\n"
                 + "echo \"Querying HTTPS with credential...\"\n"
@@ -201,11 +248,27 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
                 + "\n";
     }
 
+    /////////////////////////////////////////////////////////////////
+    // Certificate credentials retrievability by http-request-plugin
+    // in a local JVM (should work with all versions of credentials plugin)
+    /////////////////////////////////////////////////////////////////
+
+    // A set of tests with certificate credentials in different contexts
+    // TODO: Test on remote agent as in https://github.com/jenkinsci/credentials-plugin/pull/391
+    //  but this requires that PR to be merged first, so credentials-plugin
+    //  processes snapshot() and readable keystore data gets to remote agent.
+    // Note that the tests below focus on ability of the plugin to load and
+    // process the key store specified by the credential, rather than that
+    // it is usable further. It would be a separate effort to mock up a web
+    // server protected by HTTPS and using certificates for login (possibly
+    // user and server backed by two different CA's), and query that.
+
+    /** Check that "simple" Certificate credentials are usable with pipeline script
+     *  running without a {@code node{}} block.
+     */
     @Test
     @Issue({"JENKINS-70000", "JENKINS-70101"})
     void testCertSimpleHttpRequestOnController() throws Exception {
-        // Check that credentials are usable with pipeline script
-        // running without a node{}
         StandardCredentials credential = getCertificateCredentialSimple();
         store.addCredentials(Domain.global(), credential);
 
@@ -232,11 +295,12 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         j.assertLogContains("Treating UnknownHostException", run);
     }
 
+    /** Check that "simple" Certificate credentials are usable with pipeline script
+     *  running on a {@code node{}} (provided by the controller JVM).
+     */
     @Test
     @Issue({"JENKINS-70000", "JENKINS-70101"})
     void testCertSimpleHttpRequestOnNodeLocal() throws Exception {
-        // Check that credentials are usable with pipeline script
-        // running on a node{} (provided by the controller)
         StandardCredentials credential = getCertificateCredentialSimple();
         store.addCredentials(Domain.global(), credential);
 
@@ -265,11 +329,12 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         j.assertLogContains("Treating UnknownHostException", run);
     }
 
+    /** Check that "trusted" Certificate credentials are usable with pipeline script
+     *  running without a {@code node{}} block.
+     */
     @Test
     @Issue({"JENKINS-70000", "JENKINS-70101"})
     void testCertTrustedHttpRequestOnController() throws Exception {
-        // Check that credentials are usable with pipeline script
-        // running without a node{}
         StandardCredentials credential = getCertificateCredentialTrusted();
         store.addCredentials(Domain.global(), credential);
 
@@ -293,11 +358,12 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         j.assertLogContains("Treating UnknownHostException", run);
     }
 
+    /** Check that "trusted" Certificate credentials are usable with pipeline script
+     *  running on a {@code node{}} (provided by the controller JVM).
+     */
     @Test
     @Issue({"JENKINS-70000", "JENKINS-70101"})
     void testCertTrustedHttpRequestOnNodeLocal() throws Exception {
-        // Check that credentials are usable with pipeline script
-        // running on a node{} (provided by the controller)
         StandardCredentials credential = getCertificateCredentialTrusted();
         store.addCredentials(Domain.global(), credential);
 
