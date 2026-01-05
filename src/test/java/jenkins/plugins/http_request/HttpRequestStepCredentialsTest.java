@@ -264,7 +264,7 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
      *  host is HTTP-404) but it may not crash making use of the credential.<br/>
      *
      * @param id    Credential ID, saved earlier into the store
-     * @param runnerTag Currently not used
+     * @param runnerTag Reported in pipeline build log
      * @param withReentrability If true, generate a second request with same credential,
      *                          to make sure it is not garbled etc. by first use.
      * @param withLocalCertLookup If true, add lookup and logging of keystore data
@@ -299,7 +299,7 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
                         + "}\n" )
                 : "" )
                 + "\n"
-                + "msg = \"Querying HTTPS with credential...\"\n"
+                + "msg = \"Querying HTTPS with credential on " + (runnerTag != null ? runnerTag : "<unspecified node>") + "...\"\n"
                 + "echo msg;" + (verbosePipelines ? " System.out.println(msg); System.err.println(msg)" : "" ) + ";\n"
                 + "def response = httpRequest(url: 'https://github.xcom/api/v3',\n"
                 + "                 httpMode: 'GET',\n"
