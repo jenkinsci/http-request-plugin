@@ -214,6 +214,10 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
     /** Returns a String with prepared part of the pipeline script with a request
      *  (to non-existent site) using a credential named by "id" parameter.<br/>
      *
+     *  The test class property {@link #verbosePipelines} can be used to toggle writing
+     *  a copy of the progress message(s) to {@link System#out} and {@link System#err}
+     *  of the build agent JVM.<br/>
+     *
      *  Note: we accept any outcome for the HTTP request (for this plugin, unresolved
      *  host is HTTP-404) but it may not crash making use of the credential.<br/>
      *
@@ -221,10 +225,13 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
      * @param runnerTag Currently not used
      * @return String with prepared part of pipeline script
      */
-    private static String cpsScriptCredentialTestHttpRequest(String id, String runnerTag) {
+    private String cpsScriptCredentialTestHttpRequest(String id, String runnerTag) {
         return  "def authentication='" + id + "';\n"
                 + "\n"
-                + "echo \"Querying HTTPS with credential...\"\n"
+                + "def msg\n"
+                + "\n"
+                + "msg = \"Querying HTTPS with credential...\"\n"
+                + "echo msg;" + (verbosePipelines ? " System.out.println(msg); System.err.println(msg)" : "" ) + ";\n"
                 + "def response = httpRequest(url: 'https://github.xcom/api/v3',\n"
                 + "                 httpMode: 'GET',\n"
                 + "                 authentication: authentication,\n"
@@ -235,7 +242,8 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
                 + "println('First HTTP Request Plugin Status: '+ response.getStatus())\n"
                 + "println('First HTTP Request Plugin Response: '+ response.getContent())\n"
                 + "\n"
-                + "echo \"Querying HTTPS with credential again (reentrability)...\"\n"
+                + "msg = \"Querying HTTPS with credential again (reentrability)...\"\n"
+                + "echo msg;" + (verbosePipelines ? " System.out.println(msg); System.err.println(msg)" : "" ) + ";\n"
                 + "response = httpRequest(url: 'https://github.xcom/api/v3',\n"
                 + "                 httpMode: 'GET',\n"
                 + "                 authentication: authentication,\n"
