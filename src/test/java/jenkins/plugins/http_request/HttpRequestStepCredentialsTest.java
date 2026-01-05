@@ -72,7 +72,7 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         if (p12simple == null) {
             // Contains a private key + openvpn certs,
             // as alias named "1" (according to keytool)
-            p12simple = File.createTempFile("test.p12", null, tmp);
+            p12simple = File.createTempFile("test-keystore-", ".p12", tmp);
             FileUtils.copyURLToFile(HttpRequestStepCredentialsTest.class.getResource("test.p12"), p12simple);
         }
 
@@ -85,7 +85,7 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         if (p12trusted == null) {
             // Contains a private key + openvpn certs as alias named "1",
             // and another alias named "ca" with trustedKeyEntry for CA
-            p12trusted = File.createTempFile("testTrusted.p12", null, tmp);
+            p12trusted = File.createTempFile("testTrusted-keystore-", ".p12", tmp);
             FileUtils.copyURLToFile(HttpRequestStepCredentialsTest.class.getResource("testTrusted.p12"), p12trusted);
         }
 
