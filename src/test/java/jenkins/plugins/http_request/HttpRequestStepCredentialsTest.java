@@ -117,8 +117,9 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
     static {
         try {
             Class.forName(
-                    "com.cloudbees.plugins.credentials.impl.CertificateCredentialsSnapshotTaker",
-                    false, HttpRequestStepCredentialsTest.class.getClassLoader());
+                    "com.cloudbees.plugins.credentials.impl.CertificateCredentialsSnapshotTaker"
+                    // , false, HttpRequestStepCredentialsTest.class.getClassLoader()
+                    );
             credentialsPluginDoesSnapshotsRight = true;
         } catch (ClassNotFoundException ignored) {
             credentialsPluginDoesSnapshotsRight = false;
