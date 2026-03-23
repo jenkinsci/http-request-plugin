@@ -15,6 +15,8 @@ permissions:
 
 jobs:
   update_release_draft:
+    # Only draft release notes on the repo in the jenkinsci GitHub organization
+    if: ${{ github.repository_owner == 'jenkinsci' }}
     runs-on: ubuntu-latest
     steps:
       # Drafts your next Release notes as Pull Requests are merged into the default branch
