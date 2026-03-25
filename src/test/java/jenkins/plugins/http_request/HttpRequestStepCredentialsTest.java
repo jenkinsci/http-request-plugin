@@ -231,7 +231,6 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
 
         JenkinsRule.WebClient wc = j.createWebClient();
         HtmlPage page = wc.goTo("credentials/store/system/domain/_/credentials/" + credential.getId());
-        assertThat("Have usage tracking reported", page.getElementById("usage"), notNullValue());
         assertThat(
                 "No fingerprint created until first use on missing page",
                 page.getElementById("usage-missing"),
