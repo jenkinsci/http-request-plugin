@@ -180,7 +180,7 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         return new CertificateCredentialsImpl(null, id, null, password, storeSource);
     }
 
-    /** Get a new CertificateCredentialsImpl() and save it into the {@link #store} */
+    /** Get a new CertificateCredentialsImpl() and save it into the credentials store */
     private void prepareUploadedKeystore(String id, String password, Boolean useSimple) throws IOException {
         StandardCredentials c = (useSimple
                 ? getCertificateCredentialSimple(id, password)
