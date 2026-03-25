@@ -356,7 +356,7 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
                 + "                 validResponseCodes: '100:599',\n"
                 + "                 quiet: false)\n"
                 + "println('" + (withReentrability ? "First " : "") + "HTTP Request Plugin Status: '+ response.getStatus())\n"
-                + "println('" + (withReentrability ? "First " : "") + "First HTTP Request Plugin Response: '+ response.getContent())\n"
+                + "println('" + (withReentrability ? "First " : "") + "HTTP Request Plugin Response: '+ response.getContent())\n"
                 + "\n"
                 + (withReentrability ? (
                         "msg = \"Querying HTTPS with credential again (reentrability)...\"\n"
