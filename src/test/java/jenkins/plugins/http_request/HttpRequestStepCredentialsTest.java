@@ -211,9 +211,6 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
             }
         }
         assertThat("The system credentials provider is enabled", store, notNullValue());
-
-        // Primarily needed for remote-agent tests per JENKINS-70101?
-        j.jenkins.setCrumbIssuer(null);
     }
 
     /////////////////////////////////////////////////////////////////
