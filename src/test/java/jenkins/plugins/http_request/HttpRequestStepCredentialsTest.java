@@ -76,7 +76,7 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
     // Data for build agent setup
     /** Build agent label expected by test cases for remote logic execution
      * and data transfer [JENKINS-70101] */
-    private final static String agentLabelString = "cred-test-worker";
+    private static final String agentLabelString = "cred-test-worker";
     // Can this be reused for many test cases?
     private Slave agent = null;
     /** Tri-state Unknown/started/not usable [JENKINS-70101] */
