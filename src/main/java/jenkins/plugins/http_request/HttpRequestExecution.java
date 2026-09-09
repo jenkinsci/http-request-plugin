@@ -85,7 +85,7 @@ import jenkins.plugins.http_request.util.RequestAction;
 /**
  * @author Janario Oliveira
  */
-public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentSupplier, RuntimeException> {
+public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentSupplier, IOException> {
 
     @Serial
     private static final long serialVersionUID = -2066857816168989599L;
@@ -281,7 +281,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
     }
 
     @Override
-    public ResponseContentSupplier call() throws RuntimeException {
+    public ResponseContentSupplier call() throws IOException {
         logger().println("HttpMethod: " + httpMode);
         logger().println("URL: " + url);
         for (HttpRequestNameValuePair header : headers) {
@@ -291,7 +291,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
         try {
             return authAndRequest();
-        } catch (IOException | InterruptedException | NoSuchAlgorithmException | KeyManagementException e) {
+        } catch (InterruptedException | NoSuchAlgorithmException | KeyManagementException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -470,29 +470,15 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
     private ResponseContentSupplier executeRequest(
             CloseableHttpClient httpclient, HttpClientUtil clientUtil, HttpUriRequestBase httpRequestBase,
             HttpClientContext context) throws IOException {
-        ResponseContentSupplier responseContentSupplier;
-/*
-        // TODO: pick interesting fields/getters from these classes:
-        logger().println("Sending HTTP request with" +
-            " CloseableHttpClient=" + httpclient.toString() +
-            " HttpClientUtil=" + clientUtil.toString() +
-            " HttpRequestBase=" + httpRequestBase.toString() +
-            " HttpContext=" + context.toString()
-            );
-*/
         try {
             final HttpResponse response = clientUtil.execute(httpclient, context, httpRequestBase, logger());
             // The HttpEntity is consumed by the ResponseContentSupplier
-            responseContentSupplier = new ResponseContentSupplier(responseHandle, (CloseableHttpResponse) response);
+            return new ResponseContentSupplier(responseHandle, (CloseableHttpResponse) response);
         } catch (UnknownHostException uhe) {
-            logger().println("Treating UnknownHostException(" + uhe.getMessage() + ") as 404 Not Found");
-            responseContentSupplier = new ResponseContentSupplier("UnknownHostException as 404 Not Found", 404);
+            throw new AbortException("Fail: Host does not exist or could not be resolved: " + uhe.getMessage() + " while calling " + url);
         } catch (SocketTimeoutException | ConnectException ce) {
-            logger().println("Treating " + ce.getClass() + "(" + ce.getMessage() + ") as 408 Request Timeout");
-            responseContentSupplier = new ResponseContentSupplier(ce.getClass() + "(" + ce.getMessage() + ") as 408 Request Timeout", 408);
+            throw new AbortException("Fail: Connection failed or timed out: " + ce.getMessage() + " while calling " + url);
         }
-
-        return responseContentSupplier;
     }
 
     private void responseCodeIsValid(ResponseContentSupplier response) throws AbortException {

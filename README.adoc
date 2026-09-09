@@ -307,6 +307,15 @@ httpRequest authentication: 'my-jenkins-credential-id',
             uploadFile: './local/path/to/report.html'
 ----
 
+If the request cannot reach the server (unknown host, refused connection, timeout),
+the build fails with an error message that names the problem and the URL, instead
+of reporting a made-up HTTP status code:
+
+[source]
+----
+Fail: Host does not exist or could not be resolved: example.invalid while calling https://example.invalid/api
+----
+
 For details on the Pipeline features, use the Pipeline snippet generator in the Pipeline job
 configuration.
 

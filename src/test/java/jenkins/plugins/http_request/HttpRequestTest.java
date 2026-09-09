@@ -659,7 +659,8 @@ class HttpRequestTest extends HttpRequestTestBase {
 
         // Check expectations
         this.j.assertBuildStatus(Result.FAILURE, build);
-        this.j.assertLogContains("Fail: Status code 408 is not in the accepted range: 100:399", build);
+        this.j.assertLogContains("Fail: Connection failed or timed out: Read timed out", build);
+        this.j.assertLogContains(" while calling " + baseURL() + "/timeout", build);
     }
 
     @Test
