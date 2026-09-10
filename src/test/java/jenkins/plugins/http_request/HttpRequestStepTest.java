@@ -459,7 +459,7 @@ class HttpRequestStepTest extends HttpRequestTestBase {
         // The host name of the URL is unresolvable on purpose
         WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
         proj.setDefinition(new CpsFlowDefinition(
-            "def response = httpRequest url:'https://github.xcom/api/v3'\n" +
+            "def response = httpRequest url:'https://github.invalid/api/v3'\n" +
             "println('Status: '+response.getStatus())\n" +
             "println('Response: '+response.getContent())\n",
             true));
@@ -471,8 +471,9 @@ class HttpRequestStepTest extends HttpRequestTestBase {
         // clear message instead of a fake HTTP status code
         j.assertBuildStatus(Result.FAILURE, run);
         j.assertLogContains("Fail: Host does not exist or could not be resolved", run);
-        j.assertLogContains(" while calling https://github.xcom/api/v3", run);
+        j.assertLogContains(" while calling https://github.invalid/api/v3", run);
         j.assertLogNotContains("Status code 404 is not in the accepted range", run);
+        j.assertLogNotContains("IllegalStateException", run);
     }
 
     @Test
