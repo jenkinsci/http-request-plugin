@@ -304,8 +304,9 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
      *  a copy of the progress message(s) to {@link System#out} and {@link System#err}
      *  of the build agent JVM.<br/>
      *
-     *  Note: we accept any outcome for the HTTP request (for this plugin, unresolved
-     *  host is HTTP-404) but it may not crash making use of the credential.<br/>
+     *  Note: we accept any outcome for the HTTP request (for this plugin, an
+     *  unresolved host makes the step fail with an exception, which the script
+     *  catches) but it may not crash making use of the credential.<br/>
      *
      * @param id    Credential ID, saved earlier into the store
      * @param runnerTag Reported in pipeline build log
@@ -345,28 +346,38 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
                 + "\n"
                 + "msg = \"Querying HTTPS with credential on " + (runnerTag != null ? runnerTag : "<unspecified node>") + "...\"\n"
                 + "echo msg;" + (verbosePipelines ? " System.out.println(msg); System.err.println(msg)" : "" ) + ";\n"
-                + "def response = httpRequest(url: 'https://github.xcom/api/v3',\n"
+                + "def response = null\n"
+                + "try {\n"
+                + "  response = httpRequest(url: 'https://github.invalid/api/v3',\n"
                 + "                 httpMode: 'GET',\n"
                 + "                 authentication: authentication,\n"
                 + "                 consoleLogResponseBody: true,\n"
                 + "                 contentType : 'APPLICATION_FORM',\n"
                 + "                 validResponseCodes: '100:599',\n"
                 + "                 quiet: false)\n"
-                + "println('" + (withReentrability ? "First " : "") + "HTTP Request Plugin Status: '+ response.getStatus())\n"
-                + "println('" + (withReentrability ? "First " : "") + "HTTP Request Plugin Response: '+ response.getContent())\n"
+                + "} catch (err) {\n"
+                + "  echo 'HTTP Request Plugin Exception: ' + err\n"
+                + "}\n"
+                + "println('" + (withReentrability ? "First " : "") + "HTTP Request Plugin Status: '+ (response != null ? response.getStatus() : 'request failed'))\n"
+                + "println('" + (withReentrability ? "First " : "") + "HTTP Request Plugin Response: '+ (response != null ? response.getContent() : 'request failed'))\n"
                 + "\n"
                 + (withReentrability ? (
                         "msg = \"Querying HTTPS with credential again (reentrability)...\"\n"
                         + "echo msg;" + (verbosePipelines ? " System.out.println(msg); System.err.println(msg)" : "" ) + ";\n"
-                        + "response = httpRequest(url: 'https://github.xcom/api/v3',\n"
+                        + "response = null\n"
+                        + "try {\n"
+                        + "  response = httpRequest(url: 'https://github.invalid/api/v3',\n"
                         + "                 httpMode: 'GET',\n"
                         + "                 authentication: authentication,\n"
                         + "                 consoleLogResponseBody: true,\n"
                         + "                 contentType : 'APPLICATION_FORM',\n"
                         + "                 validResponseCodes: '100:599',\n"
                         + "                 quiet: false)\n"
-                        + "println('Second HTTP Request Plugin Status: '+ response.getStatus())\n"
-                        + "println('Second HTTP Request Plugin Response: '+ response.getContent())\n"
+                        + "} catch (err) {\n"
+                        + "  echo 'HTTP Request Plugin Exception: ' + err\n"
+                        + "}\n"
+                        + "println('Second HTTP Request Plugin Status: '+ (response != null ? response.getStatus() : 'request failed'))\n"
+                        + "println('Second HTTP Request Plugin Response: '+ (response != null ? response.getContent() : 'request failed'))\n"
                         + "\n" )
                 : "" );
     }
@@ -436,7 +447,7 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         // had 0 entries to add though):
         //j.assertLogNotContains("Added Trust Material from provided KeyStore", run);
         j.assertLogContains("Added Key Material from provided KeyStore", run);
-        j.assertLogContains("Treating UnknownHostException", run);
+        j.assertLogContains("Fail: Host does not exist or could not be resolved", run);
     }
 
     /** Check that "simple" Certificate credentials are usable with pipeline script
@@ -471,7 +482,7 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         // had 0 entries to add though):
         //j.assertLogNotContains("Added Trust Material from provided KeyStore", run);
         j.assertLogContains("Added Key Material from provided KeyStore", run);
-        j.assertLogContains("Treating UnknownHostException", run);
+        j.assertLogContains("Fail: Host does not exist or could not be resolved", run);
     }
 
     /** Check that "trusted" Certificate credentials are usable with pipeline script
@@ -501,7 +512,7 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         j.assertLogContains("Using authentication: cred_cert_with_ca", run);
         j.assertLogContains("Added Trust Material from provided KeyStore", run);
         j.assertLogContains("Added Key Material from provided KeyStore", run);
-        j.assertLogContains("Treating UnknownHostException", run);
+        j.assertLogContains("Fail: Host does not exist or could not be resolved", run);
     }
 
     /** Check that "trusted" Certificate credentials are usable with pipeline script
@@ -533,7 +544,7 @@ class HttpRequestStepCredentialsTest extends HttpRequestTestBase {
         j.assertLogContains("Using authentication: cred_cert_with_ca", run);
         j.assertLogContains("Added Trust Material from provided KeyStore", run);
         j.assertLogContains("Added Key Material from provided KeyStore", run);
-        j.assertLogContains("Treating UnknownHostException", run);
+        j.assertLogContains("Fail: Host does not exist or could not be resolved", run);
     }
 
     /////////////////////////////////////////////////////////////////

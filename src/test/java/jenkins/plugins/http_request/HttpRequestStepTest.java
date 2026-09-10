@@ -32,6 +32,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import hudson.model.Result;
@@ -448,8 +449,31 @@ class HttpRequestStepTest extends HttpRequestTestBase {
 
         // Check expectations
         j.assertBuildStatus(Result.FAILURE, run);
-        j.assertLogContains("Fail: Status code 408 is not in the accepted range: 100:399", run);
-        j.assertLogContains(" while calling " + baseURL(), run);
+        j.assertLogContains("Fail: Connection failed or timed out: Read timed out", run);
+        j.assertLogContains(" while calling " + baseURL() + "/timeout", run);
+    }
+
+    @Test
+    @Issue("JENKINS-70505")
+    void unknownHostFailsTheBuild() throws Exception {
+        // The host name of the URL is unresolvable on purpose
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        proj.setDefinition(new CpsFlowDefinition(
+            "def response = httpRequest url:'https://github.invalid/api/v3'\n" +
+            "println('Status: '+response.getStatus())\n" +
+            "println('Response: '+response.getContent())\n",
+            true));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+
+        // Check expectations: a name resolution error fails the build with a
+        // clear message instead of a fake HTTP status code
+        j.assertBuildStatus(Result.FAILURE, run);
+        j.assertLogContains("Fail: Host does not exist or could not be resolved", run);
+        j.assertLogContains(" while calling https://github.invalid/api/v3", run);
+        j.assertLogNotContains("Status code 404 is not in the accepted range", run);
+        j.assertLogNotContains("IllegalStateException", run);
     }
 
     @Test
