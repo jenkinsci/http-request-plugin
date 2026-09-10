@@ -32,7 +32,7 @@ THE SOFTWARE.
 	</parent>
 
 	<artifactId>http_request</artifactId>
-	<version>${revision}${changelist}</version>
+	<version>${revision}.${changelist}</version>
 	<packaging>hpi</packaging>
 	<name>HTTP Request Plugin</name>
 	<description>
@@ -48,8 +48,8 @@ THE SOFTWARE.
 	</licenses>
 
 	<properties>
-		<revision>1.27</revision>
-		<changelist>-SNAPSHOT</changelist>
+		<revision>1</revision>
+		<changelist>999999-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/http-request-plugin</gitHubRepo>
 		<!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
 		<jenkins.baseline>2.479</jenkins.baseline>
