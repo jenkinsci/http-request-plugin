@@ -411,6 +411,27 @@ class HttpRequestTest extends HttpRequestTestBase {
     }
 
     @Test
+    void invalidResponseCodeLogsResponseBody() throws Exception {
+        // Prepare the server
+        registerInvalidStatusCode();
+
+        // Prepare HttpRequest (consoleLogResponseBody not set, defaults to false)
+        HttpRequest httpRequest = new HttpRequest(baseURL() + "/invalidStatusCode");
+
+        // Run build
+        FreeStyleProject project = this.j.createFreeStyleProject();
+        project.getBuildersList().add(httpRequest);
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+
+        // Check expectations: the response body is logged on failure even
+        // without consoleLogResponseBody, so the error explanation from the
+        // server is not lost
+        this.j.assertBuildStatus(Result.FAILURE, build);
+        this.j.assertLogContains("Throwing status 400 for test", build);
+        this.j.assertLogContains("Fail: Status code 400 is not in the accepted range: 100:399", build);
+    }
+
+    @Test
     void invalidResponseCodeIsAccepted() throws Exception {
         // Prepare the server
         registerInvalidStatusCode();

@@ -249,6 +249,32 @@ class HttpRequestStepTest extends HttpRequestTestBase {
         j.assertLogContains("Throwing status 400 for test",run);
         j.assertLogContains("Fail: Status code 400 is not in the accepted range: 100:399", run);
         j.assertLogContains(" while calling " + baseURL(), run);
+        // Not logged twice: consoleLogResponseBody already printed it, the
+        // failure-path logging must not print the body again
+        assertEquals(1, j.getLog(run).split("Response: \n", -1).length - 1);
+    }
+
+    @Test
+    void invalidResponseCodeLogsResponseBody() throws Exception {
+        // Prepare the server
+        registerInvalidStatusCode();
+
+        // Configure the build (consoleLogResponseBody not set, defaults to false)
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        proj.setDefinition(new CpsFlowDefinition(
+            "def response = httpRequest url:'"+baseURL()+"/invalidStatusCode'\n" +
+            "println('Status: '+response.getStatus())\n",
+            true));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+
+        // Check expectations: the response body is logged on failure even
+        // without consoleLogResponseBody, so the error explanation from the
+        // server is not lost
+        j.assertBuildStatus(Result.FAILURE, run);
+        j.assertLogContains("Throwing status 400 for test",run);
+        j.assertLogContains("Fail: Status code 400 is not in the accepted range: 100:399", run);
     }
 
     @Test
