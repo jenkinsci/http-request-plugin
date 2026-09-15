@@ -151,6 +151,36 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
         }
     }
 
+    static HttpRequestExecution from(HttpRequestPublisher publisher,
+                                     EnvVars envVars, AbstractBuild<?, ?> build, TaskListener taskListener) {
+        String url = publisher.resolveUrl(envVars);
+        String body = publisher.resolveBody(envVars);
+        List<HttpRequestNameValuePair> headers = publisher.resolveHeaders(envVars);
+
+        FilePath outputFile = publisher.resolveOutputFile(envVars, build);
+        FilePath uploadFile = publisher.resolveUploadFile(envVars, build);
+        Item project = build.getProject();
+        Run<?, ?> run = build;
+
+        List<HttpRequestFormDataPart> formData = publisher.resolveFormDataParts(envVars, build);
+
+        return new HttpRequestExecution(
+                url, publisher.getHttpMode(), publisher.isIgnoreSslErrors(),
+                publisher.getHttpProxy(), publisher.getProxyAuthentication(),
+                body, headers, publisher.getTimeout(),
+                uploadFile, publisher.getMultipartName(), publisher.isWrapAsMultipart(),
+                publisher.getAuthentication(), publisher.isUseNtlm(), publisher.getUseSystemProperties(),
+                formData,
+
+                publisher.getValidResponseCodes(), publisher.getValidResponseContent(),
+                publisher.getConsoleLogResponseBody(), outputFile,
+                publisher.getResponseHandle(),
+
+                project,
+                run,
+                taskListener.getLogger());
+    }
+
     static HttpRequestExecution from(HttpRequestStep step, TaskListener taskListener, Execution execution)
             throws IOException, InterruptedException {
         List<HttpRequestNameValuePair> headers = step.resolveHeaders();

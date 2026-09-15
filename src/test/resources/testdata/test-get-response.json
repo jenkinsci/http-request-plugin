@@ -1,0 +1,10 @@
+{
+  "status": "ok",
+  "message": "GET call against the Jenkins Test Harness succeeded.",
+  "timestamp": "2026-07-01T00:00:00Z",
+  "items": [
+    { "id": 1, "name": "alpha" },
+    { "id": 2, "name": "beta" },
+    { "id": 3, "name": "gamma" }
+  ]
+}
