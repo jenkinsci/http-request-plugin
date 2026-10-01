@@ -59,6 +59,7 @@ public final class HttpRequestStep extends Step {
     private boolean wrapAsMultipart           = DescriptorImpl.wrapAsMultipart;
     private Boolean useSystemProperties       = DescriptorImpl.useSystemProperties;
     private boolean useNtlm                   = DescriptorImpl.useNtlm;
+	private boolean followRedirects		      = DescriptorImpl.followRedirects;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
     private List<HttpRequestFormDataPart> formData = DescriptorImpl.formData;
     private String outputFile = DescriptorImpl.outputFile;
@@ -273,6 +274,15 @@ public final class HttpRequestStep extends Step {
         return useNtlm;
     }
 
+	@DataBoundSetter
+	public void  setFollowRedirects(boolean followRedirects) {
+		this.followRedirects = followRedirects;
+	}
+
+	public boolean isFollowRedirects() {
+		return this.followRedirects;
+	}
+
     @Override
     public StepExecution start(StepContext context) {
         return new Execution(context, this);
@@ -322,7 +332,8 @@ public final class HttpRequestStep extends Step {
         public static final boolean  wrapAsMultipart           = HttpRequest.DescriptorImpl.wrapAsMultipart;
         public static final Boolean  useSystemProperties       = HttpRequest.DescriptorImpl.useSystemProperties;
         public static final boolean  useNtlm                   = HttpRequest.DescriptorImpl.useNtlm;
-        public static final List <HttpRequestNameValuePair> customHeaders = Collections.emptyList();
+		public static final boolean  followRedirects           = HttpRequest.DescriptorImpl.followRedirects;
+		public static final List <HttpRequestNameValuePair> customHeaders = Collections.emptyList();
         public static final List <HttpRequestFormDataPart> formData = Collections.emptyList();
         public static final String outputFile = "";
         public static final ResponseHandle responseHandle = ResponseHandle.STRING;
