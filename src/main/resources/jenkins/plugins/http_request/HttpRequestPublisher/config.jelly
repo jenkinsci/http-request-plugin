@@ -1,0 +1,72 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:entry field="url" title="URL" help="/plugin/http_request/help-url.html">
+        <f:textbox />
+    </f:entry>
+    <f:entry field="httpMode" title="HTTP mode" help="/plugin/http_request/help-httpMode.html">
+        <f:select />
+    </f:entry>
+    <f:entry field="ignoreSslErrors" title="Ignore Ssl errors?" help="/plugin/http_request/help-ignoreSslErrors.html">
+        <f:booleanRadio />
+    </f:entry>
+
+    <f:advanced>
+        <f:entry field="httpProxy" title="Http Proxy" help="/plugin/http_request/help-httpProxy.html">
+            <f:textbox />
+        </f:entry>
+        <f:entry field="proxyAuthentication" title="Proxy authenticate" help="/plugin/http_request/help-proxyAuthentication.html">
+            <f:select />
+        </f:entry>
+        <f:entry field="validResponseCodes" title="Response codes expected" help="/plugin/http_request/help-validResponseCodes.html">
+            <f:textbox default="${descriptor.validResponseCodes}"/>
+        </f:entry>
+        <f:entry field="validResponseContent" title="Response content expected" help="/plugin/http_request/help-validResponseContent.html">
+            <f:textbox />
+        </f:entry>
+        <f:entry field="acceptType" title="Accept" help="/plugin/http_request/help-acceptType.html">
+            <f:select />
+        </f:entry>
+        <f:entry field="contentType" title="Content-Type" help="/plugin/http_request/help-contentType.html">
+            <f:select />
+        </f:entry>
+        <f:entry field="timeout" title="Connection timeout" help="/plugin/http_request/help-timeout.html">
+            <f:number default="${descriptor.timeout}"/>
+        </f:entry>
+        <f:entry field="outputFile" title="Output response to file" help="/plugin/http_request/help-outputFile.html">
+             <f:textbox />
+        </f:entry>
+        <f:entry field="consoleLogResponseBody" title="Response body in console?" help="/plugin/http_request/help-consoleLogResponseBody.html">
+            <f:booleanRadio />
+        </f:entry>
+        <f:entry field="quiet" title="Quiet all output?" help="/plugin/http_request/help-quiet.html">
+            <f:booleanRadio />
+        </f:entry>
+        <f:entry field="requestBody" title="Request body" help="/plugin/http_request/help-requestBody.html">
+            <f:textarea />
+        </f:entry>
+        <f:entry field="wrapAsMultipart" title="Wrap as Multipart request?" help="/plugin/http_request/help-wrapAsMultipart.html">
+            <f:booleanRadio />
+        </f:entry>
+        <f:entry field="uploadFile" title="Upload file path" help="/plugin/http_request/help-uploadFile.html">
+            <f:textbox />
+        </f:entry>
+        <f:entry field="formData" title="Post form-data entries" help="/plugin/http_request/help-formData.html">
+            <f:repeatableProperty field="formData" />
+        </f:entry>
+        <f:entry field="multipartName" title="Multipart entity name" help="/plugin/http_request/help-multipartName.html">
+            <f:textbox />
+        </f:entry>
+        <f:entry field="responseHandle" title="Handle of response" help="/plugin/http_request/help-responseHandle.html">
+            <f:select />
+        </f:entry>
+        <f:entry field="authentication" title="Authenticate" help="/plugin/http_request/help-authentication.html">
+            <f:select />
+        </f:entry>
+        <f:entry field="useSystemProperties" title="Use system properties" help="/plugin/http_request/use-system-properties.html">
+            <f:booleanRadio />
+        </f:entry>
+        <f:entry title="Custom headers">
+            <f:repeatableProperty field="customHeaders" />
+        </f:entry>
+    </f:advanced>
+</j:jelly>
