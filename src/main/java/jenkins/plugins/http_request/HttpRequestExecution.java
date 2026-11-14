@@ -29,6 +29,7 @@ import javax.net.ssl.X509ExtendedTrustManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.impl.ChainElement;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
@@ -80,6 +81,7 @@ import jenkins.plugins.http_request.util.BackWardCompatibleRedirectStrategy;
 import jenkins.plugins.http_request.util.HttpClientUtil;
 import jenkins.plugins.http_request.util.HttpRequestFormDataPart;
 import jenkins.plugins.http_request.util.HttpRequestNameValuePair;
+import jenkins.plugins.http_request.util.IgnoreContentEncodingNoneExec;
 import jenkins.plugins.http_request.util.RequestAction;
 
 /**
@@ -312,6 +314,8 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
             HttpClientBuilder clientBuilder = HttpClientBuilder.create();
 			clientBuilder.disableAutomaticRetries();
 			clientBuilder.setRedirectStrategy(new BackWardCompatibleRedirectStrategy());
+			clientBuilder.addExecInterceptorAfter(ChainElement.COMPRESS.name(), "ignore-content-encoding-none",
+					new IgnoreContentEncodingNoneExec());
 
             if (useSystemProperties) {
                 clientBuilder.useSystemProperties();
