@@ -73,6 +73,7 @@ public class HttpRequest extends Builder {
     private Boolean wrapAsMultipart           = DescriptorImpl.wrapAsMultipart;
     private Boolean useSystemProperties       = DescriptorImpl.useSystemProperties;
     private boolean useNtlm                   = DescriptorImpl.useNtlm;
+	private boolean followRedirects           = DescriptorImpl.followRedirects;
     private List<HttpRequestNameValuePair> customHeaders = DescriptorImpl.customHeaders;
     private List<HttpRequestFormDataPart> formData = DescriptorImpl.formData;
 
@@ -459,7 +460,16 @@ public class HttpRequest extends Builder {
         this.useNtlm = useNtlm;
     }
 
-    @Extension
+	public boolean isFollowRedirects() {
+		return this.followRedirects;
+	}
+
+	@DataBoundSetter
+	public void setFollowRedirects(boolean followRedirects) {
+		this.followRedirects = followRedirects;
+	}
+
+	@Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
         public static final boolean ignoreSslErrors = false;
         public static final HttpMode httpMode                  = HttpMode.GET;
@@ -481,6 +491,7 @@ public class HttpRequest extends Builder {
         public static final boolean  wrapAsMultipart           = true;
         public static final Boolean  useSystemProperties       = false;
         public static final boolean  useNtlm                   = false;
+		public static final boolean  followRedirects           = true;
         public static final List<HttpRequestNameValuePair> customHeaders = Collections.emptyList();
         public static final List<HttpRequestFormDataPart> formData = Collections.emptyList();
 

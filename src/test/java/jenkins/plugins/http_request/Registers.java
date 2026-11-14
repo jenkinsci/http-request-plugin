@@ -380,6 +380,17 @@ class Registers {
         });
     }
 
+	static void registerRedirects() {
+		registerHandler("/redirects", HttpMode.HEAD, new SimpleHandler() {
+			@Override
+			boolean doHandle(Request request, Response response, Callback callback) {
+				assertEquals("HEAD", request.getMethod());
+				Response.sendRedirect(request, response, callback, 302,"/doHEAD", false);
+				return false;
+			}
+		});
+	}
+
     private static void registerHandler(String target, HttpMode method, SimpleHandler handler) {
         HttpRequestTestBase.registerHandler(target, method, handler);
     }

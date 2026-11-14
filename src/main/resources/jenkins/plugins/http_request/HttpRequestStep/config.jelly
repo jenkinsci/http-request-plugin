@@ -65,6 +65,9 @@
         <f:entry field="useSystemProperties" title="Use system properties" help="/plugin/http_request/use-system-properties.html">
             <f:booleanRadio />
         </f:entry>
+		<f:entry field="followRedirects" title="Enable redirect handling?" help="/plugin/http_request/help-followRedirects.html">
+			<f:booleanRadio />
+		</f:entry>
         <f:entry title="Custom headers">
             <f:repeatableProperty field="customHeaders" />
         </f:entry>
