@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hc.core5.http.ContentType;
+import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
@@ -500,6 +501,33 @@ class HttpRequestStepTest extends HttpRequestTestBase {
         j.assertLogContains(" while calling https://github.invalid/api/v3", run);
         j.assertLogNotContains("Status code 404 is not in the accepted range", run);
         j.assertLogNotContains("IllegalStateException", run);
+    }
+
+    @Test
+    @Issue("JENKINS-76353")
+    void contentEncodingNoneIsIgnored() throws Exception {
+        // Prepare the server: some servers send "Content-Encoding: none" for uncompressed content
+        registerHandler("/contentEncodingNone", HttpMode.GET, new SimpleHandler() {
+            @Override
+            boolean doHandle(Request request, Response response, Callback callback) {
+                response.getHeaders().add(HttpHeader.CONTENT_ENCODING, "none");
+                return okAllIsWell(response, callback);
+            }
+        });
+
+        // Configure the build
+        WorkflowJob proj = j.jenkins.createProject(WorkflowJob.class, "proj");
+        proj.setDefinition(new CpsFlowDefinition(
+            "def response = httpRequest '" + baseURL() + "/contentEncodingNone'\n" +
+            "println('Response: ' + response.content)\n",
+            true));
+
+        // Execute the build
+        WorkflowRun run = proj.scheduleBuild2(0).get();
+
+        // Check expectations
+        j.assertBuildStatusSuccess(run);
+        j.assertLogContains("Response: " + ALL_IS_WELL, run);
     }
 
     @Test
