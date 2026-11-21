@@ -132,7 +132,261 @@ THE SOFTWARE.
 			<artifactId>workflow-job</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.codehaus.gmavenplus</groupId>
+			<artifactId>gmavenplus-plugin</artifactId>
+			<version>5.0.0</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
+
+	<profiles>
+		<profile>
+			<id>configure-test-jobs</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.gmavenplus</groupId>
+						<artifactId>gmavenplus-plugin</artifactId>
+						<version>4.3.1</version>
+						<executions>
+							<execution>
+								<phase>compile</phase>
+								<goals>
+									<goal>execute</goal>
+								</goals>
+								<configuration>
+									<scripts>
+										<script><![CDATA[
+                                        import java.net.InetSocketAddress
+                                        import java.net.Socket
+                                        import com.sun.net.httpserver.HttpServer
+                                        import com.sun.net.httpserver.HttpHandler
+                                        import groovy.json.JsonOutput
+
+                                        def resolvedPort = System.getProperty("port") ?: "8080"
+                                        def harnessPort = (System.getProperty("harnessPort") ?: "8081").toInteger()
+                                        def homePath = new File(project.basedir, "work")
+                                        def harnessUrl = "http://localhost:" + harnessPort + "/echo"
+
+                                        // Canned payloads seeded from the repo. The GET body is returned verbatim;
+                                        // the POST body is inlined as a "template" object in the write-verb response.
+                                        def getPayloadFile = new File(project.basedir, "src/test/resources/testdata/test-get-response.json")
+                                        def getPayload = getPayloadFile.exists() ? getPayloadFile.text : '{"status":"ok","message":"GET call against the Jenkins Test Harness succeeded."}'
+
+                                        // Escape a Java string for embedding as a JSON string value (core Groovy only,
+                                        // so the script needs no groovy-json on the gmavenplus classpath).
+                                        def jsonEscape = { String s ->
+                                            s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\b", "\\b").replace("\f", "\\f").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
+                                        }
+                                        def jsonStringOrNull = { String s -> s == null ? "null" : "\"" + jsonEscape(s) + "\"" }
+
+                                        def writeJson = { exchange, int code, String payload ->
+                                            byte[] bytes = payload.getBytes("UTF-8")
+                                            exchange.responseHeaders.add("Content-Type", "application/json; charset=utf-8")
+                                            exchange.sendResponseHeaders(code, bytes.length)
+                                            exchange.responseBody.withCloseable { it.write(bytes) }
+                                        }
+
+                                        // Embedded echo harness. GET/HEAD return the canned GET payload; the write
+                                        // verbs build a BRAND-NEW structured JSON response that embeds the delivered
+                                        // payload (as a string) alongside request metadata and the seeded template.
+                                        def harness = HttpServer.create(new InetSocketAddress(harnessPort), 0)
+                                        harness.createContext("/echo", { exchange ->
+                                            try {
+                                                def method = exchange.requestMethod.toUpperCase()
+                                                def path = exchange.requestURI.toString()
+
+                                                if (method == "GET") {
+                                                    writeJson(exchange, 200, getPayload)
+                                                    return
+                                                }
+                                                if (method == "HEAD") {
+                                                    exchange.responseHeaders.add("Content-Type", "application/json; charset=utf-8")
+                                                    exchange.sendResponseHeaders(200, -1)
+                                                    return
+                                                }
+                                                if (method in ["POST", "PUT", "PATCH", "DELETE"]) {
+                                                    def rawBody = exchange.requestBody.getText("UTF-8")
+                                                    def contentType = exchange.requestHeaders.getFirst("Content-Type")
+                                                    def length = rawBody == null ? 0 : rawBody.length()
+
+                                                    def response = JsonOutput.toJson([
+													  "status": "ok",
+													  "message": jsonEscape(method + " call against the Jenkins Test Harness succeeded."),
+													  "method": method,
+													  "path": jsonEscape(path),
+													  "timestamp": new Date().toInstant().toString(),
+													  "receivedContentType": jsonStringOrNull(contentType),
+													  "receivedPayloadLength": length,
+													  "payload": JsonOutput.toJson(rawBody),
+													])
+                                                    writeJson(exchange, 200, response)
+                                                    return
+                                                }
+
+                                                writeJson(exchange, 405, "{\"status\":\"error\",\"message\":\"Unsupported method " + jsonEscape(method) + "\"}")
+                                            } catch (Exception e) {
+                                                writeJson(exchange, 500, "{\"status\":\"error\",\"message\":\"" + jsonEscape(String.valueOf(e.message)) + "\"}")
+                                            } finally {
+                                                exchange.close()
+                                            }
+                                        } as HttpHandler)
+                                        harness.executor = null
+                                        harness.start()
+                                        log.info("Started HTTP echo harness at " + harnessUrl)
+
+                                        // ---- Seed demo jobs pointing at the echo harness ----
+                                        def xmlEscape = { String s ->
+                                            s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;")
+                                        }
+
+                                        // Field block shared by the build step and the publisher. Both classes expose
+                                        // the same field names except passBuildParameters, which is build-step-only.
+                                        def requestFields = { String url, String httpMode, String requestBody, boolean includePassBuildParameters = false ->
+                                            def rb = requestBody ? "\n  <requestBody>" + xmlEscape(requestBody) + "</requestBody>" : ""
+                                            def ct = requestBody ? "APPLICATION_JSON" : "NOT_SET"
+                                            def xmlDoc = "<url>" + url + "</url>\n"
+                                            xmlDoc = xmlDoc + "<httpMode>" + httpMode + "</httpMode>\n"
+                                            xmlDoc = xmlDoc + "<ignoreSslErrors>false</ignoreSslErrors>\n"
+                                            xmlDoc = xmlDoc + "<contentType>" + ct + "</contentType>\n"
+                                            xmlDoc = xmlDoc + "<acceptType>APPLICATION_JSON</acceptType>" + rb + "\n"
+                                            xmlDoc = xmlDoc + "<outputFile></outputFile>\n"
+                                            xmlDoc = xmlDoc + "<consoleLogResponseBody>true</consoleLogResponseBody>\n"
+                                            if (includePassBuildParameters) {
+                                                xmlDoc = xmlDoc + "<passBuildParameters>false</passBuildParameters>\n"
+                                            }
+                                            xmlDoc = xmlDoc + "<validResponseCodes>200:299</validResponseCodes>\n"
+                                            xmlDoc = xmlDoc + "<validResponseContent></validResponseContent>\n"
+  											return xmlDoc
+                                        }
+
+                                        def buildStepJob = { String description, String fields ->
+                                            def xmlDoc = "<?xml version='1.1' encoding='UTF-8'?>"
+											xmlDoc = xmlDoc + "<project>\n"
+											xmlDoc = xmlDoc + "  <actions/>\n"
+											xmlDoc = xmlDoc + "  <description>" + description + "</description>\n"
+											xmlDoc = xmlDoc + "  <keepDependencies>false</keepDependencies>\n"
+											xmlDoc = xmlDoc + "  <properties/>\n"
+											xmlDoc = xmlDoc + "  <scm class=\"hudson.scm.NullSCM\"/>\n"
+											xmlDoc = xmlDoc + "  <canRoam>true</canRoam>\n"
+											xmlDoc = xmlDoc + "  <disabled>false</disabled>\n"
+											xmlDoc = xmlDoc + "  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n"
+											xmlDoc = xmlDoc + "  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>\n"
+											xmlDoc = xmlDoc + "  <triggers/>\n"
+											xmlDoc = xmlDoc + "  <concurrentBuild>false</concurrentBuild>\n"
+											xmlDoc = xmlDoc + "  <builders>\n"
+											xmlDoc = xmlDoc + "    <jenkins.plugins.http__request.HttpRequest>\n"
+											xmlDoc = xmlDoc + "      " + fields + "\n"
+											xmlDoc = xmlDoc + "    </jenkins.plugins.http__request.HttpRequest>\n"
+											xmlDoc = xmlDoc + "  </builders>\n"
+											xmlDoc = xmlDoc + "  <publishers/>\n"
+											xmlDoc = xmlDoc + "  <buildWrappers/>\n"
+											xmlDoc = xmlDoc + "</project>\n"
+											return xmlDoc
+                                        }
+
+                                        def publisherJob = { String description, String fields ->
+                                            def xmlDoc = "<?xml version='1.1' encoding='UTF-8'?>\n"
+											xmlDoc = xmlDoc + "<project>\n"
+											xmlDoc = xmlDoc + "  <actions/>\n"
+											xmlDoc = xmlDoc + "  <description>" + description + "</description>\n"
+											xmlDoc = xmlDoc + "  <keepDependencies>false</keepDependencies>\n"
+											xmlDoc = xmlDoc + "  <properties/>\n"
+											xmlDoc = xmlDoc + "  <scm class=\"hudson.scm.NullSCM\"/>\n"
+											xmlDoc = xmlDoc + "  <canRoam>true</canRoam>\n"
+											xmlDoc = xmlDoc + "  <disabled>false</disabled>\n"
+											xmlDoc = xmlDoc + "  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n"
+											xmlDoc = xmlDoc + "  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>\n"
+											xmlDoc = xmlDoc + "  <triggers/>\n"
+											xmlDoc = xmlDoc + "  <concurrentBuild>false</concurrentBuild>\n"
+											xmlDoc = xmlDoc + "  <builders/>\n"
+											xmlDoc = xmlDoc + "  <publishers>\n"
+											xmlDoc = xmlDoc + "	<jenkins.plugins.http__request.HttpRequestPublisher>\n"
+											xmlDoc = xmlDoc + "	  " + fields + "\n"
+											xmlDoc = xmlDoc + "	</jenkins.plugins.http__request.HttpRequestPublisher>\n"
+											xmlDoc = xmlDoc + "  </publishers>\n"
+											xmlDoc = xmlDoc + "  <buildWrappers/>\n"
+											xmlDoc = xmlDoc + "</project>\n"
+                                        }
+
+                                        def seedJob = { String name, String xml ->
+                                            def dir = new File(homePath, "jobs/" + name)
+                                            dir.mkdirs()
+                                            new File(dir, "config.xml").text = xml
+                                            log.info("Seeded job '" + name + "'")
+                                        }
+
+                                        def demoBody = '{"action":"deploy","environment":"staging","build":"#42"}'
+
+                                        // GET build step (returns the canned GET payload).
+                                        seedJob("http-request-demo",
+                                                buildStepJob("Auto-created by the test framework. Runs an HTTP Request as a BUILD STEP (GET) against the echo harness.",
+                                                        requestFields(harnessUrl, "GET", null, true)))
+
+                                        // One build-step job per write verb; each sends a payload the harness embeds
+                                        // in a freshly-built JSON response.
+                                        ["POST", "PUT", "PATCH", "DELETE"].each { mode ->
+                                            def name = "http-request-" + mode.toLowerCase() + "-demo"
+                                            def description = "Auto-created by the test framework. Runs an HTTP Request as a BUILD STEP (" + mode + ") against the echo harness; the delivered payload is returned inside a new JSON response."
+                                            seedJob(name, buildStepJob(description, requestFields(harnessUrl, mode, demoBody, true)))
+                                        }
+
+                                        // POST post-build action (the publisher is POST-only).
+                                        seedJob("http-request-publisher-demo",
+                                                publisherJob("Auto-created by the test framework. Runs an HTTP Request as a POST-BUILD ACTION (POST) against the echo harness.",
+                                                        requestFields(harnessUrl, "POST", demoBody)))
+
+                                        log.info("Seeded demo jobs targeting " + harnessUrl)
+
+                                        def targetBrowserUrl = "http://localhost:" + resolvedPort + "/jenkins/"
+                                        Thread.start {
+                                            long deadline = System.currentTimeMillis() + 120000
+                                            boolean up = false
+                                            while (System.currentTimeMillis() < deadline) {
+                                                try {
+                                                    new Socket().withCloseable { socket ->
+                                                        socket.connect(new InetSocketAddress("localhost", resolvedPort.toInteger()), 1000)
+                                                    }
+                                                    up = true
+                                                    break
+                                                } catch (Exception e) {
+                                                    Thread.sleep(500)
+                                                }
+                                            }
+                                            if (!up) {
+                                                log.warn("Jenkins did not come up on " + targetBrowserUrl + "; open it manually once ready.")
+                                                return
+                                            }
+
+                                            Thread.sleep(2000) // Small breather for initialization
+                                            def os = System.getProperty("os.name").toLowerCase()
+                                            def cmd = []
+                                            if (os.contains("mac")) {
+                                                cmd = ["open", targetBrowserUrl]
+                                            } else if (os.contains("win")) {
+                                                cmd = ["cmd", "/c", "start", "", targetBrowserUrl]
+                                            } else {
+                                                cmd = ["xdg-open", targetBrowserUrl]
+                                            }
+
+                                            try {
+                                                new ProcessBuilder(cmd).start()
+                                                log.info("Opened default browser at " + targetBrowserUrl)
+                                            } catch (Exception e) {
+                                                log.warn("Could not open browser automatically: " + e.message)
+                                            }
+                                        }
+                                    ]]></script>
+									</scripts>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 	<scm>
 		<connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
