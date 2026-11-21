@@ -106,6 +106,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
     private final boolean wrapAsMultipart;
 
     private final boolean useNtlm;
+	private final boolean followRedirects;
     private final boolean useSystemProperties;
     private final String validResponseCodes;
     private final String validResponseContent;
@@ -143,7 +144,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
                     http.getValidResponseCodes(), http.getValidResponseContent(),
                     http.getConsoleLogResponseBody(), outputFile,
-                    ResponseHandle.NONE,
+                    ResponseHandle.NONE, http.isFollowRedirects(),
 
                     project,
                     run,
@@ -174,7 +175,7 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
                 step.getValidResponseCodes(), step.getValidResponseContent(),
                 step.getConsoleLogResponseBody(), outputFile,
-                step.getResponseHandle(),
+                step.getResponseHandle(), step.isFollowRedirects(),
                 project, run, taskListener.getLogger());
     }
 
@@ -188,13 +189,14 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 
             String validResponseCodes, String validResponseContent,
             Boolean consoleLogResponseBody, FilePath outputFile,
-            ResponseHandle responseHandle,
+            ResponseHandle responseHandle, boolean followRedirects,
 
             Item project, Run<?, ?> run, PrintStream logger
     ) {
         this.url = url;
         this.httpMode = httpMode;
         this.ignoreSslErrors = ignoreSslErrors;
+		this.followRedirects = followRedirects;
 
 		if (httpProxy != null && !httpProxy.isBlank()) {
 			this.httpProxy = HttpHost.create(URI.create(httpProxy));
@@ -316,6 +318,10 @@ public class HttpRequestExecution extends MasterToSlaveCallable<ResponseContentS
 			clientBuilder.setRedirectStrategy(new BackWardCompatibleRedirectStrategy());
 			clientBuilder.addExecInterceptorAfter(ChainElement.COMPRESS.name(), "ignore-content-encoding-none",
 					new IgnoreContentEncodingNoneExec());
+
+			if (!this.followRedirects) {
+				clientBuilder.disableRedirectHandling();
+			}
 
             if (useSystemProperties) {
                 clientBuilder.useSystemProperties();
